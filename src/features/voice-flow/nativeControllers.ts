@@ -26,7 +26,7 @@ export const audioController: AudioController = {
   restoreAudio: () => ({
     ok: false,
     reason: "notImplemented",
-    message: "Audio restore is planned for a later Windows-native pass.",
+    message: "Audio restore is not implemented yet.",
   }),
 };
 

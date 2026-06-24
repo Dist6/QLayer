@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { AboutPanel } from "../features/about/AboutPanel";
 import { openCodexAction, type CodexAction } from "../features/codex/codexController";
 import { QuickToolsPanel } from "../features/quick-tools/QuickToolsPanel";
+import {
+  getQuickToolTarget,
+  quickTools,
+  type QuickToolId,
+} from "../features/quick-tools/quickTools";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { createSettingsStorage } from "../features/settings/settingsStorage";
 import type { AppSettings } from "../features/settings/settingsTypes";
@@ -13,19 +18,20 @@ import {
   listenForTrayStatus,
 } from "../features/tray/trayClient";
 import type { TrayStatus } from "../features/tray/trayEvents";
+import { VoiceFlowDetailPanel } from "../features/voice-flow/VoiceFlowDetailPanel";
 import { useVoiceFlow, type VoiceFlowState } from "../features/voice-flow/useVoiceFlow";
 
-type AppView = "quickTools" | "settings" | "about";
+type AppView = "quickTools" | "voiceFlow" | "plannedTool" | "settings" | "about";
 
 export function App() {
   const storage = useMemo(() => createSettingsStorage(window.localStorage), []);
   const loaded = useMemo(() => storage.load(), [storage]);
   const [activeView, setActiveView] = useState<AppView>("quickTools");
+  const [plannedToolId, setPlannedToolId] = useState<QuickToolId>("globalHotkeys");
   const [codexOpen, setCodexOpen] = useState(false);
-  const [codexMessage, setCodexMessage] = useState("Ready.");
   const [busyCodexAction, setBusyCodexAction] = useState<CodexAction | null>(null);
   const [settings, setSettingsState] = useState<AppSettings>(loaded.settings);
-  const [trayStatus, setTrayStatus] = useState<TrayStatus>({
+  const [, setTrayStatus] = useState<TrayStatus>({
     available: false,
     message: "Checking system tray status.",
   });
@@ -34,18 +40,28 @@ export function App() {
 
   const runCodexAction = async (action: CodexAction) => {
     setBusyCodexAction(action);
-    setCodexMessage("Opening Codex.");
 
-    const result = await openCodexAction(action);
+    await openCodexAction(action);
 
     setBusyCodexAction(null);
-    setCodexMessage(result.ok ? "Codex opened." : result.message);
     setCodexOpen(false);
   };
 
   const setSettings = (next: AppSettings) => {
     setSettingsState(next);
     storage.save(next);
+  };
+
+  const openQuickTool = (toolId: QuickToolId) => {
+    const target = getQuickToolTarget(toolId);
+
+    if (target.view === "voiceFlow") {
+      setActiveView("voiceFlow");
+      return;
+    }
+
+    setPlannedToolId(target.toolId);
+    setActiveView("plannedTool");
   };
 
   useEffect(() => {
@@ -83,7 +99,7 @@ export function App() {
 
     void listenForTrayActions(
       (action) => {
-        setActiveView("quickTools");
+        setActiveView("voiceFlow");
 
         if (action === "startVoiceFlow") {
           void start();
@@ -172,8 +188,14 @@ export function App() {
       </header>
 
       <main className="main-panel">
-        {renderView(activeView, settings, setSettings, trayStatus, voiceFlow, codexMessage, () =>
-          setActiveView("quickTools"),
+        {renderView(
+          activeView,
+          settings,
+          setSettings,
+          voiceFlow,
+          () => setActiveView("quickTools"),
+          openQuickTool,
+          plannedToolId,
         )}
       </main>
 
@@ -202,23 +224,40 @@ function renderView(
   activeView: AppView,
   settings: AppSettings,
   setSettings: (settings: AppSettings) => void,
-  trayStatus: TrayStatus,
   voiceFlow: VoiceFlowState,
-  codexMessage: string,
   onBack: () => void,
+  onOpenTool: (toolId: QuickToolId) => void,
+  plannedToolId: QuickToolId,
 ) {
   switch (activeView) {
+    case "voiceFlow":
+      return <VoiceFlowDetailPanel settings={settings} voiceFlow={voiceFlow} onBack={onBack} />;
+    case "plannedTool":
+      return <PlannedToolPanel onBack={onBack} toolId={plannedToolId} />;
     case "settings":
       return <SettingsPage settings={settings} onSettingsChange={setSettings} />;
     case "about":
       return <AboutPanel onBack={onBack} />;
     default:
-      return (
-        <QuickToolsPanel
-          codexMessage={codexMessage}
-          trayStatus={trayStatus}
-          voiceFlow={voiceFlow}
-        />
-      );
+      return <QuickToolsPanel onOpenTool={onOpenTool} />;
   }
+}
+
+function PlannedToolPanel({ toolId, onBack }: { toolId: QuickToolId; onBack: () => void }) {
+  const tool = quickTools.find((item) => item.id === toolId);
+
+  return (
+    <section className="secondary-view">
+      <button className="back-button" onClick={onBack} type="button">
+        Quick Tools
+      </button>
+      <div className="detail-heading">
+        <h1>{tool?.title ?? "Planned tool"}</h1>
+        <span className="status-chip">Planned</span>
+      </div>
+      <article className="compact-card">
+        <p>Coming later.</p>
+      </article>
+    </section>
+  );
 }

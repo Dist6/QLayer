@@ -1,27 +1,30 @@
 import { describe, expect, it } from "vitest";
 
-import { quickTools } from "./quickTools";
+import { getQuickToolTarget, quickTools } from "./quickTools";
 
 describe("quick tools", () => {
-  it("keeps the tray utility tools in the expected order", () => {
+  it("keeps only feature modules in the top-level list", () => {
     expect(quickTools.map((tool) => tool.title)).toEqual([
-      "Start Voice Flow",
-      "Restore Audio",
-      "Tray Controls",
+      "Voice Flow",
       "Global Hotkeys",
-      "Audio Control",
       "Add-ons",
     ]);
   });
 
-  it("marks only implemented utility surfaces as ready or active", () => {
-    expect(quickTools.map((tool) => [tool.id, tool.status])).toEqual([
-      ["startVoiceFlow", "ready"],
-      ["restoreAudio", "planned"],
-      ["trayControls", "active"],
-      ["globalHotkeys", "planned"],
-      ["audioControl", "planned"],
-      ["addOns", "planned"],
+  it("marks only Voice Flow as ready", () => {
+    expect(quickTools.map((tool) => [tool.id, tool.status, tool.description])).toEqual([
+      ["voiceFlow", "ready", "Speak to Codex faster"],
+      ["globalHotkeys", "planned", "Trigger tools from anywhere"],
+      ["addOns", "planned", "Community tools later"],
     ]);
+  });
+
+  it("maps tool modules to app views", () => {
+    expect(getQuickToolTarget("voiceFlow")).toEqual({ view: "voiceFlow" });
+    expect(getQuickToolTarget("globalHotkeys")).toEqual({
+      view: "plannedTool",
+      toolId: "globalHotkeys",
+    });
+    expect(getQuickToolTarget("addOns")).toEqual({ view: "plannedTool", toolId: "addOns" });
   });
 });

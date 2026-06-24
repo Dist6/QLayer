@@ -177,7 +177,7 @@ describe("Voice Flow service", () => {
       restoreAudio: () => ({
         ok: false,
         reason: "notImplemented",
-        message: "Audio restore is planned for a later Windows-native pass.",
+        message: "Audio restore is not implemented yet.",
       }),
     };
 
@@ -185,7 +185,7 @@ describe("Voice Flow service", () => {
 
     expect(result).toEqual({
       status: "audioUnavailable",
-      message: "Audio restore is planned for a later Windows-native pass.",
+      message: "Audio restore is not implemented yet.",
     });
   });
 });

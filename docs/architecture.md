@@ -5,7 +5,7 @@ QoLayer is a Tauri 2 desktop app with a React, TypeScript, Vite, and Tailwind fr
 ## Frontend
 
 - `src/app` contains the compact app shell and top-level view composition.
-- `src/features/quick-tools` contains the Quick Tools launcher model and UI.
+- `src/features/quick-tools` contains the Quick Tools module list and navigation mapping. Top-level Quick Tools are user-facing modules, not internal tray or restore actions.
 - `src/features/codex` contains Codex deep links used by the integration selector.
 - `src/features/voice-flow` contains controller contracts, native controller adapters, and the simple Voice Flow state machine.
 - `src/features/settings` contains typed settings, defaults, validation, storage, and the compact Settings view.
@@ -31,4 +31,4 @@ Voice Flow is a simple state machine, not a workflow engine. It orchestrates:
 3. Optional dictation shortcut trigger.
 4. Audio restore.
 
-Audio control, audio restore, and keyboard automation return explicit `NotImplemented` results in v0.1.
+Voice Flow is the first active Quick Tool module. Audio control, audio restore, global hotkeys, and keyboard automation remain planned; unavailable native paths return explicit `NotImplemented` results in v0.1.

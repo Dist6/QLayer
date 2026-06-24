@@ -1,65 +1,49 @@
-import {
-  Keyboard,
-  Layers,
-  Monitor,
-  Puzzle,
-  RotateCcw,
-  Speaker,
-  type LucideIcon,
-} from "lucide-react";
+import { Keyboard, Layers, Puzzle, type LucideIcon } from "lucide-react";
 
-export type QuickToolId =
-  | "startVoiceFlow"
-  | "restoreAudio"
-  | "trayControls"
-  | "globalHotkeys"
-  | "audioControl"
-  | "addOns";
+export type QuickToolId = "voiceFlow" | "globalHotkeys" | "addOns";
 
-export type QuickToolStatus = "ready" | "active" | "planned";
+export type QuickToolStatus = "ready" | "planned";
 
 export type QuickTool = {
   id: QuickToolId;
   title: string;
   status: QuickToolStatus;
+  description: string;
   icon: LucideIcon;
 };
 
+export type QuickToolTarget =
+  | { view: "voiceFlow" }
+  | { view: "plannedTool"; toolId: Exclude<QuickToolId, "voiceFlow"> };
+
 export const quickTools: QuickTool[] = [
   {
-    id: "startVoiceFlow",
-    title: "Start Voice Flow",
+    id: "voiceFlow",
+    title: "Voice Flow",
     status: "ready",
+    description: "Speak to Codex faster",
     icon: Layers,
-  },
-  {
-    id: "restoreAudio",
-    title: "Restore Audio",
-    status: "planned",
-    icon: RotateCcw,
-  },
-  {
-    id: "trayControls",
-    title: "Tray Controls",
-    status: "active",
-    icon: Monitor,
   },
   {
     id: "globalHotkeys",
     title: "Global Hotkeys",
     status: "planned",
+    description: "Trigger tools from anywhere",
     icon: Keyboard,
-  },
-  {
-    id: "audioControl",
-    title: "Audio Control",
-    status: "planned",
-    icon: Speaker,
   },
   {
     id: "addOns",
     title: "Add-ons",
     status: "planned",
+    description: "Community tools later",
     icon: Puzzle,
   },
 ];
+
+export function getQuickToolTarget(id: QuickToolId): QuickToolTarget {
+  if (id === "voiceFlow") {
+    return { view: "voiceFlow" };
+  }
+
+  return { view: "plannedTool", toolId: id };
+}
