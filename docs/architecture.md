@@ -13,7 +13,9 @@ QoLayer is a Tauri 2 desktop app with a React, TypeScript, Vite, and Tailwind fr
 
 ## Native
 
-`src-tauri` is intentionally narrow. v0.1 exposes one validated command for opening a small allowlist of Codex deep links. The command delegates to Tauri's official opener plugin after validation.
+`src-tauri` is intentionally narrow. v0.1 exposes one validated command for opening a small allowlist of Codex deep links and one command for reading system tray status. The Codex command delegates to Tauri's official opener plugin after validation.
+
+The system tray setup lives in `src-tauri/src/tray.rs`. Tray menu actions either show the main QoLayer window, quit the app, or emit a typed frontend event that React handles through the existing Voice Flow service.
 
 QoLayer v0.1 does not expose broad shell access, arbitrary command execution, credential reading, token reading, browser cookie access, network interception, or proxy behavior.
 
@@ -26,4 +28,4 @@ Voice Flow is a simple state machine, not a workflow engine. It orchestrates:
 3. Optional dictation shortcut trigger.
 4. Audio restore.
 
-Audio control and keyboard automation return explicit `NotImplemented` results in v0.1.
+Audio control, audio restore, and keyboard automation return explicit `NotImplemented` results in v0.1.

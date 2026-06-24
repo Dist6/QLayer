@@ -154,4 +154,25 @@ describe("Voice Flow service", () => {
 
     expect(result).toEqual({ status: "failed", message: "Restore failed." });
   });
+
+  it("reports NotImplemented restore results without faking success", async () => {
+    const audio: AudioController = {
+      prepareAudio: () => ({
+        ok: true,
+        value: { status: "audioDisabled", message: "Audio disabled." },
+      }),
+      restoreAudio: () => ({
+        ok: false,
+        reason: "notImplemented",
+        message: "Audio restore is planned for a later Windows-native pass.",
+      }),
+    };
+
+    const result = await restoreVoiceFlowAudio(audio);
+
+    expect(result).toEqual({
+      status: "audioUnavailable",
+      message: "Audio restore is planned for a later Windows-native pass.",
+    });
+  });
 });

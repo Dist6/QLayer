@@ -21,11 +21,9 @@ export const audioController: AudioController = {
     return notImplemented(`${label} is planned for a later Windows-native pass.`);
   },
   restoreAudio: () => ({
-    ok: true,
-    value: {
-      status: "restored",
-      message: "No audio changes were made by QoLayer in v0.1.",
-    },
+    ok: false,
+    reason: "notImplemented",
+    message: "Audio restore is planned for a later Windows-native pass.",
   }),
 };
 

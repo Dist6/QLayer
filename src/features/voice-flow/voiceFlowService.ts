@@ -54,6 +54,10 @@ export async function restoreVoiceFlowAudio(audio: AudioController): Promise<Voi
   const result = audio.restoreAudio();
 
   if (!result.ok) {
+    if (result.reason === "notImplemented") {
+      return { status: "audioUnavailable", message: result.message };
+    }
+
     return { status: "failed", message: result.message };
   }
 

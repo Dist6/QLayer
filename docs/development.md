@@ -50,5 +50,6 @@ pnpm rust:check
 - Keep shared helpers under `src/shared`.
 - Keep native and system code under `src-tauri`.
 - Keep Tauri commands focused and validated.
+- Keep tray actions routed through typed frontend events when they need UI-side workflows.
 - Do not add telemetry, cloud sync, credential access, token access, browser cookie access, or proxy behavior.
 - Keep UI text English-only for v0.1.

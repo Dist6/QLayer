@@ -11,6 +11,7 @@ QoLayer is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, 
 - Tauri 2 desktop foundation with React, TypeScript, Vite, and Tailwind CSS.
 - Clean app shell with Home, Codex, Voice Flow, Settings, Privacy, and About.
 - Codex deep-link actions for opening Codex, Codex settings, and a new Codex thread.
+- Minimal system tray menu for showing QoLayer, starting Voice Flow, restoring audio, and quitting.
 - Strongly typed local settings with validation and safe defaults.
 - Voice Flow foundation with explicit unavailable states for native features planned later.
 
@@ -26,7 +27,6 @@ QoLayer is local-first. v0.1 does not collect telemetry, upload prompts, record 
 
 The following are intentionally not implemented in v0.1:
 
-- System tray.
 - Global hotkeys.
 - Keyboard automation.
 - Audio ducking or muting.

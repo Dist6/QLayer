@@ -15,7 +15,7 @@ QoLayer v0.1 includes:
 - Strongly typed local settings with validation and safe defaults.
 - Local-only project documentation and open-source governance files.
 
-QoLayer v0.1 does not include tray support, global hotkeys, keyboard automation, audio control, project launchers, prompt templates, usage dashboards, task inboxes, add-on marketplaces, telemetry, cloud sync, proxy behavior, credential reading, token reading, or browser cookie access.
+QoLayer v0.1 includes a minimal system tray foundation. It does not include global hotkeys, keyboard automation, audio control, project launchers, prompt templates, usage dashboards, task inboxes, add-on marketplaces, telemetry, cloud sync, proxy behavior, credential reading, token reading, or browser cookie access.
 
 ## Architecture
 
@@ -121,4 +121,4 @@ QoLayer v0.1:
 
 ## Implementation Boundary
 
-This design is intentionally conservative. The next pass can add Windows-native tray, global hotkeys, and audio control after the foundation is validated.
+This design is intentionally conservative. The first native pass adds a minimal system tray. Later passes can add global hotkeys and audio control after the foundation is validated.

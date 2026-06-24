@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AboutPage } from "../features/about/AboutPage";
 import { CodexPage } from "../features/codex/CodexPage";
@@ -7,7 +7,10 @@ import { PrivacyPage } from "../features/privacy/PrivacyPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { createSettingsStorage } from "../features/settings/settingsStorage";
 import type { AppSettings } from "../features/settings/settingsTypes";
+import { getTrayStatus, listenForTrayActions } from "../features/tray/trayClient";
+import type { TrayStatus } from "../features/tray/trayEvents";
 import { VoiceFlowPage } from "../features/voice-flow/VoiceFlowPage";
+import { useVoiceFlow, type VoiceFlowState } from "../features/voice-flow/useVoiceFlow";
 import { navigationItems, type PageId } from "./navigation";
 
 export function App() {
@@ -15,11 +18,59 @@ export function App() {
   const loaded = useMemo(() => storage.load(), [storage]);
   const [activePage, setActivePage] = useState<PageId>("home");
   const [settings, setSettingsState] = useState<AppSettings>(loaded.settings);
+  const [trayStatus, setTrayStatus] = useState<TrayStatus>({
+    available: false,
+    message: "Checking system tray status.",
+  });
+  const voiceFlow = useVoiceFlow(settings);
+  const { reportMessage, restore, start } = voiceFlow;
 
   const setSettings = (next: AppSettings) => {
     setSettingsState(next);
     storage.save(next);
   };
+
+  useEffect(() => {
+    void getTrayStatus().then(setTrayStatus);
+  }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+
+    void listenForTrayActions(
+      (action) => {
+        setActivePage("voiceFlow");
+
+        if (action === "startVoiceFlow") {
+          void start();
+        } else {
+          void restore();
+        }
+      },
+      (message) => {
+        reportMessage({ status: "failed", message });
+      },
+    )
+      .then((nextUnlisten) => {
+        if (cancelled) {
+          nextUnlisten();
+        } else {
+          unlisten = nextUnlisten;
+        }
+      })
+      .catch(() => {
+        setTrayStatus({
+          available: false,
+          message: "System tray is available only in the desktop app.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [reportMessage, restore, start]);
 
   return (
     <div className="app-shell">
@@ -53,11 +104,13 @@ export function App() {
 
         <div className="sidebar-footer">
           <span>v0.1.0</span>
-          <span>Local-first</span>
+          <span>{trayStatus.available ? "Tray ready" : "Tray unavailable"}</span>
         </div>
       </aside>
 
-      <main className="main-panel">{renderPage(activePage, settings, setSettings)}</main>
+      <main className="main-panel">
+        {renderPage(activePage, settings, setSettings, trayStatus, voiceFlow)}
+      </main>
     </div>
   );
 }
@@ -66,6 +119,8 @@ function renderPage(
   activePage: PageId,
   settings: AppSettings,
   setSettings: (settings: AppSettings) => void,
+  trayStatus: TrayStatus,
+  voiceFlow: VoiceFlowState,
 ) {
   switch (activePage) {
     case "home":
@@ -73,7 +128,17 @@ function renderPage(
     case "codex":
       return <CodexPage />;
     case "voiceFlow":
-      return <VoiceFlowPage settings={settings} />;
+      return (
+        <VoiceFlowPage
+          settings={settings}
+          status={voiceFlow.status}
+          steps={voiceFlow.steps}
+          running={voiceFlow.running}
+          trayStatus={trayStatus}
+          onStart={voiceFlow.start}
+          onRestore={voiceFlow.restore}
+        />
+      );
     case "settings":
       return <SettingsPage settings={settings} onSettingsChange={setSettings} />;
     case "privacy":

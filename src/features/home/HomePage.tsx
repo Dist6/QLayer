@@ -33,8 +33,8 @@ export function HomePage() {
         <h2>What this version intentionally avoids</h2>
         <p>
           No telemetry, no cloud sync, no credential access, no token access, no proxy behavior, no
-          usage dashboard, and no add-on marketplace. Native Windows features are planned for a
-          later pass after the foundation is validated.
+          usage dashboard, and no add-on marketplace. Additional Windows-native automation is
+          planned for a later pass after the foundation is validated.
         </p>
       </article>
     </section>

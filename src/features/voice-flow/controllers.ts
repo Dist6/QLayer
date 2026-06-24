@@ -7,6 +7,7 @@ export type VoiceFlowStatus =
   | "audioDisabled"
   | "audioDucked"
   | "audioMuted"
+  | "audioUnavailable"
   | "dictationUnavailable"
   | "restored"
   | "failed";

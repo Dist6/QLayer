@@ -1,26 +1,32 @@
 import { RotateCcw, Waves } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { Button } from "../../shared/ui/Button";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { StatusChip } from "../../shared/ui/StatusChip";
+import type { TrayStatus } from "../tray/trayEvents";
 import type { AppSettings } from "../settings/settingsTypes";
 import type { VoiceFlowStep } from "./controllers";
-import { audioController, codexController, keyboardController } from "./nativeControllers";
-import { restoreVoiceFlowAudio, startVoiceFlow } from "./voiceFlowService";
 
 type VoiceFlowPageProps = {
   settings: AppSettings;
+  status: VoiceFlowStep;
+  steps: VoiceFlowStep[];
+  running: boolean;
+  trayStatus: TrayStatus;
+  onStart: () => Promise<void>;
+  onRestore: () => Promise<void>;
 };
 
-export function VoiceFlowPage({ settings }: VoiceFlowPageProps) {
-  const [status, setStatus] = useState<VoiceFlowStep>({
-    status: "ready",
-    message: "Ready.",
-  });
-  const [steps, setSteps] = useState<VoiceFlowStep[]>([]);
-  const [running, setRunning] = useState(false);
-
+export function VoiceFlowPage({
+  settings,
+  status,
+  steps,
+  running,
+  trayStatus,
+  onStart,
+  onRestore,
+}: VoiceFlowPageProps) {
   const configurationSummary = useMemo(
     () => [
       `Target: Codex`,
@@ -31,28 +37,6 @@ export function VoiceFlowPage({ settings }: VoiceFlowPageProps) {
     [settings],
   );
 
-  const start = async () => {
-    setRunning(true);
-    setStatus({ status: "openingCodex", message: "Starting Voice Flow." });
-
-    const result = await startVoiceFlow({
-      settings,
-      audio: audioController,
-      codex: codexController,
-      keyboard: keyboardController,
-    });
-
-    setSteps(result.steps);
-    setStatus(result.steps.at(-1) ?? { status: result.status, message: "Voice Flow finished." });
-    setRunning(false);
-  };
-
-  const restore = async () => {
-    const restored = await restoreVoiceFlowAudio(audioController);
-    setStatus(restored);
-    setSteps((current) => [...current, restored]);
-  };
-
   return (
     <section className="page">
       <PageHeader
@@ -62,14 +46,12 @@ export function VoiceFlowPage({ settings }: VoiceFlowPageProps) {
 
       <div className="grid-2">
         <article className="card stack">
-          <StatusChip tone={status.status === "failed" ? "danger" : "success"}>
-            {status.message}
-          </StatusChip>
+          <StatusChip tone={readStatusTone(status.status)}>{status.message}</StatusChip>
           <div className="button-row">
-            <Button disabled={running} onClick={() => void start()} variant="primary">
+            <Button disabled={running} onClick={() => void onStart()} variant="primary">
               <Waves size={17} /> Start Voice Flow
             </Button>
-            <Button disabled={running} onClick={() => void restore()}>
+            <Button disabled={running} onClick={() => void onRestore()}>
               <RotateCcw size={17} /> Restore Audio
             </Button>
           </div>
@@ -87,6 +69,16 @@ export function VoiceFlowPage({ settings }: VoiceFlowPageProps) {
           </ul>
         </article>
       </div>
+
+      <article className="card stack">
+        <div className="button-row">
+          <h2>System tray</h2>
+          <StatusChip tone={trayStatus.available ? "success" : "warning"}>
+            {trayStatus.available ? "Available" : "Unavailable"}
+          </StatusChip>
+        </div>
+        <p>{trayStatus.message}</p>
+      </article>
 
       <article className="card stack">
         <h2>Run log</h2>
@@ -120,4 +112,16 @@ function formatAudioMode(mode: AppSettings["voiceFlow"]["audioMode"]): string {
 
 function formatRestoreMode(mode: AppSettings["voiceFlow"]["restoreMode"]): string {
   return mode === "manual" ? "Manual" : "After timeout";
+}
+
+function readStatusTone(status: VoiceFlowStep["status"]): "danger" | "success" | "warning" {
+  if (status === "failed") {
+    return "danger";
+  }
+
+  if (status === "audioUnavailable" || status === "dictationUnavailable") {
+    return "warning";
+  }
+
+  return "success";
 }
