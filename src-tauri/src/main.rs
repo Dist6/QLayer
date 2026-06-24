@@ -8,7 +8,10 @@ fn open_codex_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
 
     app.opener()
         .open_url(url, None::<&str>)
-        .map_err(|_| "Codex could not be opened. Make sure Codex is installed and deep links are enabled.".to_string())
+        .map_err(|_| {
+            "Codex could not be opened. Make sure Codex is installed and deep links are enabled."
+                .to_string()
+        })
 }
 
 fn is_allowed_codex_url(url: &str) -> bool {

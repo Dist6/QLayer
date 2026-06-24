@@ -95,6 +95,38 @@ describe("Voice Flow service", () => {
     });
   });
 
+  it("reports keyboard automation failures that are not NotImplemented", async () => {
+    const audio: AudioController = {
+      prepareAudio: () => ({
+        ok: true,
+        value: { status: "audioDisabled", message: "Audio disabled." },
+      }),
+      restoreAudio: () => ({ ok: true, value: { status: "restored", message: "Restored." } }),
+    };
+    const codex: CodexController = {
+      openCodex: async () => ({ ok: true, value: undefined }),
+      openSettings: async () => ({ ok: true, value: undefined }),
+      openNewThread: async () => ({ ok: true, value: undefined }),
+    };
+    const failingKeyboard: KeyboardController = {
+      triggerDictationShortcut: () => ({
+        ok: false,
+        reason: "failed",
+        message: "Shortcut failed.",
+      }),
+    };
+
+    const result = await startVoiceFlow({
+      settings: defaultSettings,
+      audio,
+      codex,
+      keyboard: failingKeyboard,
+    });
+
+    expect(result.status).toBe("failed");
+    expect(result.steps.at(-1)).toEqual({ status: "failed", message: "Shortcut failed." });
+  });
+
   it("restores audio through the audio controller", async () => {
     const audio: AudioController = {
       prepareAudio: () => ({
@@ -107,5 +139,19 @@ describe("Voice Flow service", () => {
     const result = await restoreVoiceFlowAudio(audio);
 
     expect(result).toEqual({ status: "restored", message: "Audio restored." });
+  });
+
+  it("reports restore failures", async () => {
+    const audio: AudioController = {
+      prepareAudio: () => ({
+        ok: true,
+        value: { status: "audioDisabled", message: "Audio disabled." },
+      }),
+      restoreAudio: () => ({ ok: false, reason: "failed", message: "Restore failed." }),
+    };
+
+    const result = await restoreVoiceFlowAudio(audio);
+
+    expect(result).toEqual({ status: "failed", message: "Restore failed." });
   });
 });

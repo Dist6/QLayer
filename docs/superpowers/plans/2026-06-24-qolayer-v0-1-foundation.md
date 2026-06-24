@@ -8,6 +8,8 @@
 
 **Tech Stack:** Tauri 2, React, TypeScript, Vite, Tailwind CSS, Rust, pnpm, Vitest, ESLint, Prettier.
 
+**Status:** Implemented in the initial v0.1 foundation commit.
+
 ---
 
 ### Task 1: Project Scaffold
@@ -19,14 +21,13 @@
 - Create: `index.html`
 - Create: `vite.config.ts`
 - Create: `tsconfig.json`
-- Create: `tsconfig.node.json`
 - Create: `src-tauri/Cargo.toml`
 - Create: `src-tauri/tauri.conf.json`
 - Create: `src-tauri/src/main.rs`
 
-- [ ] Create a Tauri 2 React/Vite/TypeScript scaffold.
-- [ ] Add Tailwind, ESLint, Prettier, Vitest, and strict TypeScript configuration.
-- [ ] Keep Tauri permissions narrow and expose only the commands required by v0.1.
+- [x] Create a Tauri 2 React/Vite/TypeScript scaffold.
+- [x] Add Tailwind, ESLint, Prettier, Vitest, and strict TypeScript configuration.
+- [x] Keep Tauri permissions narrow and expose only the commands required by v0.1.
 
 ### Task 2: Typed Settings
 
@@ -38,9 +39,9 @@
 - Create: `src/features/settings/settingsStorage.ts`
 - Test: `src/features/settings/settings.test.ts`
 
-- [ ] Write failing tests for defaults, validation, corrupted JSON parsing, and partial stored settings.
-- [ ] Implement strict settings types, safe defaults, validation, and local storage parsing.
-- [ ] Verify tests pass.
+- [x] Write failing tests for defaults, validation, corrupted JSON parsing, and partial stored settings.
+- [x] Implement strict settings types, safe defaults, validation, and local storage parsing.
+- [x] Verify tests pass.
 
 ### Task 3: Codex Deep Links
 
@@ -50,10 +51,10 @@
 - Create: `src/features/codex/codexController.ts`
 - Test: `src/features/codex/deepLinks.test.ts`
 
-- [ ] Write failing tests for `codex://`, `codex://settings`, and `codex://threads/new`.
-- [ ] Implement deep-link builders in one module.
-- [ ] Implement a controller that delegates opening to the narrow native command.
-- [ ] Verify tests pass.
+- [x] Write failing tests for `codex://`, `codex://settings`, and `codex://threads/new`.
+- [x] Implement deep-link builders in one module.
+- [x] Implement a controller that delegates opening to the narrow native command.
+- [x] Verify tests pass.
 
 ### Task 4: Voice Flow State Machine
 
@@ -64,9 +65,9 @@
 - Create: `src/features/voice-flow/voiceFlowService.ts`
 - Test: `src/features/voice-flow/voiceFlowService.test.ts`
 
-- [ ] Write failing tests for disabled audio, NotImplemented audio, Codex open failure, and restore behavior.
-- [ ] Implement controller interfaces and a simple service/state-machine function.
-- [ ] Verify tests pass.
+- [x] Write failing tests for disabled audio, NotImplemented audio, Codex open failure, and restore behavior.
+- [x] Implement controller interfaces and a simple service/state-machine function.
+- [x] Verify tests pass.
 
 ### Task 5: App Shell and Pages
 
@@ -80,9 +81,9 @@
 - Create: `src/shared/ui/StatusChip.tsx`
 - Create: feature page components for Home, Codex, Voice Flow, Settings, Privacy, and About.
 
-- [ ] Implement the dark, English-only developer-tool UI.
-- [ ] Wire settings state and Voice Flow actions into the UI.
-- [ ] Ensure unavailable native behavior is visible and understandable.
+- [x] Implement the dark, English-only developer-tool UI.
+- [x] Wire settings state and Voice Flow actions into the UI.
+- [x] Ensure unavailable native behavior is visible and understandable.
 
 ### Task 6: Documentation
 
@@ -98,15 +99,15 @@
 - Create: `docs/roadmap.md`
 - Create: `docs/development.md`
 
-- [ ] Document scope, privacy model, limitations, development workflow, security constraints, and roadmap.
-- [ ] Include the unofficial project disclaimer.
-- [ ] Keep docs aligned with the actual implemented v0.1 behavior.
+- [x] Document scope, privacy model, limitations, development workflow, security constraints, and roadmap.
+- [x] Include the unofficial project disclaimer.
+- [x] Keep docs aligned with the actual implemented v0.1 behavior.
 
 ### Task 7: Verification
 
-- [ ] Run formatting.
-- [ ] Run TypeScript typecheck.
-- [ ] Run lint.
-- [ ] Run tests.
-- [ ] Run Rust checks where practical.
-- [ ] Fix any issues found by checks.
+- [x] Run formatting.
+- [x] Run TypeScript typecheck.
+- [x] Run lint.
+- [x] Run tests.
+- [x] Run Rust checks where practical.
+- [x] Fix any issues found by checks.
