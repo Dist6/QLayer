@@ -45,7 +45,7 @@
 
 - [x] Replace wide sidebar layout with compact top navigation.
 - [x] Set the Tauri default window near 420 by 600.
-- [x] Keep all pages English-only and present.
+- [x] Keep all app views English-only and present.
 
 ### Task 4: Voice Flow Messaging
 

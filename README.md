@@ -9,7 +9,7 @@ QoLayer is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, 
 ## Current v0.1 Scope
 
 - Tauri 2 desktop foundation with React, TypeScript, Vite, and Tailwind CSS.
-- Clean app shell with Home, Codex, Voice Flow, Settings, Privacy, and About.
+- Compact Quick Tools launcher with secondary Settings and About views.
 - Codex deep-link actions for opening Codex, Codex settings, and a new Codex thread.
 - Minimal system tray menu for showing QoLayer, starting Voice Flow, restoring audio, and quitting.
 - Compact tray utility window: closing the window hides it, while Quit from the tray exits the app.

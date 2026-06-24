@@ -4,11 +4,12 @@ QoLayer is a Tauri 2 desktop app with a React, TypeScript, Vite, and Tailwind fr
 
 ## Frontend
 
-- `src/app` contains the app shell, navigation, and page composition.
-- `src/features/codex` contains Codex deep links and Codex UI.
+- `src/app` contains the compact app shell and top-level view composition.
+- `src/features/quick-tools` contains the Quick Tools launcher model and UI.
+- `src/features/codex` contains Codex deep links used by the integration selector.
 - `src/features/voice-flow` contains controller contracts, native controller adapters, and the simple Voice Flow state machine.
-- `src/features/settings` contains typed settings, defaults, validation, storage, and Settings UI.
-- `src/features/privacy` and `src/features/about` contain static product pages.
+- `src/features/settings` contains typed settings, defaults, validation, storage, and the compact Settings view.
+- `src/features/about` contains the compact About and privacy summary view.
 - `src/shared` contains reused UI primitives and result types only.
 
 ## Native

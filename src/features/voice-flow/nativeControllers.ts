@@ -31,8 +31,7 @@ export const audioController: AudioController = {
 };
 
 export const keyboardController: KeyboardController = {
-  triggerDictationShortcut: () =>
-    notImplemented("Dictation automation is planned for a later Windows-native pass."),
+  triggerDictationShortcut: () => notImplemented("Dictation automation is not implemented yet."),
 };
 
 export const codexController: CodexController = {

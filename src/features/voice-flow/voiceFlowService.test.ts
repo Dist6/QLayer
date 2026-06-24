@@ -8,7 +8,7 @@ const keyboard: KeyboardController = {
   triggerDictationShortcut: () => ({
     ok: false,
     reason: "notImplemented",
-    message: "Dictation automation is planned for a later Windows-native pass.",
+    message: "Dictation automation is not implemented yet.",
   }),
 };
 
@@ -45,9 +45,9 @@ describe("Voice Flow service", () => {
       "Audio control is disabled. Planned audio ducking and muting were not used.",
       "Opening Codex.",
       "Codex opened.",
-      "Audio control is planned for a later Windows-native pass.",
-      "Dictation automation is planned for a later Windows-native pass.",
-      "Voice Flow opened Codex. Audio control and dictation automation are still planned.",
+      "Audio is not implemented yet.",
+      "Dictation automation is not implemented yet.",
+      "Codex opened. Audio and dictation are not implemented yet.",
     ]);
   });
 
