@@ -5,6 +5,7 @@ import {
   parseTrayActionPayload,
   parseTrayStatus,
   QOLAYER_TRAY_ACTION_EVENT,
+  QOLAYER_TRAY_STATUS_EVENT,
   type TrayAction,
   type TrayStatus,
 } from "./trayEvents";
@@ -30,5 +31,13 @@ export async function listenForTrayActions(
     } else {
       onInvalidPayload(parsed.message);
     }
+  });
+}
+
+export async function listenForTrayStatus(
+  onStatus: (status: TrayStatus) => void,
+): Promise<() => void> {
+  return listen(QOLAYER_TRAY_STATUS_EVENT, (event) => {
+    onStatus(parseTrayStatus(event.payload));
   });
 }

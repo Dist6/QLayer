@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   QOLAYER_TRAY_ACTION_EVENT,
-  parseTrayStatus,
+  QOLAYER_TRAY_STATUS_EVENT,
   parseTrayActionPayload,
+  parseTrayStatus,
   trayActionLabels,
   type TrayAction,
 } from "./trayEvents";
@@ -11,6 +12,10 @@ import {
 describe("tray events", () => {
   it("uses one stable event name for tray actions", () => {
     expect(QOLAYER_TRAY_ACTION_EVENT).toBe("qolayer://tray-action");
+  });
+
+  it("uses one stable event name for tray status updates", () => {
+    expect(QOLAYER_TRAY_STATUS_EVENT).toBe("qolayer://tray-status");
   });
 
   it("parses supported tray action payloads", () => {

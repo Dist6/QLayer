@@ -12,11 +12,12 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "QoLayer",
-        "width": 1180,
-        "height": 760,
-        "minWidth": 920,
-        "minHeight": 620
+        "width": 420,
+        "height": 600,
+        "minWidth": 380,
+        "minHeight": 520
       }
     ],
     "security": {

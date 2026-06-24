@@ -8,7 +8,7 @@ const keyboard: KeyboardController = {
   triggerDictationShortcut: () => ({
     ok: false,
     reason: "notImplemented",
-    message: "Not available yet.",
+    message: "Dictation automation is planned for a later Windows-native pass.",
   }),
 };
 
@@ -17,7 +17,10 @@ describe("Voice Flow service", () => {
     const audio: AudioController = {
       prepareAudio: () => ({
         ok: true,
-        value: { status: "audioDisabled", message: "Audio disabled." },
+        value: {
+          status: "audioDisabled",
+          message: "Audio control is disabled. Planned audio ducking and muting were not used.",
+        },
       }),
       restoreAudio: () => ({ ok: true, value: { status: "restored", message: "Restored." } }),
     };
@@ -33,8 +36,18 @@ describe("Voice Flow service", () => {
     expect(result.steps.map((step) => step.status)).toEqual([
       "audioDisabled",
       "openingCodex",
+      "codexOpened",
+      "audioUnavailable",
       "dictationUnavailable",
       "ready",
+    ]);
+    expect(result.steps.map((step) => step.message)).toEqual([
+      "Audio control is disabled. Planned audio ducking and muting were not used.",
+      "Opening Codex.",
+      "Codex opened.",
+      "Audio control is planned for a later Windows-native pass.",
+      "Dictation automation is planned for a later Windows-native pass.",
+      "Voice Flow opened Codex. Audio control and dictation automation are still planned.",
     ]);
   });
 

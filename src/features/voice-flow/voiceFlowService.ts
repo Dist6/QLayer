@@ -34,6 +34,12 @@ export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceF
     return fail(steps, codexResult.message);
   }
 
+  steps.push({ status: "codexOpened", message: "Codex opened." });
+  steps.push({
+    status: "audioUnavailable",
+    message: "Audio control is planned for a later Windows-native pass.",
+  });
+
   const keyboardResult = input.keyboard.triggerDictationShortcut(
     input.settings.codex.dictationShortcut,
   );
@@ -45,7 +51,10 @@ export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceF
     steps.push(keyboardResult.value);
   }
 
-  steps.push({ status: "ready", message: "Voice Flow is ready." });
+  steps.push({
+    status: "ready",
+    message: "Voice Flow opened Codex. Audio control and dictation automation are still planned.",
+  });
 
   return { status: "ready", steps };
 }

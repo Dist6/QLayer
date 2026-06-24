@@ -17,6 +17,8 @@ QoLayer is a Tauri 2 desktop app with a React, TypeScript, Vite, and Tailwind fr
 
 The system tray setup lives in `src-tauri/src/tray.rs`. Tray menu actions either show the main QoLayer window, quit the app, or emit a typed frontend event that React handles through the existing Voice Flow service.
 
+Window lifecycle behavior stays native-side: a user close request hides the main window and keeps QoLayer running in the system tray. The app exits only through the tray Quit item.
+
 QoLayer v0.1 does not expose broad shell access, arbitrary command execution, credential reading, token reading, browser cookie access, network interception, or proxy behavior.
 
 ## Voice Flow

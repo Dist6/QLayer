@@ -7,7 +7,11 @@ import { PrivacyPage } from "../features/privacy/PrivacyPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { createSettingsStorage } from "../features/settings/settingsStorage";
 import type { AppSettings } from "../features/settings/settingsTypes";
-import { getTrayStatus, listenForTrayActions } from "../features/tray/trayClient";
+import {
+  getTrayStatus,
+  listenForTrayActions,
+  listenForTrayStatus,
+} from "../features/tray/trayClient";
 import type { TrayStatus } from "../features/tray/trayEvents";
 import { VoiceFlowPage } from "../features/voice-flow/VoiceFlowPage";
 import { useVoiceFlow, type VoiceFlowState } from "../features/voice-flow/useVoiceFlow";
@@ -32,6 +36,31 @@ export function App() {
 
   useEffect(() => {
     void getTrayStatus().then(setTrayStatus);
+  }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+
+    void listenForTrayStatus(setTrayStatus)
+      .then((nextUnlisten) => {
+        if (cancelled) {
+          nextUnlisten();
+        } else {
+          unlisten = nextUnlisten;
+        }
+      })
+      .catch(() => {
+        setTrayStatus({
+          available: false,
+          message: "System tray status is available only in the desktop app.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
   }, []);
 
   useEffect(() => {

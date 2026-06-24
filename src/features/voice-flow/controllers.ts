@@ -4,6 +4,7 @@ import type { AudioMode } from "../settings/settingsTypes";
 export type VoiceFlowStatus =
   | "ready"
   | "openingCodex"
+  | "codexOpened"
   | "audioDisabled"
   | "audioDucked"
   | "audioMuted"

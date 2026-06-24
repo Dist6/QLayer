@@ -12,6 +12,7 @@ QoLayer is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, 
 - Clean app shell with Home, Codex, Voice Flow, Settings, Privacy, and About.
 - Codex deep-link actions for opening Codex, Codex settings, and a new Codex thread.
 - Minimal system tray menu for showing QoLayer, starting Voice Flow, restoring audio, and quitting.
+- Compact tray utility window: closing the window hides it, while Quit from the tray exits the app.
 - Strongly typed local settings with validation and safe defaults.
 - Voice Flow foundation with explicit unavailable states for native features planned later.
 

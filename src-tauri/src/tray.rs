@@ -7,6 +7,7 @@ use tauri::{App, AppHandle, Emitter, Manager};
 
 const MAIN_WINDOW_LABEL: &str = "main";
 const TRAY_EVENT: &str = "qolayer://tray-action";
+const TRAY_STATUS_EVENT: &str = "qolayer://tray-status";
 const FALLBACK_ICON_RGBA: &[u8] = &[0x54, 0xd3, 0xa1, 0xff];
 const SHOW_ITEM_ID: &str = "show-qolayer";
 const START_VOICE_FLOW_ITEM_ID: &str = "start-voice-flow";
@@ -68,6 +69,10 @@ impl TrayState {
     }
 }
 
+pub fn record_window_hidden(app: &AppHandle) {
+    update_status(app, true, "QoLayer is still running in the system tray.");
+}
+
 pub fn setup_tray(app: &mut App) {
     let result = try_setup_tray(app);
     let state = app.state::<TrayState>();
@@ -119,12 +124,35 @@ fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
 }
 
 fn show_main_window(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
-        let _ = window.show();
-        let _ = window.set_focus();
+    let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) else {
+        update_status(app, false, "QoLayer window is unavailable.");
+        return;
+    };
+
+    if window.show().is_err() {
+        update_status(app, false, "QoLayer window could not be shown.");
+        return;
     }
+
+    if window.unminimize().is_err() {
+        update_status(app, false, "QoLayer window could not be restored.");
+        return;
+    }
+
+    if window.set_focus().is_err() {
+        update_status(app, false, "QoLayer window could not be focused.");
+        return;
+    }
+
+    update_status(app, true, "QoLayer window is visible.");
 }
 
 fn emit_tray_action(app: &AppHandle, action: &'static str) {
     let _ = app.emit(TRAY_EVENT, TrayActionPayload { action });
+}
+
+fn update_status(app: &AppHandle, available: bool, message: impl Into<String>) {
+    let state = app.state::<TrayState>();
+    state.set_status(available, message);
+    let _ = app.emit(TRAY_STATUS_EVENT, state.status());
 }

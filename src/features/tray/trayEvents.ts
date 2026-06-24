@@ -1,4 +1,5 @@
 export const QOLAYER_TRAY_ACTION_EVENT = "qolayer://tray-action";
+export const QOLAYER_TRAY_STATUS_EVENT = "qolayer://tray-status";
 
 export type TrayAction = "startVoiceFlow" | "restoreAudio";
 

@@ -13,7 +13,10 @@ export const audioController: AudioController = {
     if (mode === "disabled") {
       return {
         ok: true,
-        value: { status: "audioDisabled", message: "Audio changes are disabled." },
+        value: {
+          status: "audioDisabled",
+          message: "Audio control is disabled. Planned audio ducking and muting were not used.",
+        },
       };
     }
 
@@ -29,7 +32,7 @@ export const audioController: AudioController = {
 
 export const keyboardController: KeyboardController = {
   triggerDictationShortcut: () =>
-    notImplemented("Keyboard automation is planned for a later Windows-native pass."),
+    notImplemented("Dictation automation is planned for a later Windows-native pass."),
 };
 
 export const codexController: CodexController = {

@@ -1,4 +1,5 @@
 use tauri_plugin_opener::OpenerExt;
+use tauri::{Manager, WindowEvent};
 
 mod tray;
 
@@ -32,6 +33,13 @@ fn main() {
         .setup(|app| {
             tray::setup_tray(app);
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+                tray::record_window_hidden(window.app_handle());
+            }
         })
         .invoke_handler(tauri::generate_handler![open_codex_url, get_tray_status])
         .run(tauri::generate_context!())
