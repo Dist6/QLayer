@@ -1,14 +1,21 @@
 import type { ReactNode } from "react";
 
 import { StatusChip } from "../../shared/ui/StatusChip";
+import type { GlobalHotkeyStatus } from "../global-hotkeys/globalHotkeyEvents";
+import { getGlobalHotkeyStatusLabel } from "../global-hotkeys/globalHotkeyEvents";
 import type { AppSettings, AudioMode, RestoreMode } from "./settingsTypes";
 
 type SettingsPageProps = {
+  globalHotkeyStatus: GlobalHotkeyStatus;
   settings: AppSettings;
   onSettingsChange: (settings: AppSettings) => void;
 };
 
-export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) {
+export function SettingsPage({
+  globalHotkeyStatus,
+  settings,
+  onSettingsChange,
+}: SettingsPageProps) {
   const update = (next: Partial<AppSettings>) => {
     onSettingsChange({ ...settings, ...next });
   };
@@ -57,15 +64,13 @@ export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) 
       <article className="compact-card settings-grid">
         <div className="button-row">
           <h2>Voice Flow</h2>
-          <StatusChip>Planned</StatusChip>
+          <GlobalHotkeyStatusChip state={globalHotkeyStatus.state} />
         </div>
         <Field label="Voice Flow hotkey">
-          <input
-            value={settings.voiceFlow.hotkey}
-            onChange={(event) =>
-              update({ voiceFlow: { ...settings.voiceFlow, hotkey: event.target.value } })
-            }
-          />
+          <input disabled value={globalHotkeyStatus.shortcut} readOnly />
+        </Field>
+        <Field label="Registration status">
+          <input disabled value={getGlobalHotkeyStatusLabel(globalHotkeyStatus.state)} readOnly />
         </Field>
         <label className="field">
           <span>Audio mode</span>
@@ -105,6 +110,18 @@ export function SettingsPage({ settings, onSettingsChange }: SettingsPageProps) 
       </article>
     </section>
   );
+}
+
+function GlobalHotkeyStatusChip({ state }: { state: GlobalHotkeyStatus["state"] }) {
+  if (state === "active") {
+    return <StatusChip tone="success">Active</StatusChip>;
+  }
+
+  if (state === "failed") {
+    return <StatusChip tone="danger">Failed</StatusChip>;
+  }
+
+  return <StatusChip>Not available</StatusChip>;
 }
 
 type FieldProps = {

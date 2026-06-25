@@ -6,6 +6,7 @@
 - React app shell.
 - Codex deep-link foundation.
 - Voice Flow foundation.
+- Global hotkey foundation.
 - Minimal system tray foundation.
 - Typed local settings.
 - Privacy and security documentation.
@@ -16,7 +17,7 @@
 - Media pause and resume.
 - Reliable Codex window focusing.
 - Keyboard automation for dictation shortcut.
-- Global hotkeys.
+- Custom hotkey editing.
 - Tray refinements.
 - Recoverable voice drafts.
 - Continue by Voice.

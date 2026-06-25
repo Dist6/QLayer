@@ -1,6 +1,7 @@
 use tauri_plugin_opener::OpenerExt;
 use tauri::{Manager, WindowEvent};
 
+mod global_hotkeys;
 mod tray;
 
 #[tauri::command]
@@ -22,16 +23,30 @@ fn get_tray_status(app: tauri::AppHandle) -> tray::TrayStatus {
     tray::tray_status(app)
 }
 
+#[tauri::command]
+fn get_global_hotkey_status(app: tauri::AppHandle) -> global_hotkeys::GlobalHotkeyStatus {
+    global_hotkeys::global_hotkey_status(app)
+}
+
 fn is_allowed_codex_url(url: &str) -> bool {
     matches!(url, "codex://" | "codex://settings" | "codex://threads/new")
 }
 
 fn main() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, shortcut, event| {
+                    global_hotkeys::handle_global_hotkey(app, shortcut, event.state());
+                })
+                .build(),
+        )
         .manage(tray::TrayState::default())
+        .manage(global_hotkeys::GlobalHotkeyState::default())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             tray::setup_tray(app);
+            global_hotkeys::setup_global_hotkeys(app);
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -41,7 +56,11 @@ fn main() {
                 tray::record_window_hidden(window.app_handle());
             }
         })
-        .invoke_handler(tauri::generate_handler![open_codex_url, get_tray_status])
+        .invoke_handler(tauri::generate_handler![
+            open_codex_url,
+            get_tray_status,
+            get_global_hotkey_status
+        ])
         .run(tauri::generate_context!())
         .expect("error while running QoLayer");
 }

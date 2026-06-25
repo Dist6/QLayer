@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getQuickToolTarget, quickTools } from "./quickTools";
+import { getQuickToolStatus, getQuickToolTarget, quickTools } from "./quickTools";
 
 describe("quick tools", () => {
   it("keeps only feature modules in the top-level list", () => {
@@ -11,20 +11,26 @@ describe("quick tools", () => {
     ]);
   });
 
-  it("marks only Voice Flow as ready", () => {
-    expect(quickTools.map((tool) => [tool.id, tool.status, tool.description])).toEqual([
+  it("maps tool module status from global hotkey registration", () => {
+    expect(
+      quickTools.map((tool) => [
+        tool.id,
+        getQuickToolStatus(tool.id, { state: "active" }),
+        tool.description,
+      ]),
+    ).toEqual([
       ["voiceFlow", "ready", "Speak to Codex faster"],
-      ["globalHotkeys", "planned", "Trigger tools from anywhere"],
+      ["globalHotkeys", "active", "Trigger tools from anywhere"],
       ["addOns", "planned", "Community tools later"],
     ]);
+
+    expect(getQuickToolStatus("globalHotkeys", { state: "failed" })).toBe("failed");
+    expect(getQuickToolStatus("globalHotkeys", { state: "notAvailable" })).toBe("notAvailable");
   });
 
   it("maps tool modules to app views", () => {
     expect(getQuickToolTarget("voiceFlow")).toEqual({ view: "voiceFlow" });
-    expect(getQuickToolTarget("globalHotkeys")).toEqual({
-      view: "plannedTool",
-      toolId: "globalHotkeys",
-    });
+    expect(getQuickToolTarget("globalHotkeys")).toEqual({ view: "globalHotkeys" });
     expect(getQuickToolTarget("addOns")).toEqual({ view: "plannedTool", toolId: "addOns" });
   });
 });

@@ -3,6 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AboutPanel } from "../features/about/AboutPanel";
 import { openCodexAction, type CodexAction } from "../features/codex/codexController";
+import { GlobalHotkeysDetailPanel } from "../features/global-hotkeys/GlobalHotkeysDetailPanel";
+import {
+  getGlobalHotkeyStatus,
+  listenForGlobalHotkeyActions,
+  listenForGlobalHotkeyStatus,
+} from "../features/global-hotkeys/globalHotkeyClient";
+import {
+  DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
+  type GlobalHotkeyStatus,
+} from "../features/global-hotkeys/globalHotkeyEvents";
 import { QuickToolsPanel } from "../features/quick-tools/QuickToolsPanel";
 import {
   getQuickToolTarget,
@@ -21,16 +31,21 @@ import type { TrayStatus } from "../features/tray/trayEvents";
 import { VoiceFlowDetailPanel } from "../features/voice-flow/VoiceFlowDetailPanel";
 import { useVoiceFlow, type VoiceFlowState } from "../features/voice-flow/useVoiceFlow";
 
-type AppView = "quickTools" | "voiceFlow" | "plannedTool" | "settings" | "about";
+type AppView = "quickTools" | "voiceFlow" | "globalHotkeys" | "plannedTool" | "settings" | "about";
 
 export function App() {
   const storage = useMemo(() => createSettingsStorage(window.localStorage), []);
   const loaded = useMemo(() => storage.load(), [storage]);
   const [activeView, setActiveView] = useState<AppView>("quickTools");
-  const [plannedToolId, setPlannedToolId] = useState<QuickToolId>("globalHotkeys");
+  const [plannedToolId, setPlannedToolId] = useState<"addOns">("addOns");
   const [codexOpen, setCodexOpen] = useState(false);
   const [busyCodexAction, setBusyCodexAction] = useState<CodexAction | null>(null);
   const [settings, setSettingsState] = useState<AppSettings>(loaded.settings);
+  const [globalHotkeyStatus, setGlobalHotkeyStatus] = useState<GlobalHotkeyStatus>({
+    state: "notAvailable",
+    shortcut: DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
+    message: "Checking global hotkey status.",
+  });
   const [, setTrayStatus] = useState<TrayStatus>({
     available: false,
     message: "Checking system tray status.",
@@ -60,12 +75,21 @@ export function App() {
       return;
     }
 
+    if (target.view === "globalHotkeys") {
+      setActiveView("globalHotkeys");
+      return;
+    }
+
     setPlannedToolId(target.toolId);
     setActiveView("plannedTool");
   };
 
   useEffect(() => {
     void getTrayStatus().then(setTrayStatus);
+  }, []);
+
+  useEffect(() => {
+    void getGlobalHotkeyStatus().then(setGlobalHotkeyStatus);
   }, []);
 
   useEffect(() => {
@@ -92,6 +116,68 @@ export function App() {
       unlisten?.();
     };
   }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+
+    void listenForGlobalHotkeyStatus(setGlobalHotkeyStatus)
+      .then((nextUnlisten) => {
+        if (cancelled) {
+          nextUnlisten();
+        } else {
+          unlisten = nextUnlisten;
+        }
+      })
+      .catch(() => {
+        setGlobalHotkeyStatus({
+          state: "notAvailable",
+          shortcut: DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
+          message: "Global hotkeys are available only in the desktop app.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+
+    void listenForGlobalHotkeyActions(
+      (action) => {
+        if (action === "startVoiceFlow") {
+          setActiveView("voiceFlow");
+          void start();
+        }
+      },
+      (message) => {
+        reportMessage({ status: "failed", message });
+      },
+    )
+      .then((nextUnlisten) => {
+        if (cancelled) {
+          nextUnlisten();
+        } else {
+          unlisten = nextUnlisten;
+        }
+      })
+      .catch(() => {
+        setGlobalHotkeyStatus({
+          state: "notAvailable",
+          shortcut: DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
+          message: "Global hotkeys are available only in the desktop app.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [reportMessage, start]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -193,6 +279,7 @@ export function App() {
           settings,
           setSettings,
           voiceFlow,
+          globalHotkeyStatus,
           () => setActiveView("quickTools"),
           openQuickTool,
           plannedToolId,
@@ -225,25 +312,34 @@ function renderView(
   settings: AppSettings,
   setSettings: (settings: AppSettings) => void,
   voiceFlow: VoiceFlowState,
+  globalHotkeyStatus: GlobalHotkeyStatus,
   onBack: () => void,
   onOpenTool: (toolId: QuickToolId) => void,
-  plannedToolId: QuickToolId,
+  plannedToolId: "addOns",
 ) {
   switch (activeView) {
     case "voiceFlow":
       return <VoiceFlowDetailPanel settings={settings} voiceFlow={voiceFlow} onBack={onBack} />;
+    case "globalHotkeys":
+      return <GlobalHotkeysDetailPanel status={globalHotkeyStatus} onBack={onBack} />;
     case "plannedTool":
       return <PlannedToolPanel onBack={onBack} toolId={plannedToolId} />;
     case "settings":
-      return <SettingsPage settings={settings} onSettingsChange={setSettings} />;
+      return (
+        <SettingsPage
+          globalHotkeyStatus={globalHotkeyStatus}
+          settings={settings}
+          onSettingsChange={setSettings}
+        />
+      );
     case "about":
       return <AboutPanel onBack={onBack} />;
     default:
-      return <QuickToolsPanel onOpenTool={onOpenTool} />;
+      return <QuickToolsPanel globalHotkeyStatus={globalHotkeyStatus} onOpenTool={onOpenTool} />;
   }
 }
 
-function PlannedToolPanel({ toolId, onBack }: { toolId: QuickToolId; onBack: () => void }) {
+function PlannedToolPanel({ toolId, onBack }: { toolId: "addOns"; onBack: () => void }) {
   const tool = quickTools.find((item) => item.id === toolId);
 
   return (
