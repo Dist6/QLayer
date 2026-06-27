@@ -3,6 +3,7 @@ import type {
   AppLanguage,
   AppSettings,
   AudioMode,
+  CodexDictationShortcut,
   RestoreMode,
   StoredSettingsParseResult,
   Theme,
@@ -12,6 +13,7 @@ type ValidationResult = { ok: true; settings: AppSettings } | { ok: false; setti
 
 const audioModes = new Set<AudioMode>(["disabled", "duck", "mute"]);
 const restoreModes = new Set<RestoreMode>(["manual", "afterTimeout"]);
+const dictationShortcuts = new Set<CodexDictationShortcut>(["Ctrl+M", "Ctrl+Shift+M"]);
 const themes = new Set<Theme>(["dark"]);
 const languages = new Set<AppLanguage>(["en"]);
 
@@ -56,8 +58,9 @@ function mergeSettings(value: Record<string, unknown>): AppSettings {
     },
     codex: {
       enabled: readBoolean(codex.enabled, defaultSettings.codex.enabled),
-      dictationShortcut: readNonEmptyString(
+      dictationShortcut: readEnum(
         codex.dictationShortcut,
+        dictationShortcuts,
         defaultSettings.codex.dictationShortcut,
       ),
     },
@@ -88,7 +91,7 @@ function isSettingsFullyValid(value: Record<string, unknown>): boolean {
     themes.has(appearance.theme as Theme) &&
     languages.has(appearance.language as AppLanguage) &&
     typeof codex.enabled === "boolean" &&
-    isNonEmptyString(codex.dictationShortcut) &&
+    dictationShortcuts.has(codex.dictationShortcut as CodexDictationShortcut) &&
     isNonEmptyString(voiceFlow.hotkey) &&
     audioModes.has(voiceFlow.audioMode as AudioMode) &&
     restoreModes.has(voiceFlow.restoreMode as RestoreMode) &&

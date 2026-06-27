@@ -10,20 +10,31 @@ describe("Voice Flow status messages", () => {
       { status: "openingCodex", message: "Opening Codex." },
       { status: "codexOpened", message: "Codex opened." },
       {
-        status: "dictationUnavailable",
-        message: "Dictation automation is not implemented yet.",
+        status: "dictationSent",
+        message: "Dictation shortcut sent.",
       },
       {
         status: "ready",
-        message: "Audio lowered. Codex opened. Dictation automation is not implemented yet.",
+        message: "Audio lowered. Codex opened. Dictation shortcut sent.",
       },
     ];
 
     expect(readVoiceFlowMessages(steps)).toEqual([
       "Audio lowered.",
       "Codex opened.",
-      "Dictation automation is not implemented yet.",
+      "Dictation shortcut sent.",
     ]);
+  });
+
+  it("uses a short unavailable message for dictation automation", () => {
+    expect(
+      readVoiceFlowMessages([
+        {
+          status: "dictationUnavailable",
+          message: "Dictation automation is not available.",
+        },
+      ]),
+    ).toEqual(["Dictation automation is not available."]);
   });
 
   it("uses a compact restore audio message", () => {

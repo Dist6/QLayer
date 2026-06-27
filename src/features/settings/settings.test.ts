@@ -57,4 +57,18 @@ describe("settings validation", () => {
     expect(parsed.settings.voiceFlow.audioMode).toBe("disabled");
     expect(parsed.recovered).toBe(true);
   });
+
+  it("rejects unsupported dictation shortcuts and keeps the safe default", () => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        codex: {
+          enabled: true,
+          dictationShortcut: "Ctrl+V",
+        },
+      }),
+    );
+
+    expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+M");
+    expect(parsed.recovered).toBe(true);
+  });
 });

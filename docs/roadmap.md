@@ -8,6 +8,7 @@
 - Voice Flow foundation.
 - Global hotkey foundation.
 - Global Windows audio duck, mute, and restore.
+- Allowlisted Codex dictation shortcut sending.
 - Minimal system tray foundation.
 - Typed local settings.
 - Privacy and security documentation.
@@ -17,7 +18,8 @@
 - Real per-app audio ducking.
 - Media pause and resume.
 - Reliable Codex window focusing.
-- Keyboard automation for dictation shortcut.
+- Custom dictation shortcut recorder.
+- Arbitrary keyboard input remains out of scope unless a specific safe use case is approved.
 - Custom hotkey editing.
 - Tray refinements.
 - Recoverable voice drafts.

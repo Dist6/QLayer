@@ -2,6 +2,7 @@ export type AudioMode = "disabled" | "duck" | "mute";
 export type RestoreMode = "manual" | "afterTimeout";
 export type Theme = "dark";
 export type AppLanguage = "en";
+export type CodexDictationShortcut = "Ctrl+M" | "Ctrl+Shift+M";
 
 export type AppSettings = {
   general: {
@@ -13,7 +14,7 @@ export type AppSettings = {
   };
   codex: {
     enabled: boolean;
-    dictationShortcut: string;
+    dictationShortcut: CodexDictationShortcut;
   };
   voiceFlow: {
     hotkey: string;

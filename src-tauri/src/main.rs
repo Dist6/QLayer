@@ -3,6 +3,7 @@ use tauri::{Manager, WindowEvent};
 
 mod audio;
 mod global_hotkeys;
+mod keyboard;
 mod tray;
 
 #[tauri::command]
@@ -39,6 +40,11 @@ fn restore_audio(app: tauri::AppHandle) -> Result<audio::AudioStep, String> {
     audio::restore_audio(app)
 }
 
+#[tauri::command]
+fn send_dictation_shortcut(shortcut: String) -> Result<keyboard::KeyboardStep, String> {
+    keyboard::send_dictation_shortcut(shortcut)
+}
+
 fn is_allowed_codex_url(url: &str) -> bool {
     matches!(url, "codex://" | "codex://settings" | "codex://threads/new")
 }
@@ -73,7 +79,8 @@ fn main() {
             get_tray_status,
             get_global_hotkey_status,
             prepare_audio,
-            restore_audio
+            restore_audio,
+            send_dictation_shortcut
         ])
         .run(tauri::generate_context!())
         .expect("error while running QoLayer");

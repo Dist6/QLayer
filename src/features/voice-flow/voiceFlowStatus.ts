@@ -7,7 +7,8 @@ const visibleStatusMessages: Partial<Record<VoiceFlowStep["status"], string>> = 
   nothingToRestore: "Nothing to restore.",
   codexOpened: "Codex opened.",
   audioUnavailable: "Audio control is not available.",
-  dictationUnavailable: "Dictation automation is not implemented yet.",
+  dictationSent: "Dictation shortcut sent.",
+  dictationUnavailable: "Dictation automation is not available.",
   failed: "Audio control failed.",
 };
 

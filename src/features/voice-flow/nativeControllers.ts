@@ -10,7 +10,7 @@ import type {
   VoiceFlowStep,
 } from "./controllers";
 
-type NativeAudioStep = {
+type NativeVoiceFlowStep = {
   status: VoiceFlowStep["status"];
   message: string;
 };
@@ -33,8 +33,7 @@ export const audioController: AudioController = {
 };
 
 export const keyboardController: KeyboardController = {
-  triggerDictationShortcut: async () =>
-    notImplemented("Dictation automation is not implemented yet."),
+  triggerDictationShortcut: async (shortcut: string) => invokeKeyboardCommand({ shortcut }),
 };
 
 export const codexController: CodexController = {
@@ -69,7 +68,40 @@ function parseNativeAudioStep(value: unknown): AppResult<VoiceFlowStep> {
   return { ok: true, value };
 }
 
-function isNativeAudioStep(value: unknown): value is NativeAudioStep {
+async function invokeKeyboardCommand(args: {
+  shortcut: string;
+}): Promise<AppResult<VoiceFlowStep>> {
+  try {
+    const step = await invoke<unknown>("send_dictation_shortcut", args);
+    return parseNativeKeyboardStep(step);
+  } catch (error) {
+    const message = typeof error === "string" ? error : "Dictation automation is not available.";
+
+    if (message === "Dictation automation is not available.") {
+      return notImplemented(message);
+    }
+
+    return failed("Dictation shortcut could not be sent.");
+  }
+}
+
+export function parseNativeKeyboardStep(value: unknown): AppResult<VoiceFlowStep> {
+  if (!isNativeKeyboardStep(value)) {
+    return failed("Dictation shortcut could not be sent.");
+  }
+
+  return { ok: true, value };
+}
+
+function isNativeAudioStep(value: unknown): value is NativeVoiceFlowStep {
+  return isNativeVoiceFlowStep(value) && isAudioStatus(value.status);
+}
+
+function isNativeKeyboardStep(value: unknown): value is NativeVoiceFlowStep {
+  return isNativeVoiceFlowStep(value) && value.status === "dictationSent";
+}
+
+function isNativeVoiceFlowStep(value: unknown): value is NativeVoiceFlowStep {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
   }
@@ -80,6 +112,20 @@ function isNativeAudioStep(value: unknown): value is NativeAudioStep {
 
 function isVoiceFlowStatus(value: unknown): value is VoiceFlowStep["status"] {
   return (
+    value === "audioDisabled" ||
+    value === "audioDucked" ||
+    value === "audioMuted" ||
+    value === "restored" ||
+    value === "nothingToRestore" ||
+    value === "audioUnavailable" ||
+    value === "dictationSent" ||
+    value === "failed"
+  );
+}
+
+function isAudioStatus(value: VoiceFlowStep["status"]): boolean {
+  return (
+    value === "audioDisabled" ||
     value === "audioDucked" ||
     value === "audioMuted" ||
     value === "restored" ||

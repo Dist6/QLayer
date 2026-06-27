@@ -6,9 +6,19 @@ import { startVoiceFlow, restoreVoiceFlowAudio } from "./voiceFlowService";
 
 const keyboard: KeyboardController = {
   triggerDictationShortcut: async () => ({
+    ok: true,
+    value: {
+      status: "dictationSent",
+      message: "Dictation shortcut sent.",
+    },
+  }),
+};
+
+const unavailableKeyboard: KeyboardController = {
+  triggerDictationShortcut: async () => ({
     ok: false,
     reason: "notImplemented",
-    message: "Dictation automation is not implemented yet.",
+    message: "Dictation automation is not available.",
   }),
 };
 
@@ -40,15 +50,15 @@ describe("Voice Flow service", () => {
       "audioDisabled",
       "openingCodex",
       "codexOpened",
-      "dictationUnavailable",
+      "dictationSent",
       "ready",
     ]);
     expect(result.steps.map((step) => step.message)).toEqual([
       "Audio unchanged.",
       "Opening Codex.",
       "Codex opened.",
-      "Dictation automation is not implemented yet.",
-      "Codex opened. Dictation automation is not implemented yet.",
+      "Dictation shortcut sent.",
+      "Codex opened. Dictation shortcut sent.",
     ]);
   });
 
@@ -82,7 +92,7 @@ describe("Voice Flow service", () => {
     expect(result.status).toBe("ready");
     expect(result.steps.map((step) => step.message)).toContain("Audio lowered.");
     expect(result.steps.at(-1)?.message).toBe(
-      "Audio lowered. Codex opened. Dictation automation is not implemented yet.",
+      "Audio lowered. Codex opened. Dictation shortcut sent.",
     );
   });
 
@@ -116,7 +126,47 @@ describe("Voice Flow service", () => {
     expect(result.status).toBe("ready");
     expect(result.steps.map((step) => step.message)).toContain("Audio muted.");
     expect(result.steps.at(-1)?.message).toBe(
-      "Audio muted. Codex opened. Dictation automation is not implemented yet.",
+      "Audio muted. Codex opened. Dictation shortcut sent.",
+    );
+  });
+
+  it("reports unavailable dictation automation without faking success", async () => {
+    const audio: AudioController = {
+      prepareAudio: async () => ({
+        ok: true,
+        value: {
+          status: "audioDisabled",
+          message: "Audio unchanged.",
+        },
+      }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
+      }),
+    };
+    const codex: CodexController = {
+      openCodex: async () => ({ ok: true, value: undefined }),
+      openSettings: async () => ({ ok: true, value: undefined }),
+      openNewThread: async () => ({ ok: true, value: undefined }),
+    };
+
+    const result = await startVoiceFlow({
+      settings: defaultSettings,
+      audio,
+      codex,
+      keyboard: unavailableKeyboard,
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.steps.map((step) => step.status)).toEqual([
+      "audioDisabled",
+      "openingCodex",
+      "codexOpened",
+      "dictationUnavailable",
+      "ready",
+    ]);
+    expect(result.steps.at(-1)?.message).toBe(
+      "Codex opened. Dictation automation is not available.",
     );
   });
 
@@ -205,7 +255,7 @@ describe("Voice Flow service", () => {
       triggerDictationShortcut: async () => ({
         ok: false,
         reason: "failed",
-        message: "Shortcut failed.",
+        message: "Dictation shortcut could not be sent.",
       }),
     };
 
@@ -217,7 +267,10 @@ describe("Voice Flow service", () => {
     });
 
     expect(result.status).toBe("failed");
-    expect(result.steps.at(-1)).toEqual({ status: "failed", message: "Shortcut failed." });
+    expect(result.steps.at(-1)).toEqual({
+      status: "failed",
+      message: "Dictation shortcut could not be sent.",
+    });
   });
 
   it("restores audio through the audio controller", async () => {

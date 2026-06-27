@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { StatusChip } from "../../shared/ui/StatusChip";
 import type { GlobalHotkeyStatus } from "../global-hotkeys/globalHotkeyEvents";
 import { getGlobalHotkeyStatusLabel } from "../global-hotkeys/globalHotkeyEvents";
-import type { AppSettings, AudioMode, RestoreMode } from "./settingsTypes";
+import type { AppSettings, AudioMode, CodexDictationShortcut, RestoreMode } from "./settingsTypes";
 
 type SettingsPageProps = {
   globalHotkeyStatus: GlobalHotkeyStatus;
@@ -51,14 +51,23 @@ export function SettingsPage({
             <option value="disabled">Disabled</option>
           </select>
         </label>
-        <Field label="Dictation shortcut">
-          <input
+        <label className="field">
+          <span>Dictation shortcut</span>
+          <select
             value={settings.codex.dictationShortcut}
             onChange={(event) =>
-              update({ codex: { ...settings.codex, dictationShortcut: event.target.value } })
+              update({
+                codex: {
+                  ...settings.codex,
+                  dictationShortcut: event.target.value as CodexDictationShortcut,
+                },
+              })
             }
-          />
-        </Field>
+          >
+            <option value="Ctrl+M">Ctrl+M</option>
+            <option value="Ctrl+Shift+M">Ctrl+Shift+M</option>
+          </select>
+        </label>
       </article>
 
       <article className="compact-card settings-grid">

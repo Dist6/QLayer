@@ -99,8 +99,10 @@ function buildReadyMessage(steps: VoiceFlowStep[]): string {
 
   messages.push("Codex opened.");
 
-  if (steps.some((step) => step.status === "dictationUnavailable")) {
-    messages.push("Dictation automation is not implemented yet.");
+  if (steps.some((step) => step.status === "dictationSent")) {
+    messages.push("Dictation shortcut sent.");
+  } else if (steps.some((step) => step.status === "dictationUnavailable")) {
+    messages.push("Dictation automation is not available.");
   }
 
   return messages.join(" ");
