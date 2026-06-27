@@ -2,7 +2,7 @@ export type AudioMode = "disabled" | "duck" | "mute";
 export type RestoreMode = "manual" | "afterTimeout";
 export type Theme = "dark";
 export type AppLanguage = "en";
-export type CodexDictationShortcut = "Ctrl+M" | "Ctrl+Shift+M";
+export type CodexDictationShortcut = "Ctrl+Shift+D";
 
 export type AppSettings = {
   general: {

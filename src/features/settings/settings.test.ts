@@ -5,7 +5,7 @@ import { parseStoredSettings, validateSettings } from "./settingsValidation";
 
 describe("settings defaults", () => {
   it("uses conservative v0.1 defaults", () => {
-    expect(defaultSettings.codex.dictationShortcut).toBe("Ctrl+M");
+    expect(defaultSettings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
     expect(defaultSettings.voiceFlow.hotkey).toBe("Ctrl+Alt+Space");
     expect(defaultSettings.voiceFlow.audioMode).toBe("disabled");
     expect(defaultSettings.voiceFlow.restoreMode).toBe("manual");
@@ -42,7 +42,7 @@ describe("settings validation", () => {
     expect(parsed.settings.voiceFlow.audioMode).toBe("mute");
     expect(parsed.settings.voiceFlow.restoreMode).toBe("afterTimeout");
     expect(parsed.settings.voiceFlow.restoreTimeoutSeconds).toBe(20);
-    expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+M");
+    expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
   });
 
   it("rejects invalid enum values and keeps defaults", () => {
@@ -63,12 +63,12 @@ describe("settings validation", () => {
       JSON.stringify({
         codex: {
           enabled: true,
-          dictationShortcut: "Ctrl+V",
+          dictationShortcut: "Ctrl+M",
         },
       }),
     );
 
-    expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+M");
+    expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
     expect(parsed.recovered).toBe(true);
   });
 });

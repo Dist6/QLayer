@@ -10,7 +10,7 @@ export const defaultSettings: AppSettings = {
   },
   codex: {
     enabled: true,
-    dictationShortcut: "Ctrl+M",
+    dictationShortcut: "Ctrl+Shift+D",
   },
   voiceFlow: {
     hotkey: "Ctrl+Alt+Space",

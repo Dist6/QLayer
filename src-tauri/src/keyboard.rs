@@ -9,8 +9,7 @@ pub struct KeyboardStep {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum DictationShortcut {
-    CtrlM,
-    CtrlShiftM,
+    CtrlShiftD,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -19,7 +18,7 @@ enum KeyCode {
     Shift,
     Alt,
     Space,
-    M,
+    D,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -40,34 +39,26 @@ pub fn send_dictation_shortcut(shortcut: String) -> Result<KeyboardStep, String>
     })
 }
 
-fn input_plan_for_shortcut(shortcut: DictationShortcut) -> Vec<KeyAction> {
+fn input_plan_for_shortcut(_shortcut: DictationShortcut) -> Vec<KeyAction> {
     let mut actions = vec![
         KeyAction::Release(KeyCode::Alt),
         KeyAction::Release(KeyCode::Space),
         KeyAction::Release(KeyCode::Shift),
         KeyAction::Release(KeyCode::Control),
         KeyAction::Press(KeyCode::Control),
+        KeyAction::Press(KeyCode::Shift),
+        KeyAction::Press(KeyCode::D),
+        KeyAction::Release(KeyCode::D),
     ];
 
-    if shortcut == DictationShortcut::CtrlShiftM {
-        actions.push(KeyAction::Press(KeyCode::Shift));
-    }
-
-    actions.push(KeyAction::Press(KeyCode::M));
-    actions.push(KeyAction::Release(KeyCode::M));
-
-    if shortcut == DictationShortcut::CtrlShiftM {
-        actions.push(KeyAction::Release(KeyCode::Shift));
-    }
-
+    actions.push(KeyAction::Release(KeyCode::Shift));
     actions.push(KeyAction::Release(KeyCode::Control));
     actions
 }
 
 fn parse_dictation_shortcut(shortcut: &str) -> Option<DictationShortcut> {
     match shortcut.to_ascii_lowercase().replace(' ', "").as_str() {
-        "ctrl+m" => Some(DictationShortcut::CtrlM),
-        "ctrl+shift+m" => Some(DictationShortcut::CtrlShiftM),
+        "ctrl+shift+d" => Some(DictationShortcut::CtrlShiftD),
         _ => None,
     }
 }
@@ -80,7 +71,7 @@ mod platform {
         KEYEVENTF_KEYUP, VIRTUAL_KEY, VK_CONTROL, VK_MENU, VK_SHIFT, VK_SPACE,
     };
 
-    const VK_M: VIRTUAL_KEY = VIRTUAL_KEY(0x4d);
+    const VK_D: VIRTUAL_KEY = VIRTUAL_KEY(0x44);
 
     pub fn send_shortcut(shortcut: DictationShortcut) -> Result<(), &'static str> {
         let actions = input_plan_for_shortcut(shortcut);
@@ -123,7 +114,7 @@ mod platform {
                 KeyCode::Shift => VK_SHIFT,
                 KeyCode::Alt => VK_MENU,
                 KeyCode::Space => VK_SPACE,
-                KeyCode::M => VK_M,
+                KeyCode::D => VK_D,
             },
         }
     }
@@ -147,34 +138,33 @@ mod tests {
     #[test]
     fn accepts_supported_dictation_shortcuts() {
         assert_eq!(
-            parse_dictation_shortcut("Ctrl+M"),
-            Some(DictationShortcut::CtrlM)
-        );
-        assert_eq!(
-            parse_dictation_shortcut("Ctrl+Shift+M"),
-            Some(DictationShortcut::CtrlShiftM)
+            parse_dictation_shortcut("Ctrl+Shift+D"),
+            Some(DictationShortcut::CtrlShiftD)
         );
     }
 
     #[test]
     fn rejects_unsupported_dictation_shortcuts() {
-        assert_eq!(parse_dictation_shortcut("Ctrl+V"), None);
+        assert_eq!(parse_dictation_shortcut("Ctrl+M"), None);
+        assert_eq!(parse_dictation_shortcut("Ctrl+Shift+M"), None);
         assert_eq!(parse_dictation_shortcut("Alt+M"), None);
         assert_eq!(parse_dictation_shortcut("Hello"), None);
     }
 
     #[test]
-    fn releases_global_hotkey_modifiers_before_sending_ctrl_m() {
+    fn releases_global_hotkey_modifiers_before_sending_ctrl_shift_d() {
         assert_eq!(
-            input_plan_for_shortcut(DictationShortcut::CtrlM),
+            input_plan_for_shortcut(DictationShortcut::CtrlShiftD),
             vec![
                 KeyAction::Release(KeyCode::Alt),
                 KeyAction::Release(KeyCode::Space),
                 KeyAction::Release(KeyCode::Shift),
                 KeyAction::Release(KeyCode::Control),
                 KeyAction::Press(KeyCode::Control),
-                KeyAction::Press(KeyCode::M),
-                KeyAction::Release(KeyCode::M),
+                KeyAction::Press(KeyCode::Shift),
+                KeyAction::Press(KeyCode::D),
+                KeyAction::Release(KeyCode::D),
+                KeyAction::Release(KeyCode::Shift),
                 KeyAction::Release(KeyCode::Control),
             ],
         );

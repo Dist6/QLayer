@@ -15,7 +15,7 @@ QoLayer is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, 
 - The Voice Flow button and `Ctrl+Alt+Space` run the same workflow.
 - Voice Flow can globally lower, mute, and restore Windows system audio.
 - Voice Flow makes a best-effort attempt to focus Codex before dictation.
-- Voice Flow can send the configured Codex dictation command, such as `Ctrl+M`, after Codex opens.
+- Voice Flow can send the configured Codex dictation command, `Ctrl+Shift+D`, after Codex opens.
 - Codex deep-link actions for opening Codex, Codex settings, and a new Codex thread.
 - Minimal system tray menu for showing QoLayer, starting Voice Flow, restoring audio, and quitting.
 - Compact tray utility window: closing the window hides it, while Quit from the tray exits the app.

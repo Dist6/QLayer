@@ -64,8 +64,7 @@ export function SettingsPage({
               })
             }
           >
-            <option value="Ctrl+M">Ctrl+M</option>
-            <option value="Ctrl+Shift+M">Ctrl+Shift+M</option>
+            <option value="Ctrl+Shift+D">Ctrl+Shift+D</option>
           </select>
         </label>
       </article>

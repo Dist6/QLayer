@@ -13,7 +13,7 @@ type ValidationResult = { ok: true; settings: AppSettings } | { ok: false; setti
 
 const audioModes = new Set<AudioMode>(["disabled", "duck", "mute"]);
 const restoreModes = new Set<RestoreMode>(["manual", "afterTimeout"]);
-const dictationShortcuts = new Set<CodexDictationShortcut>(["Ctrl+M", "Ctrl+Shift+M"]);
+const dictationShortcuts = new Set<CodexDictationShortcut>(["Ctrl+Shift+D"]);
 const themes = new Set<Theme>(["dark"]);
 const languages = new Set<AppLanguage>(["en"]);
 
