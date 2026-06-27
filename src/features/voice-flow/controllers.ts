@@ -5,6 +5,8 @@ export type VoiceFlowStatus =
   | "ready"
   | "openingCodex"
   | "codexOpened"
+  | "codexFocused"
+  | "codexFocusNotConfirmed"
   | "audioDisabled"
   | "audioDucked"
   | "audioMuted"
@@ -27,6 +29,10 @@ export type AudioController = {
 
 export type KeyboardController = {
   triggerDictationShortcut: (shortcut: string) => Promise<AppResult<VoiceFlowStep>>;
+};
+
+export type WindowController = {
+  focusCodex: () => Promise<AppResult<VoiceFlowStep>>;
 };
 
 export type CodexController = {

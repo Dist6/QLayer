@@ -14,5 +14,6 @@ v0.1 does not:
 - Add remote logging.
 - Add cloud sync.
 - Expose arbitrary keyboard input or text typing.
+- Expose arbitrary window control.
 
 v0.1 stores only local preferences. Future add-ons that require extra permissions must be explicit and opt-in.

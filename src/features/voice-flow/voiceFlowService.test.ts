@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { defaultSettings } from "../settings/defaultSettings";
-import type { AudioController, CodexController, KeyboardController } from "./controllers";
+import type {
+  AudioController,
+  CodexController,
+  KeyboardController,
+  WindowController,
+} from "./controllers";
 import { startVoiceFlow, restoreVoiceFlowAudio } from "./voiceFlowService";
 
 const keyboard: KeyboardController = {
@@ -19,6 +24,26 @@ const unavailableKeyboard: KeyboardController = {
     ok: false,
     reason: "notImplemented",
     message: "Dictation automation is not available.",
+  }),
+};
+
+const focusedWindow: WindowController = {
+  focusCodex: async () => ({
+    ok: true,
+    value: {
+      status: "codexFocused",
+      message: "Codex focused.",
+    },
+  }),
+};
+
+const unconfirmedWindow: WindowController = {
+  focusCodex: async () => ({
+    ok: true,
+    value: {
+      status: "codexFocusNotConfirmed",
+      message: "Codex opened, but focus could not be confirmed.",
+    },
   }),
 };
 
@@ -43,13 +68,20 @@ describe("Voice Flow service", () => {
       openNewThread: async () => ({ ok: true, value: undefined }),
     };
 
-    const result = await startVoiceFlow({ settings: defaultSettings, audio, codex, keyboard });
+    const result = await startVoiceFlow({
+      settings: defaultSettings,
+      audio,
+      codex,
+      window: focusedWindow,
+      keyboard,
+    });
 
     expect(result.status).toBe("ready");
     expect(result.steps.map((step) => step.status)).toEqual([
       "audioDisabled",
       "openingCodex",
       "codexOpened",
+      "codexFocused",
       "dictationSent",
       "ready",
     ]);
@@ -57,9 +89,52 @@ describe("Voice Flow service", () => {
       "Audio unchanged.",
       "Opening Codex.",
       "Codex opened.",
+      "Codex focused.",
       "Dictation shortcut sent.",
-      "Codex opened. Dictation shortcut sent.",
+      "Codex opened. Codex focused. Dictation shortcut sent.",
     ]);
+  });
+
+  it("continues to dictation when Codex focus cannot be confirmed", async () => {
+    const audio: AudioController = {
+      prepareAudio: async () => ({
+        ok: true,
+        value: {
+          status: "audioDisabled",
+          message: "Audio unchanged.",
+        },
+      }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
+      }),
+    };
+    const codex: CodexController = {
+      openCodex: async () => ({ ok: true, value: undefined }),
+      openSettings: async () => ({ ok: true, value: undefined }),
+      openNewThread: async () => ({ ok: true, value: undefined }),
+    };
+
+    const result = await startVoiceFlow({
+      settings: defaultSettings,
+      audio,
+      codex,
+      window: unconfirmedWindow,
+      keyboard,
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.steps.map((step) => step.status)).toEqual([
+      "audioDisabled",
+      "openingCodex",
+      "codexOpened",
+      "codexFocusNotConfirmed",
+      "dictationSent",
+      "ready",
+    ]);
+    expect(result.steps.at(-1)?.message).toBe(
+      "Codex opened. Codex opened, but focus could not be confirmed. Dictation shortcut sent.",
+    );
   });
 
   it("lowers audio before opening Codex", async () => {
@@ -86,13 +161,14 @@ describe("Voice Flow service", () => {
       },
       audio,
       codex,
+      window: focusedWindow,
       keyboard,
     });
 
     expect(result.status).toBe("ready");
     expect(result.steps.map((step) => step.message)).toContain("Audio lowered.");
     expect(result.steps.at(-1)?.message).toBe(
-      "Audio lowered. Codex opened. Dictation shortcut sent.",
+      "Audio lowered. Codex opened. Codex focused. Dictation shortcut sent.",
     );
   });
 
@@ -120,13 +196,14 @@ describe("Voice Flow service", () => {
       },
       audio,
       codex,
+      window: focusedWindow,
       keyboard,
     });
 
     expect(result.status).toBe("ready");
     expect(result.steps.map((step) => step.message)).toContain("Audio muted.");
     expect(result.steps.at(-1)?.message).toBe(
-      "Audio muted. Codex opened. Dictation shortcut sent.",
+      "Audio muted. Codex opened. Codex focused. Dictation shortcut sent.",
     );
   });
 
@@ -154,6 +231,7 @@ describe("Voice Flow service", () => {
       settings: defaultSettings,
       audio,
       codex,
+      window: focusedWindow,
       keyboard: unavailableKeyboard,
     });
 
@@ -162,11 +240,12 @@ describe("Voice Flow service", () => {
       "audioDisabled",
       "openingCodex",
       "codexOpened",
+      "codexFocused",
       "dictationUnavailable",
       "ready",
     ]);
     expect(result.steps.at(-1)?.message).toBe(
-      "Codex opened. Dictation automation is not available.",
+      "Codex opened. Codex focused. Dictation automation is not available.",
     );
   });
 
@@ -195,6 +274,7 @@ describe("Voice Flow service", () => {
       },
       audio,
       codex,
+      window: focusedWindow,
       keyboard,
     });
 
@@ -226,7 +306,13 @@ describe("Voice Flow service", () => {
       openNewThread: async () => ({ ok: true, value: undefined }),
     };
 
-    const result = await startVoiceFlow({ settings: defaultSettings, audio, codex, keyboard });
+    const result = await startVoiceFlow({
+      settings: defaultSettings,
+      audio,
+      codex,
+      window: focusedWindow,
+      keyboard,
+    });
 
     expect(result.status).toBe("failed");
     expect(result.steps.at(-1)).toEqual({
@@ -263,6 +349,7 @@ describe("Voice Flow service", () => {
       settings: defaultSettings,
       audio,
       codex,
+      window: focusedWindow,
       keyboard: failingKeyboard,
     });
 

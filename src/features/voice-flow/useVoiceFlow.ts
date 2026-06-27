@@ -2,7 +2,12 @@ import { useCallback, useState } from "react";
 
 import type { AppSettings } from "../settings/settingsTypes";
 import type { VoiceFlowStep } from "./controllers";
-import { audioController, codexController, keyboardController } from "./nativeControllers";
+import {
+  audioController,
+  codexController,
+  keyboardController,
+  windowController,
+} from "./nativeControllers";
 import { restoreVoiceFlowAudio, startVoiceFlow } from "./voiceFlowService";
 
 export type VoiceFlowState = {
@@ -30,6 +35,7 @@ export function useVoiceFlow(settings: AppSettings): VoiceFlowState {
       settings,
       audio: audioController,
       codex: codexController,
+      window: windowController,
       keyboard: keyboardController,
     });
 

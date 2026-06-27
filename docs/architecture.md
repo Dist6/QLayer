@@ -15,7 +15,7 @@ QoLayer is a Tauri 2 desktop app with a React, TypeScript, Vite, and Tailwind fr
 
 ## Native
 
-`src-tauri` is intentionally narrow. v0.1 exposes one validated command for opening a small allowlist of Codex deep links, one command for reading system tray status, one command for reading global hotkey registration status, two commands for global audio prepare/restore, and one command for sending an allowlisted Codex dictation shortcut. The Codex command delegates to Tauri's official opener plugin after validation.
+`src-tauri` is intentionally narrow. v0.1 exposes one validated command for opening a small allowlist of Codex deep links, one command for reading system tray status, one command for reading global hotkey registration status, two commands for global audio prepare/restore, one command for best-effort Codex focus, and one command for sending an allowlisted Codex dictation shortcut. The Codex command delegates to Tauri's official opener plugin after validation.
 
 The system tray setup lives in `src-tauri/src/tray.rs`. Tray menu actions either show the main QoLayer window, quit the app, or emit a typed frontend event that React handles through the existing Voice Flow service.
 
@@ -25,9 +25,11 @@ The Windows audio setup lives in `src-tauri/src/audio.rs`. It uses Windows Core 
 
 The keyboard automation setup lives in `src-tauri/src/keyboard.rs`. It validates the configured dictation shortcut against a small allowlist before using Windows input APIs. QoLayer does not expose arbitrary keyboard input or text typing to the frontend.
 
+The Codex focus setup lives in `src-tauri/src/window_focus.rs`. It exposes no arbitrary window target, title, process, or selector. The native side performs a best-effort Windows focus attempt for the supported Codex target only and reports when focus cannot be confirmed.
+
 Window lifecycle behavior stays native-side: a user close request hides the main window and keeps QoLayer running in the system tray. The app exits only through the tray Quit item.
 
-QoLayer v0.1 does not expose broad shell access, arbitrary command execution, credential reading, token reading, browser cookie access, network interception, or proxy behavior.
+QoLayer v0.1 does not expose broad shell access, arbitrary command execution, arbitrary window control, credential reading, token reading, browser cookie access, network interception, or proxy behavior.
 
 ## Voice Flow
 
@@ -35,7 +37,8 @@ Voice Flow is a simple state machine, not a workflow engine. It orchestrates:
 
 1. Audio preparation.
 2. Codex opening.
-3. Optional dictation shortcut trigger.
-4. Audio restore.
+3. Best-effort Codex focus.
+4. Optional dictation shortcut trigger.
+5. Audio restore.
 
-Voice Flow is the first active Quick Tool module. Global Hotkeys starts Voice Flow with `Ctrl+Alt+Space`. Windows global audio duck, mute, and restore are available through the existing Voice Flow audio controller. The configured Codex dictation shortcut is sent through the existing keyboard controller after Codex opens. Per-app audio control, hotkey editing, arbitrary keyboard input, and reliable Codex window focusing remain planned.
+Voice Flow is the first active Quick Tool module. Global Hotkeys starts Voice Flow with `Ctrl+Alt+Space`. Windows global audio duck, mute, and restore are available through the existing Voice Flow audio controller. After Codex opens, QoLayer attempts to focus Codex before the configured dictation shortcut is sent through the existing keyboard controller. Per-app audio control, hotkey editing, arbitrary keyboard input, arbitrary window control, and advanced Codex app detection remain planned.

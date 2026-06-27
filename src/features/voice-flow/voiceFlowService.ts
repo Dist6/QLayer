@@ -4,6 +4,7 @@ import type {
   CodexController,
   KeyboardController,
   VoiceFlowStep,
+  WindowController,
 } from "./controllers";
 
 export type VoiceFlowRunResult = {
@@ -15,6 +16,7 @@ export type StartVoiceFlowInput = {
   settings: AppSettings;
   audio: AudioController;
   codex: CodexController;
+  window: WindowController;
   keyboard: KeyboardController;
 };
 
@@ -42,6 +44,16 @@ export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceF
   }
 
   steps.push({ status: "codexOpened", message: "Codex opened." });
+
+  const focusResult = await input.window.focusCodex();
+  if (!focusResult.ok) {
+    steps.push({
+      status: "codexFocusNotConfirmed",
+      message: "Codex opened, but focus could not be confirmed.",
+    });
+  } else {
+    steps.push(focusResult.value);
+  }
 
   const keyboardResult = await input.keyboard.triggerDictationShortcut(
     input.settings.codex.dictationShortcut,
@@ -98,6 +110,12 @@ function buildReadyMessage(steps: VoiceFlowStep[]): string {
   }
 
   messages.push("Codex opened.");
+
+  if (steps.some((step) => step.status === "codexFocused")) {
+    messages.push("Codex focused.");
+  } else if (steps.some((step) => step.status === "codexFocusNotConfirmed")) {
+    messages.push("Codex opened, but focus could not be confirmed.");
+  }
 
   if (steps.some((step) => step.status === "dictationSent")) {
     messages.push("Dictation shortcut sent.");

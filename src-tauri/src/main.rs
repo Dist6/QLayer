@@ -5,6 +5,7 @@ mod audio;
 mod global_hotkeys;
 mod keyboard;
 mod tray;
+mod window_focus;
 
 #[tauri::command]
 fn open_codex_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
@@ -45,6 +46,11 @@ fn send_dictation_shortcut(shortcut: String) -> Result<keyboard::KeyboardStep, S
     keyboard::send_dictation_shortcut(shortcut)
 }
 
+#[tauri::command]
+fn focus_codex_window() -> window_focus::WindowFocusStep {
+    window_focus::focus_codex_window()
+}
+
 fn is_allowed_codex_url(url: &str) -> bool {
     matches!(url, "codex://" | "codex://settings" | "codex://threads/new")
 }
@@ -80,7 +86,8 @@ fn main() {
             get_global_hotkey_status,
             prepare_audio,
             restore_audio,
-            send_dictation_shortcut
+            send_dictation_shortcut,
+            focus_codex_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running QoLayer");

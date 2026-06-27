@@ -13,6 +13,7 @@ QoLayer is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, 
 - Voice Flow and Global Hotkeys are active foundation modules; Add-ons are planned.
 - Global Hotkeys registers `Ctrl+Alt+Space` to start the existing Voice Flow workflow.
 - Voice Flow can globally lower, mute, and restore Windows system audio.
+- Voice Flow makes a best-effort attempt to focus Codex before dictation.
 - Voice Flow can send the configured Codex dictation shortcut after Codex opens.
 - Codex deep-link actions for opening Codex, Codex settings, and a new Codex thread.
 - Minimal system tray menu for showing QoLayer, starting Voice Flow, restoring audio, and quitting.
@@ -35,8 +36,9 @@ The following are intentionally not implemented in v0.1:
 - Custom hotkey editing.
 - Arbitrary keyboard input or text typing.
 - Dictation shortcuts outside the small allowlist.
+- Arbitrary window control.
 - Per-app audio control.
-- Reliable Codex window focusing.
+- Advanced or guaranteed Codex window focusing.
 - Auto-update.
 - Code signing.
 - Installers.

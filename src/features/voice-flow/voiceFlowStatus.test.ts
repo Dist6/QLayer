@@ -9,6 +9,7 @@ describe("Voice Flow status messages", () => {
       { status: "audioDucked", message: "Audio lowered." },
       { status: "openingCodex", message: "Opening Codex." },
       { status: "codexOpened", message: "Codex opened." },
+      { status: "codexFocused", message: "Codex focused." },
       {
         status: "dictationSent",
         message: "Dictation shortcut sent.",
@@ -22,8 +23,20 @@ describe("Voice Flow status messages", () => {
     expect(readVoiceFlowMessages(steps)).toEqual([
       "Audio lowered.",
       "Codex opened.",
+      "Codex focused.",
       "Dictation shortcut sent.",
     ]);
+  });
+
+  it("uses a short message when Codex focus is not confirmed", () => {
+    expect(
+      readVoiceFlowMessages([
+        {
+          status: "codexFocusNotConfirmed",
+          message: "Codex opened, but focus could not be confirmed.",
+        },
+      ]),
+    ).toEqual(["Codex opened, but focus could not be confirmed."]);
   });
 
   it("uses a short unavailable message for dictation automation", () => {
