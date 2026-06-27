@@ -57,7 +57,11 @@ export function VoiceFlowDetailPanel({ settings, voiceFlow, onBack }: VoiceFlowD
             <dd>Codex</dd>
           </div>
           <div>
-            <dt>Dictation shortcut</dt>
+            <dt>Voice Flow hotkey</dt>
+            <dd>{settings.voiceFlow.hotkey}</dd>
+          </div>
+          <div>
+            <dt>Codex command sent</dt>
             <dd>{settings.codex.dictationShortcut}</dd>
           </div>
           <div>

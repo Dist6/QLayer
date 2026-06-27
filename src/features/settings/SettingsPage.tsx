@@ -52,7 +52,7 @@ export function SettingsPage({
           </select>
         </label>
         <label className="field">
-          <span>Dictation shortcut</span>
+          <span>Codex command sent</span>
           <select
             value={settings.codex.dictationShortcut}
             onChange={(event) =>

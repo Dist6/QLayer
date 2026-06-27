@@ -137,6 +137,74 @@ describe("Voice Flow service", () => {
     );
   });
 
+  it("waits for Codex readiness before focusing and sending dictation", async () => {
+    const events: string[] = [];
+    const audio: AudioController = {
+      prepareAudio: async () => {
+        events.push("audio");
+        return {
+          ok: true,
+          value: {
+            status: "audioDisabled",
+            message: "Audio unchanged.",
+          },
+        };
+      },
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
+      }),
+    };
+    const codex: CodexController = {
+      openCodex: async () => {
+        events.push("open");
+        return { ok: true, value: undefined };
+      },
+      openSettings: async () => ({ ok: true, value: undefined }),
+      openNewThread: async () => ({ ok: true, value: undefined }),
+    };
+    const window: WindowController = {
+      focusCodex: async () => {
+        events.push("focus");
+        return {
+          ok: true,
+          value: {
+            status: "codexFocused",
+            message: "Codex focused.",
+          },
+        };
+      },
+    };
+    const keyboard: KeyboardController = {
+      triggerDictationShortcut: async () => {
+        events.push("dictation");
+        return {
+          ok: true,
+          value: {
+            status: "dictationSent",
+            message: "Dictation shortcut sent.",
+          },
+        };
+      },
+    };
+
+    await startVoiceFlow({
+      settings: defaultSettings,
+      audio,
+      codex,
+      window,
+      keyboard,
+      waitAfterCodexOpen: async () => {
+        events.push("wait-open");
+      },
+      waitAfterCodexFocus: async () => {
+        events.push("wait-focus");
+      },
+    });
+
+    expect(events).toEqual(["audio", "open", "wait-open", "focus", "wait-focus", "dictation"]);
+  });
+
   it("lowers audio before opening Codex", async () => {
     const audio: AudioController = {
       prepareAudio: async () => ({

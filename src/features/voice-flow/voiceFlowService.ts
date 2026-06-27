@@ -18,7 +18,12 @@ export type StartVoiceFlowInput = {
   codex: CodexController;
   window: WindowController;
   keyboard: KeyboardController;
+  waitAfterCodexOpen?: () => Promise<void>;
+  waitAfterCodexFocus?: () => Promise<void>;
 };
+
+const CODEX_OPEN_DELAY_MS = 600;
+const CODEX_FOCUS_SETTLE_DELAY_MS = 250;
 
 export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceFlowRunResult> {
   const steps: VoiceFlowStep[] = [];
@@ -44,6 +49,7 @@ export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceF
   }
 
   steps.push({ status: "codexOpened", message: "Codex opened." });
+  await (input.waitAfterCodexOpen ?? waitAfterCodexOpen)();
 
   const focusResult = await input.window.focusCodex();
   if (!focusResult.ok) {
@@ -54,6 +60,7 @@ export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceF
   } else {
     steps.push(focusResult.value);
   }
+  await (input.waitAfterCodexFocus ?? waitAfterCodexFocus)();
 
   const keyboardResult = await input.keyboard.triggerDictationShortcut(
     input.settings.codex.dictationShortcut,
@@ -124,4 +131,18 @@ function buildReadyMessage(steps: VoiceFlowStep[]): string {
   }
 
   return messages.join(" ");
+}
+
+function waitAfterCodexOpen(): Promise<void> {
+  return wait(CODEX_OPEN_DELAY_MS);
+}
+
+function waitAfterCodexFocus(): Promise<void> {
+  return wait(CODEX_FOCUS_SETTLE_DELAY_MS);
+}
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, milliseconds);
+  });
 }
