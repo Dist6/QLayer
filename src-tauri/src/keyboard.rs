@@ -13,6 +13,21 @@ enum DictationShortcut {
     CtrlShiftM,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum KeyCode {
+    Control,
+    Shift,
+    Alt,
+    Space,
+    M,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum KeyAction {
+    Press(KeyCode),
+    Release(KeyCode),
+}
+
 pub fn send_dictation_shortcut(shortcut: String) -> Result<KeyboardStep, String> {
     let shortcut = parse_dictation_shortcut(&shortcut)
         .ok_or_else(|| "Dictation shortcut could not be sent.".to_string())?;
@@ -25,6 +40,30 @@ pub fn send_dictation_shortcut(shortcut: String) -> Result<KeyboardStep, String>
     })
 }
 
+fn input_plan_for_shortcut(shortcut: DictationShortcut) -> Vec<KeyAction> {
+    let mut actions = vec![
+        KeyAction::Release(KeyCode::Alt),
+        KeyAction::Release(KeyCode::Space),
+        KeyAction::Release(KeyCode::Shift),
+        KeyAction::Release(KeyCode::Control),
+        KeyAction::Press(KeyCode::Control),
+    ];
+
+    if shortcut == DictationShortcut::CtrlShiftM {
+        actions.push(KeyAction::Press(KeyCode::Shift));
+    }
+
+    actions.push(KeyAction::Press(KeyCode::M));
+    actions.push(KeyAction::Release(KeyCode::M));
+
+    if shortcut == DictationShortcut::CtrlShiftM {
+        actions.push(KeyAction::Release(KeyCode::Shift));
+    }
+
+    actions.push(KeyAction::Release(KeyCode::Control));
+    actions
+}
+
 fn parse_dictation_shortcut(shortcut: &str) -> Option<DictationShortcut> {
     match shortcut.to_ascii_lowercase().replace(' ', "").as_str() {
         "ctrl+m" => Some(DictationShortcut::CtrlM),
@@ -35,30 +74,20 @@ fn parse_dictation_shortcut(shortcut: &str) -> Option<DictationShortcut> {
 
 #[cfg(windows)]
 mod platform {
-    use super::DictationShortcut;
+    use super::{input_plan_for_shortcut, DictationShortcut, KeyAction, KeyCode};
     use windows::Win32::UI::Input::KeyboardAndMouse::{
         SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS,
-        KEYEVENTF_KEYUP, VIRTUAL_KEY, VK_CONTROL, VK_SHIFT,
+        KEYEVENTF_KEYUP, VIRTUAL_KEY, VK_CONTROL, VK_MENU, VK_SHIFT, VK_SPACE,
     };
 
     const VK_M: VIRTUAL_KEY = VIRTUAL_KEY(0x4d);
 
     pub fn send_shortcut(shortcut: DictationShortcut) -> Result<(), &'static str> {
-        let mut keys = vec![VK_CONTROL];
-
-        if shortcut == DictationShortcut::CtrlShiftM {
-            keys.push(VK_SHIFT);
-        }
-
-        keys.push(VK_M);
-
-        let mut inputs = Vec::with_capacity(keys.len() * 2);
-        for key in &keys {
-            inputs.push(key_input(*key, false));
-        }
-        for key in keys.iter().rev() {
-            inputs.push(key_input(*key, true));
-        }
+        let actions = input_plan_for_shortcut(shortcut);
+        let inputs = actions
+            .iter()
+            .map(|action| key_input(action_key(*action), matches!(action, KeyAction::Release(_))))
+            .collect::<Vec<_>>();
 
         let sent = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
         if sent as usize == inputs.len() {
@@ -86,6 +115,18 @@ mod platform {
             },
         }
     }
+
+    fn action_key(action: KeyAction) -> VIRTUAL_KEY {
+        match action {
+            KeyAction::Press(key) | KeyAction::Release(key) => match key {
+                KeyCode::Control => VK_CONTROL,
+                KeyCode::Shift => VK_SHIFT,
+                KeyCode::Alt => VK_MENU,
+                KeyCode::Space => VK_SPACE,
+                KeyCode::M => VK_M,
+            },
+        }
+    }
 }
 
 #[cfg(not(windows))]
@@ -99,7 +140,9 @@ mod platform {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_dictation_shortcut, DictationShortcut};
+    use super::{
+        input_plan_for_shortcut, parse_dictation_shortcut, DictationShortcut, KeyAction, KeyCode,
+    };
 
     #[test]
     fn accepts_supported_dictation_shortcuts() {
@@ -118,5 +161,22 @@ mod tests {
         assert_eq!(parse_dictation_shortcut("Ctrl+V"), None);
         assert_eq!(parse_dictation_shortcut("Alt+M"), None);
         assert_eq!(parse_dictation_shortcut("Hello"), None);
+    }
+
+    #[test]
+    fn releases_global_hotkey_modifiers_before_sending_ctrl_m() {
+        assert_eq!(
+            input_plan_for_shortcut(DictationShortcut::CtrlM),
+            vec![
+                KeyAction::Release(KeyCode::Alt),
+                KeyAction::Release(KeyCode::Space),
+                KeyAction::Release(KeyCode::Shift),
+                KeyAction::Release(KeyCode::Control),
+                KeyAction::Press(KeyCode::Control),
+                KeyAction::Press(KeyCode::M),
+                KeyAction::Release(KeyCode::M),
+                KeyAction::Release(KeyCode::Control),
+            ],
+        );
     }
 }

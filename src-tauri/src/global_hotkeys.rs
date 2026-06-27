@@ -80,7 +80,7 @@ pub fn global_hotkey_status(app: AppHandle) -> GlobalHotkeyStatus {
 }
 
 pub fn handle_global_hotkey(app: &AppHandle, shortcut: &Shortcut, event: ShortcutState) {
-    if event == ShortcutState::Pressed && shortcut == &default_shortcut() {
+    if should_emit_start_voice_flow(shortcut, event) {
         let _ = app.emit(
             GLOBAL_HOTKEY_ACTION_EVENT,
             GlobalHotkeyActionPayload {
@@ -90,8 +90,44 @@ pub fn handle_global_hotkey(app: &AppHandle, shortcut: &Shortcut, event: Shortcu
     }
 }
 
+fn should_emit_start_voice_flow(shortcut: &Shortcut, event: ShortcutState) -> bool {
+    event == ShortcutState::Released && shortcut == &default_shortcut()
+}
+
 fn update_status(app: &AppHandle, state: &'static str, message: impl Into<String>) {
     let state_store = app.state::<GlobalHotkeyState>();
     state_store.set_status(state, message);
     let _ = app.emit(GLOBAL_HOTKEY_STATUS_EVENT, state_store.status());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{default_shortcut, should_emit_start_voice_flow};
+    use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
+
+    #[test]
+    fn starts_voice_flow_when_global_hotkey_is_released() {
+        assert!(should_emit_start_voice_flow(
+            &default_shortcut(),
+            ShortcutState::Released
+        ));
+    }
+
+    #[test]
+    fn does_not_start_voice_flow_while_global_hotkey_is_still_pressed() {
+        assert!(!should_emit_start_voice_flow(
+            &default_shortcut(),
+            ShortcutState::Pressed
+        ));
+    }
+
+    #[test]
+    fn ignores_other_released_shortcuts() {
+        let other_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyM);
+
+        assert!(!should_emit_start_voice_flow(
+            &other_shortcut,
+            ShortcutState::Released
+        ));
+    }
 }
