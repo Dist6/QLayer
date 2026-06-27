@@ -1,9 +1,14 @@
 import type { VoiceFlowStep } from "./controllers";
 
 const visibleStatusMessages: Partial<Record<VoiceFlowStep["status"], string>> = {
+  audioDucked: "Audio lowered.",
+  audioMuted: "Audio muted.",
+  restored: "Audio restored.",
+  nothingToRestore: "Nothing to restore.",
   codexOpened: "Codex opened.",
-  audioUnavailable: "Audio is not implemented yet.",
+  audioUnavailable: "Audio control is not available.",
   dictationUnavailable: "Dictation automation is not implemented yet.",
+  failed: "Audio control failed.",
 };
 
 export function readVoiceFlowMessages(steps: VoiceFlowStep[]): string[] {
@@ -21,7 +26,12 @@ export function readVoiceFlowMessages(steps: VoiceFlowStep[]): string[] {
 }
 
 function readStepMessage(step: VoiceFlowStep): string | null {
-  if (step.message === "Audio restore is not implemented yet.") {
+  if (
+    step.status === "audioUnavailable" ||
+    step.status === "failed" ||
+    step.status === "nothingToRestore" ||
+    step.status === "restored"
+  ) {
     return step.message;
   }
 

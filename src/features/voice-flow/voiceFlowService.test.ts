@@ -5,7 +5,7 @@ import type { AudioController, CodexController, KeyboardController } from "./con
 import { startVoiceFlow, restoreVoiceFlowAudio } from "./voiceFlowService";
 
 const keyboard: KeyboardController = {
-  triggerDictationShortcut: () => ({
+  triggerDictationShortcut: async () => ({
     ok: false,
     reason: "notImplemented",
     message: "Dictation automation is not implemented yet.",
@@ -15,14 +15,17 @@ const keyboard: KeyboardController = {
 describe("Voice Flow service", () => {
   it("starts with disabled audio and opens Codex", async () => {
     const audio: AudioController = {
-      prepareAudio: () => ({
+      prepareAudio: async () => ({
         ok: true,
         value: {
           status: "audioDisabled",
-          message: "Audio control is disabled. Planned audio ducking and muting were not used.",
+          message: "Audio unchanged.",
         },
       }),
-      restoreAudio: () => ({ ok: true, value: { status: "restored", message: "Restored." } }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
+      }),
     };
     const codex: CodexController = {
       openCodex: async () => ({ ok: true, value: undefined }),
@@ -37,28 +40,97 @@ describe("Voice Flow service", () => {
       "audioDisabled",
       "openingCodex",
       "codexOpened",
-      "audioUnavailable",
       "dictationUnavailable",
       "ready",
     ]);
     expect(result.steps.map((step) => step.message)).toEqual([
-      "Audio control is disabled. Planned audio ducking and muting were not used.",
+      "Audio unchanged.",
       "Opening Codex.",
       "Codex opened.",
-      "Audio is not implemented yet.",
       "Dictation automation is not implemented yet.",
-      "Codex opened. Audio and dictation are not implemented yet.",
+      "Codex opened. Dictation automation is not implemented yet.",
     ]);
   });
 
-  it("surfaces NotImplemented audio instead of silently succeeding", async () => {
+  it("lowers audio before opening Codex", async () => {
     const audio: AudioController = {
-      prepareAudio: () => ({
+      prepareAudio: async () => ({
+        ok: true,
+        value: { status: "audioDucked", message: "Audio lowered." },
+      }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "restored", message: "Audio restored." },
+      }),
+    };
+    const codex: CodexController = {
+      openCodex: async () => ({ ok: true, value: undefined }),
+      openSettings: async () => ({ ok: true, value: undefined }),
+      openNewThread: async () => ({ ok: true, value: undefined }),
+    };
+
+    const result = await startVoiceFlow({
+      settings: {
+        ...defaultSettings,
+        voiceFlow: { ...defaultSettings.voiceFlow, audioMode: "duck" },
+      },
+      audio,
+      codex,
+      keyboard,
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.steps.map((step) => step.message)).toContain("Audio lowered.");
+    expect(result.steps.at(-1)?.message).toBe(
+      "Audio lowered. Codex opened. Dictation automation is not implemented yet.",
+    );
+  });
+
+  it("mutes audio before opening Codex", async () => {
+    const audio: AudioController = {
+      prepareAudio: async () => ({
+        ok: true,
+        value: { status: "audioMuted", message: "Audio muted." },
+      }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "restored", message: "Audio restored." },
+      }),
+    };
+    const codex: CodexController = {
+      openCodex: async () => ({ ok: true, value: undefined }),
+      openSettings: async () => ({ ok: true, value: undefined }),
+      openNewThread: async () => ({ ok: true, value: undefined }),
+    };
+
+    const result = await startVoiceFlow({
+      settings: {
+        ...defaultSettings,
+        voiceFlow: { ...defaultSettings.voiceFlow, audioMode: "mute" },
+      },
+      audio,
+      codex,
+      keyboard,
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.steps.map((step) => step.message)).toContain("Audio muted.");
+    expect(result.steps.at(-1)?.message).toBe(
+      "Audio muted. Codex opened. Dictation automation is not implemented yet.",
+    );
+  });
+
+  it("reports unavailable audio control without faking success", async () => {
+    const audio: AudioController = {
+      prepareAudio: async () => ({
         ok: false,
         reason: "notImplemented",
-        message: "Audio ducking is not implemented yet.",
+        message: "Audio control is not available.",
       }),
-      restoreAudio: () => ({ ok: true, value: { status: "restored", message: "Restored." } }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
+      }),
     };
     const codex: CodexController = {
       openCodex: async () => ({ ok: true, value: undefined }),
@@ -77,17 +149,22 @@ describe("Voice Flow service", () => {
     });
 
     expect(result.status).toBe("failed");
-    expect(result.steps.at(-1)?.status).toBe("failed");
-    expect(result.steps.at(-1)?.message).toContain("not implemented");
+    expect(result.steps.at(-1)).toEqual({
+      status: "audioUnavailable",
+      message: "Audio control is not available.",
+    });
   });
 
   it("reports Codex open failures", async () => {
     const audio: AudioController = {
-      prepareAudio: () => ({
+      prepareAudio: async () => ({
         ok: true,
         value: { status: "audioDisabled", message: "Audio disabled." },
       }),
-      restoreAudio: () => ({ ok: true, value: { status: "restored", message: "Restored." } }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
+      }),
     };
     const codex: CodexController = {
       openCodex: async () => ({
@@ -110,11 +187,14 @@ describe("Voice Flow service", () => {
 
   it("reports keyboard automation failures that are not NotImplemented", async () => {
     const audio: AudioController = {
-      prepareAudio: () => ({
+      prepareAudio: async () => ({
         ok: true,
         value: { status: "audioDisabled", message: "Audio disabled." },
       }),
-      restoreAudio: () => ({ ok: true, value: { status: "restored", message: "Restored." } }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
+      }),
     };
     const codex: CodexController = {
       openCodex: async () => ({ ok: true, value: undefined }),
@@ -122,7 +202,7 @@ describe("Voice Flow service", () => {
       openNewThread: async () => ({ ok: true, value: undefined }),
     };
     const failingKeyboard: KeyboardController = {
-      triggerDictationShortcut: () => ({
+      triggerDictationShortcut: async () => ({
         ok: false,
         reason: "failed",
         message: "Shortcut failed.",
@@ -142,11 +222,14 @@ describe("Voice Flow service", () => {
 
   it("restores audio through the audio controller", async () => {
     const audio: AudioController = {
-      prepareAudio: () => ({
+      prepareAudio: async () => ({
         ok: true,
         value: { status: "audioDisabled", message: "Audio disabled." },
       }),
-      restoreAudio: () => ({ ok: true, value: { status: "restored", message: "Audio restored." } }),
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "restored", message: "Audio restored." },
+      }),
     };
 
     const result = await restoreVoiceFlowAudio(audio);
@@ -156,11 +239,11 @@ describe("Voice Flow service", () => {
 
   it("reports restore failures", async () => {
     const audio: AudioController = {
-      prepareAudio: () => ({
+      prepareAudio: async () => ({
         ok: true,
         value: { status: "audioDisabled", message: "Audio disabled." },
       }),
-      restoreAudio: () => ({ ok: false, reason: "failed", message: "Restore failed." }),
+      restoreAudio: async () => ({ ok: false, reason: "failed", message: "Restore failed." }),
     };
 
     const result = await restoreVoiceFlowAudio(audio);
@@ -168,24 +251,23 @@ describe("Voice Flow service", () => {
     expect(result).toEqual({ status: "failed", message: "Restore failed." });
   });
 
-  it("reports NotImplemented restore results without faking success", async () => {
+  it("reports when there is nothing to restore", async () => {
     const audio: AudioController = {
-      prepareAudio: () => ({
+      prepareAudio: async () => ({
         ok: true,
         value: { status: "audioDisabled", message: "Audio disabled." },
       }),
-      restoreAudio: () => ({
-        ok: false,
-        reason: "notImplemented",
-        message: "Audio restore is not implemented yet.",
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "nothingToRestore", message: "Nothing to restore." },
       }),
     };
 
     const result = await restoreVoiceFlowAudio(audio);
 
     expect(result).toEqual({
-      status: "audioUnavailable",
-      message: "Audio restore is not implemented yet.",
+      status: "nothingToRestore",
+      message: "Nothing to restore.",
     });
   });
 });

@@ -11,6 +11,7 @@ export type VoiceFlowStatus =
   | "audioUnavailable"
   | "dictationUnavailable"
   | "restored"
+  | "nothingToRestore"
   | "failed";
 
 export type VoiceFlowStep = {
@@ -19,12 +20,12 @@ export type VoiceFlowStep = {
 };
 
 export type AudioController = {
-  prepareAudio: (mode: AudioMode) => AppResult<VoiceFlowStep>;
-  restoreAudio: () => AppResult<VoiceFlowStep>;
+  prepareAudio: (mode: AudioMode) => Promise<AppResult<VoiceFlowStep>>;
+  restoreAudio: () => Promise<AppResult<VoiceFlowStep>>;
 };
 
 export type KeyboardController = {
-  triggerDictationShortcut: (shortcut: string) => AppResult<VoiceFlowStep>;
+  triggerDictationShortcut: (shortcut: string) => Promise<AppResult<VoiceFlowStep>>;
 };
 
 export type CodexController = {

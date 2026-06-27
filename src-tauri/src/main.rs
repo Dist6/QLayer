@@ -1,6 +1,7 @@
 use tauri_plugin_opener::OpenerExt;
 use tauri::{Manager, WindowEvent};
 
+mod audio;
 mod global_hotkeys;
 mod tray;
 
@@ -28,6 +29,16 @@ fn get_global_hotkey_status(app: tauri::AppHandle) -> global_hotkeys::GlobalHotk
     global_hotkeys::global_hotkey_status(app)
 }
 
+#[tauri::command]
+fn prepare_audio(app: tauri::AppHandle, mode: String) -> Result<audio::AudioStep, String> {
+    audio::prepare_audio(app, mode)
+}
+
+#[tauri::command]
+fn restore_audio(app: tauri::AppHandle) -> Result<audio::AudioStep, String> {
+    audio::restore_audio(app)
+}
+
 fn is_allowed_codex_url(url: &str) -> bool {
     matches!(url, "codex://" | "codex://settings" | "codex://threads/new")
 }
@@ -43,6 +54,7 @@ fn main() {
         )
         .manage(tray::TrayState::default())
         .manage(global_hotkeys::GlobalHotkeyState::default())
+        .manage(audio::AudioState::default())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             tray::setup_tray(app);
@@ -59,7 +71,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             open_codex_url,
             get_tray_status,
-            get_global_hotkey_status
+            get_global_hotkey_status,
+            prepare_audio,
+            restore_audio
         ])
         .run(tauri::generate_context!())
         .expect("error while running QoLayer");

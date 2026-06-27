@@ -65,6 +65,10 @@ export function VoiceFlowDetailPanel({ settings, voiceFlow, onBack }: VoiceFlowD
             <dd>{formatAudioMode(settings.voiceFlow.audioMode)}</dd>
           </div>
           <div>
+            <dt>Audio status</dt>
+            <dd>{formatAudioStatus(voiceFlow.status.status)}</dd>
+          </div>
+          <div>
             <dt>Restore mode</dt>
             <dd>{formatRestoreMode(settings.voiceFlow.restoreMode)}</dd>
           </div>
@@ -87,4 +91,23 @@ function formatAudioMode(mode: AppSettings["voiceFlow"]["audioMode"]): string {
 
 function formatRestoreMode(mode: AppSettings["voiceFlow"]["restoreMode"]): string {
   return mode === "manual" ? "Manual" : "After timeout";
+}
+
+function formatAudioStatus(status: VoiceFlowState["status"]["status"]): string {
+  switch (status) {
+    case "audioDucked":
+      return "Lowered";
+    case "audioMuted":
+      return "Muted";
+    case "restored":
+      return "Restored";
+    case "nothingToRestore":
+      return "Nothing to restore";
+    case "audioUnavailable":
+      return "Not available";
+    case "failed":
+      return "Failed";
+    default:
+      return "Ready";
+  }
 }

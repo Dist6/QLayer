@@ -7,6 +7,7 @@
 - Codex deep-link foundation.
 - Voice Flow foundation.
 - Global hotkey foundation.
+- Global Windows audio duck, mute, and restore.
 - Minimal system tray foundation.
 - Typed local settings.
 - Privacy and security documentation.

@@ -12,11 +12,12 @@ QoLayer is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, 
 - Compact Quick Tools launcher with feature modules, plus secondary Settings and About views.
 - Voice Flow and Global Hotkeys are active foundation modules; Add-ons are planned.
 - Global Hotkeys registers `Ctrl+Alt+Space` to start the existing Voice Flow workflow.
+- Voice Flow can globally lower, mute, and restore Windows system audio.
 - Codex deep-link actions for opening Codex, Codex settings, and a new Codex thread.
 - Minimal system tray menu for showing QoLayer, starting Voice Flow, restoring audio, and quitting.
 - Compact tray utility window: closing the window hides it, while Quit from the tray exits the app.
 - Strongly typed local settings with validation and safe defaults.
-- Voice Flow foundation with explicit unavailable states for audio and dictation features planned later.
+- Voice Flow foundation with explicit unavailable states for dictation features planned later.
 
 ## What QoLayer Is Not
 
@@ -32,7 +33,7 @@ The following are intentionally not implemented in v0.1:
 
 - Custom hotkey editing.
 - Keyboard automation.
-- Audio ducking or muting.
+- Per-app audio control.
 - Reliable Codex window focusing.
 - Auto-update.
 - Code signing.

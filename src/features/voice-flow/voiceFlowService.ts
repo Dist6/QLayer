@@ -20,9 +20,16 @@ export type StartVoiceFlowInput = {
 
 export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceFlowRunResult> {
   const steps: VoiceFlowStep[] = [];
-  const audioResult = input.audio.prepareAudio(input.settings.voiceFlow.audioMode);
+  const audioResult = await input.audio.prepareAudio(input.settings.voiceFlow.audioMode);
 
   if (!audioResult.ok) {
+    if (audioResult.reason === "notImplemented") {
+      return finish("failed", steps, {
+        status: "audioUnavailable",
+        message: audioResult.message,
+      });
+    }
+
     return fail(steps, audioResult.message);
   }
 
@@ -35,12 +42,8 @@ export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceF
   }
 
   steps.push({ status: "codexOpened", message: "Codex opened." });
-  steps.push({
-    status: "audioUnavailable",
-    message: "Audio is not implemented yet.",
-  });
 
-  const keyboardResult = input.keyboard.triggerDictationShortcut(
+  const keyboardResult = await input.keyboard.triggerDictationShortcut(
     input.settings.codex.dictationShortcut,
   );
   if (!keyboardResult.ok && keyboardResult.reason === "notImplemented") {
@@ -53,14 +56,14 @@ export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceF
 
   steps.push({
     status: "ready",
-    message: "Codex opened. Audio and dictation are not implemented yet.",
+    message: buildReadyMessage(steps),
   });
 
   return { status: "ready", steps };
 }
 
 export async function restoreVoiceFlowAudio(audio: AudioController): Promise<VoiceFlowStep> {
-  const result = audio.restoreAudio();
+  const result = await audio.restoreAudio();
 
   if (!result.ok) {
     if (result.reason === "notImplemented") {
@@ -74,7 +77,31 @@ export async function restoreVoiceFlowAudio(audio: AudioController): Promise<Voi
 }
 
 function fail(steps: VoiceFlowStep[], message: string): VoiceFlowRunResult {
-  const failedStep: VoiceFlowStep = { status: "failed", message };
+  return finish("failed", steps, { status: "failed", message });
+}
 
-  return { status: "failed", steps: [...steps, failedStep] };
+function finish(
+  status: VoiceFlowRunResult["status"],
+  steps: VoiceFlowStep[],
+  step: VoiceFlowStep,
+): VoiceFlowRunResult {
+  return { status, steps: [...steps, step] };
+}
+
+function buildReadyMessage(steps: VoiceFlowStep[]): string {
+  const messages: string[] = [];
+
+  if (steps.some((step) => step.status === "audioDucked")) {
+    messages.push("Audio lowered.");
+  } else if (steps.some((step) => step.status === "audioMuted")) {
+    messages.push("Audio muted.");
+  }
+
+  messages.push("Codex opened.");
+
+  if (steps.some((step) => step.status === "dictationUnavailable")) {
+    messages.push("Dictation automation is not implemented yet.");
+  }
+
+  return messages.join(" ");
 }
