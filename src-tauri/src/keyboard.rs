@@ -21,6 +21,18 @@ enum KeyCode {
     D,
 }
 
+impl KeyCode {
+    fn scan_code(self) -> u16 {
+        match self {
+            Self::Control => 0x1d,
+            Self::Shift => 0x2a,
+            Self::Alt => 0x38,
+            Self::Space => 0x39,
+            Self::D => 0x20,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum KeyAction {
     Press(KeyCode),
@@ -65,13 +77,11 @@ fn parse_dictation_shortcut(shortcut: &str) -> Option<DictationShortcut> {
 
 #[cfg(windows)]
 mod platform {
-    use super::{input_plan_for_shortcut, DictationShortcut, KeyAction, KeyCode};
+    use super::{input_plan_for_shortcut, DictationShortcut, KeyAction};
     use windows::Win32::UI::Input::KeyboardAndMouse::{
-        SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS,
-        KEYEVENTF_KEYUP, VIRTUAL_KEY, VK_CONTROL, VK_MENU, VK_SHIFT, VK_SPACE,
+        SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP,
+        KEYEVENTF_SCANCODE, VIRTUAL_KEY,
     };
-
-    const VK_D: VIRTUAL_KEY = VIRTUAL_KEY(0x44);
 
     pub fn send_shortcut(shortcut: DictationShortcut) -> Result<(), &'static str> {
         let actions = input_plan_for_shortcut(shortcut);
@@ -93,12 +103,12 @@ mod platform {
             r#type: INPUT_KEYBOARD,
             Anonymous: INPUT_0 {
                 ki: KEYBDINPUT {
-                    wVk: key,
-                    wScan: 0,
+                    wVk: VIRTUAL_KEY(0),
+                    wScan: key.0,
                     dwFlags: if key_up {
-                        KEYEVENTF_KEYUP
+                        KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP
                     } else {
-                        KEYBD_EVENT_FLAGS(0)
+                        KEYEVENTF_SCANCODE
                     },
                     time: 0,
                     dwExtraInfo: 0,
@@ -109,13 +119,7 @@ mod platform {
 
     fn action_key(action: KeyAction) -> VIRTUAL_KEY {
         match action {
-            KeyAction::Press(key) | KeyAction::Release(key) => match key {
-                KeyCode::Control => VK_CONTROL,
-                KeyCode::Shift => VK_SHIFT,
-                KeyCode::Alt => VK_MENU,
-                KeyCode::Space => VK_SPACE,
-                KeyCode::D => VK_D,
-            },
+            KeyAction::Press(key) | KeyAction::Release(key) => VIRTUAL_KEY(key.scan_code()),
         }
     }
 }
@@ -168,5 +172,12 @@ mod tests {
                 KeyAction::Release(KeyCode::Control),
             ],
         );
+    }
+
+    #[test]
+    fn maps_ctrl_shift_d_to_physical_scan_codes() {
+        assert_eq!(KeyCode::Control.scan_code(), 0x1d);
+        assert_eq!(KeyCode::Shift.scan_code(), 0x2a);
+        assert_eq!(KeyCode::D.scan_code(), 0x20);
     }
 }
