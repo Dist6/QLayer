@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::path::PathBuf;
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,6 +30,10 @@ where
             message: "ChatGPT became active, but its composer could not be focused.",
         },
     }
+}
+
+pub fn verified_codex_process_path() -> Option<PathBuf> {
+    platform::verified_codex_process_path()
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -98,6 +103,7 @@ mod platform {
         ACTIVATION_POLL_ATTEMPTS, FOCUS_ATTEMPTS, FOCUS_POLL_ATTEMPTS,
         FOCUS_POLL_INTERVAL_MS,
     };
+    use std::path::PathBuf;
     use std::time::Duration;
     use windows::core::{BOOL, PWSTR, Result};
     use windows::Win32::Foundation::{
@@ -105,7 +111,8 @@ mod platform {
     };
     use windows::Win32::Storage::Packaging::Appx::GetPackageFamilyName;
     use windows::Win32::System::Threading::{
-        AttachThreadInput, GetCurrentThreadId, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+        AttachThreadInput, GetCurrentThreadId, OpenProcess, QueryFullProcessImageNameW,
+        PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
     };
     use windows::Win32::UI::Input::KeyboardAndMouse::{
         SendInput, SetActiveWindow, SetFocus, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN,
@@ -176,6 +183,41 @@ mod platform {
         }
 
         FocusOutcome::Focused
+    }
+
+    pub fn verified_codex_process_path() -> Option<PathBuf> {
+        let hwnd = find_codex_window()?;
+        let mut process_id = 0_u32;
+        unsafe {
+            GetWindowThreadProcessId(hwnd, Some(&mut process_id));
+        }
+        if process_id == 0 {
+            return None;
+        }
+
+        let process = unsafe {
+            OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id).ok()?
+        };
+        let mut buffer = vec![0_u16; 32_768];
+        let mut length = buffer.len() as u32;
+        let read = unsafe {
+            QueryFullProcessImageNameW(
+                process,
+                PROCESS_NAME_WIN32,
+                PWSTR(buffer.as_mut_ptr()),
+                &mut length,
+            )
+        };
+        unsafe {
+            let _ = CloseHandle(process);
+        }
+        if read.is_err() || length == 0 {
+            return None;
+        }
+
+        Some(PathBuf::from(String::from_utf16_lossy(
+            &buffer[..length as usize],
+        )))
     }
 
     fn find_codex_window() -> Option<HWND> {
@@ -375,12 +417,17 @@ mod platform {
 #[cfg(not(windows))]
 mod platform {
     use super::FocusOutcome;
+    use std::path::PathBuf;
 
     pub fn focus_codex_window<F>(_activate_existing: F) -> FocusOutcome
     where
         F: FnOnce() -> bool,
     {
         FocusOutcome::NotFound
+    }
+
+    pub fn verified_codex_process_path() -> Option<PathBuf> {
+        None
     }
 }
 

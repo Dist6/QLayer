@@ -3,6 +3,8 @@ use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_opener::OpenerExt;
 
 mod audio;
+mod chat_discovery;
+mod codex_runtime;
 mod codex_threads;
 mod global_hotkeys;
 mod keyboard;
@@ -74,6 +76,16 @@ fn focus_codex_window(app: tauri::AppHandle) -> window_focus::WindowFocusStep {
 }
 
 #[tauri::command]
+async fn list_recent_codex_chats() -> Result<Vec<chat_discovery::RecentChat>, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let runtime = codex_runtime::resolve_codex_runtime().map_err(str::to_string)?;
+        chat_discovery::list_recent_chats(&runtime)
+    })
+    .await
+    .map_err(|_| "Recent chats are unavailable.".to_string())?
+}
+
+#[tauri::command]
 fn set_close_to_tray(state: tauri::State<window_behavior::WindowBehaviorState>, enabled: bool) {
     state.set_close_to_tray(enabled);
 }
@@ -131,6 +143,7 @@ fn main() {
             press_dictation_shortcut,
             release_dictation_shortcut,
             focus_codex_window,
+            list_recent_codex_chats,
             set_close_to_tray
         ])
         .run(tauri::generate_context!())
