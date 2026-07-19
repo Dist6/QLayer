@@ -23,6 +23,10 @@ export type StartVoiceFlowHoldInput = StartVoiceFlowInput & {
   shouldContinue: () => boolean;
 };
 
+export type StartTargetedVoiceFlowHoldInput = StartVoiceFlowHoldInput & {
+  threadId?: string;
+};
+
 const CODEX_FOCUS_SETTLE_DELAY_MS = 50;
 const WAITING_FOR_CODEX_MESSAGE =
   "Waiting for Codex or ChatGPT. Make sure it is open and visible, then hold Ctrl+Alt+Space again.";
@@ -67,6 +71,59 @@ export async function startVoiceFlowHold(
     return setupResult;
   }
 
+  return finishHoldAfterSetup(input, steps);
+}
+
+export async function startTargetedVoiceFlowHold(
+  input: StartTargetedVoiceFlowHoldInput,
+): Promise<VoiceFlowRunResult> {
+  const steps: VoiceFlowStep[] = [
+    { status: "focusingCodex", message: "Opening the selected chat." },
+  ];
+  const focusResult = input.threadId
+    ? await input.window.focusCodexThread?.(input.threadId)
+    : await input.window.focusCodex();
+  if (focusResult?.ok) {
+    steps.push(focusResult.value);
+  }
+  if (!focusResult?.ok || focusResult.value.status !== "codexFocused") {
+    await input.window.showQoLayer();
+    return finish("waitingForCodex", steps, {
+      status: "waitingForCodex",
+      message: WAITING_FOR_CODEX_MESSAGE,
+    });
+  }
+
+  await (input.waitAfterCodexFocus ?? waitAfterCodexFocus)();
+  if (!input.shouldContinue()) {
+    return finish("ready", steps, {
+      status: "dictationStopped",
+      message: "Voice Flow cancelled.",
+    });
+  }
+
+  const audioResult = await input.audio.prepareAudio(
+    input.settings.voiceFlow.audioMode,
+    input.settings.voiceFlow.listeningVolumePercent,
+  );
+  if (!audioResult.ok) {
+    return finish(
+      "failed",
+      steps,
+      audioResult.reason === "notImplemented"
+        ? { status: "audioUnavailable", message: audioResult.message }
+        : { status: "failed", message: audioResult.message },
+    );
+  }
+  steps.push(audioResult.value);
+
+  return finishHoldAfterSetup(input, steps);
+}
+
+async function finishHoldAfterSetup(
+  input: StartVoiceFlowHoldInput,
+  steps: VoiceFlowStep[],
+): Promise<VoiceFlowRunResult> {
   if (!input.shouldContinue()) {
     await restorePreparedAudio(input.audio, steps);
     steps.push({

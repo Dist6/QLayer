@@ -77,6 +77,13 @@ fn focus_codex_window(app: tauri::AppHandle) -> window_focus::WindowFocusStep {
 }
 
 #[tauri::command]
+fn focus_codex_thread(app: tauri::AppHandle, thread_id: String) -> window_focus::WindowFocusStep {
+    window_focus::focus_codex_thread(&thread_id, |url| {
+        app.opener().open_url(url, None::<&str>).is_ok()
+    })
+}
+
+#[tauri::command]
 async fn list_recent_codex_chats() -> Result<Vec<chat_discovery::RecentChat>, String> {
     tauri::async_runtime::spawn_blocking(|| {
         let runtime = codex_runtime::resolve_codex_runtime().map_err(str::to_string)?;
@@ -144,6 +151,7 @@ fn main() {
             press_dictation_shortcut,
             release_dictation_shortcut,
             focus_codex_window,
+            focus_codex_thread,
             list_recent_codex_chats,
             voice_selector::show_voice_selector,
             voice_selector::hide_voice_selector,

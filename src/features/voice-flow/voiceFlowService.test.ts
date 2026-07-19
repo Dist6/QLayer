@@ -11,6 +11,7 @@ import {
   restoreVoiceFlowAudio,
   startVoiceFlow,
   startVoiceFlowHold,
+  startTargetedVoiceFlowHold,
   stopVoiceFlowHold,
 } from "./voiceFlowService";
 
@@ -34,6 +35,10 @@ const focusedWindow: WindowController = {
     ok: true,
     value: { status: "codexFocused", message: "Codex focused." },
   }),
+  focusCodexThread: async () => ({
+    ok: true,
+    value: { status: "codexFocused", message: "Codex focused." },
+  }),
   showQoLayer: async () => ({ ok: true, value: undefined }),
 };
 
@@ -48,6 +53,77 @@ function createAudioController(
 }
 
 describe("Voice Flow service", () => {
+  it("focuses a selected chat before changing audio", async () => {
+    const events: string[] = [];
+    const result = await startTargetedVoiceFlowHold({
+      settings: defaultSettings,
+      audio: {
+        prepareAudio: async () => {
+          events.push("audio");
+          return {
+            ok: true,
+            value: { status: "audioDisabled", message: "Audio unchanged." },
+          };
+        },
+        restoreAudio: async () => ({
+          ok: true,
+          value: { status: "restored", message: "Audio restored." },
+        }),
+      },
+      window: {
+        ...focusedWindow,
+        focusCodexThread: async (threadId) => {
+          events.push(`focus:${threadId}`);
+          return {
+            ok: true,
+            value: { status: "codexFocused", message: "Codex focused." },
+          };
+        },
+      },
+      keyboard: {
+        ...successfulKeyboard,
+        pressDictationShortcut: async () => {
+          events.push("press");
+          return {
+            ok: true,
+            value: { status: "dictationStarted", message: "Dictation shortcut is held." },
+          };
+        },
+      },
+      threadId: "019f72d8-d02e-75d1-9969-d6c5a647c95e",
+      shouldContinue: () => true,
+      waitAfterCodexFocus: async () => {
+        events.push("wait-focus");
+      },
+    });
+
+    expect(result.status).toBe("ready");
+    expect(events).toEqual([
+      "focus:019f72d8-d02e-75d1-9969-d6c5a647c95e",
+      "wait-focus",
+      "audio",
+      "press",
+    ]);
+  });
+
+  it("does not change audio when selection is released during navigation", async () => {
+    const events: string[] = [];
+    const result = await startTargetedVoiceFlowHold({
+      settings: defaultSettings,
+      audio: createAudioController(),
+      window: focusedWindow,
+      keyboard: successfulKeyboard,
+      shouldContinue: () => false,
+      waitAfterCodexFocus: async () => {
+        events.push("wait-focus");
+      },
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.steps.some((step) => step.status.startsWith("audio"))).toBe(false);
+    expect(events).toEqual(["wait-focus"]);
+  });
+
   it("prepares audio, focuses Codex, and sends the tap shortcut", async () => {
     const events: string[] = [];
     const audio: AudioController = {

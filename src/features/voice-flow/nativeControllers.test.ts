@@ -103,4 +103,12 @@ describe("native window controller parsing", () => {
       message: "Codex could not be focused.",
     });
   });
+
+  it("rejects malformed targeted focus payloads", () => {
+    expect(parseNativeWindowStep({ status: "codexFocused" })).toEqual({
+      ok: false,
+      reason: "failed",
+      message: "Codex could not be focused.",
+    });
+  });
 });

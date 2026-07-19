@@ -44,7 +44,9 @@ export const keyboardController: KeyboardController = {
 };
 
 export const windowController: WindowController = {
-  focusCodex: async () => invokeWindowCommand(),
+  focusCodex: async () => invokeWindowCommand("focus_codex_window"),
+  focusCodexThread: async (threadId: string) =>
+    invokeWindowCommand("focus_codex_thread", { threadId }),
   showQoLayer: async () => invokeShowMainWindow(),
 };
 
@@ -102,9 +104,12 @@ export function parseNativeKeyboardStep(value: unknown): AppResult<VoiceFlowStep
   return { ok: true, value };
 }
 
-async function invokeWindowCommand(): Promise<AppResult<VoiceFlowStep>> {
+async function invokeWindowCommand(
+  command: "focus_codex_window" | "focus_codex_thread",
+  args?: Record<string, unknown>,
+): Promise<AppResult<VoiceFlowStep>> {
   try {
-    const step = await invoke<unknown>("focus_codex_window");
+    const step = await invoke<unknown>(command, args);
     return parseNativeWindowStep(step);
   } catch {
     return notImplemented("Codex could not be focused.");

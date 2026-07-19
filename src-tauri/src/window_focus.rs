@@ -1,7 +1,8 @@
 use serde::Serialize;
 use std::path::PathBuf;
+use std::time::Duration;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WindowFocusStep {
     status: &'static str,
@@ -34,6 +35,54 @@ where
 
 pub fn verified_codex_process_path() -> Option<PathBuf> {
     platform::verified_codex_process_path()
+}
+
+pub fn focus_codex_thread<F>(thread_id: &str, open_link: F) -> WindowFocusStep
+where
+    F: FnOnce(&str) -> bool,
+{
+    focus_codex_thread_with(
+        thread_id,
+        platform::codex_window_available,
+        open_link,
+        || {
+            std::thread::sleep(Duration::from_millis(180));
+            focus_codex_window(|| false)
+        },
+    )
+}
+
+fn focus_codex_thread_with<A, O, F>(
+    thread_id: &str,
+    window_available: A,
+    open_link: O,
+    focus_after_open: F,
+) -> WindowFocusStep
+where
+    A: FnOnce() -> bool,
+    O: FnOnce(&str) -> bool,
+    F: FnOnce() -> WindowFocusStep,
+{
+    let Ok(link) = crate::codex_threads::build_thread_link(thread_id) else {
+        return WindowFocusStep {
+            status: "codexFocusNotConfirmed",
+            message: "QoLayer blocked an invalid Codex chat destination.",
+        };
+    };
+    if !window_available() {
+        return WindowFocusStep {
+            status: "codexFocusNotConfirmed",
+            message: "No supported Codex or ChatGPT window was detected.",
+        };
+    }
+    if !open_link(&link) {
+        return WindowFocusStep {
+            status: "codexFocusNotConfirmed",
+            message: "The selected Codex chat could not be opened.",
+        };
+    }
+
+    focus_after_open()
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -218,6 +267,10 @@ mod platform {
         Some(PathBuf::from(String::from_utf16_lossy(
             &buffer[..length as usize],
         )))
+    }
+
+    pub fn codex_window_available() -> bool {
+        find_codex_window().is_some()
     }
 
     fn find_codex_window() -> Option<HWND> {
@@ -429,11 +482,18 @@ mod platform {
     pub fn verified_codex_process_path() -> Option<PathBuf> {
         None
     }
+
+    pub fn codex_window_available() -> bool {
+        false
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{codex_composer_focus_point, is_supported_codex_window, Point, WindowRect};
+    use super::{
+        codex_composer_focus_point, focus_codex_thread_with, is_supported_codex_window, Point,
+        WindowFocusStep, WindowRect,
+    };
 
     #[test]
     fn accepts_supported_codex_window_titles() {
@@ -494,5 +554,37 @@ mod tests {
             }),
             None
         );
+    }
+
+    #[test]
+    fn targeted_focus_requires_a_valid_destination_and_existing_window() {
+        let invalid = focus_codex_thread_with("not-a-thread", || true, |_| true, focused_step);
+        assert_eq!(invalid.status, "codexFocusNotConfirmed");
+
+        let missing = focus_codex_thread_with(
+            "019f72d8-d02e-75d1-9969-d6c5a647c95e",
+            || false,
+            |_| panic!("opener must not run"),
+            focused_step,
+        );
+        assert_eq!(missing.message, "No supported Codex or ChatGPT window was detected.");
+    }
+
+    #[test]
+    fn targeted_focus_opens_only_the_canonical_link() {
+        let step = focus_codex_thread_with(
+            "019f72d8-d02e-75d1-9969-d6c5a647c95e",
+            || true,
+            |link| link == "codex://threads/019f72d8-d02e-75d1-9969-d6c5a647c95e",
+            focused_step,
+        );
+        assert_eq!(step.status, "codexFocused");
+    }
+
+    fn focused_step() -> WindowFocusStep {
+        WindowFocusStep {
+            status: "codexFocused",
+            message: "Codex focused.",
+        }
     }
 }

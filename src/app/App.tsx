@@ -43,7 +43,7 @@ export function App() {
   const [globalHotkeyStatus, setGlobalHotkeyStatus] =
     useState<GlobalHotkeyStatus>(initialHotkeyStatus);
   const chatDestinations = useChatDestinations();
-  const voiceFlow = useVoiceFlow(settings);
+  const voiceFlow = useVoiceFlow(settings, chatDestinations.destinations);
   const { reportMessage, restore, startHold, stopHold } = voiceFlow;
 
   const setSettings = (next: AppSettings) => {
