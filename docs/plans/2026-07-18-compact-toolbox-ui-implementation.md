@@ -243,10 +243,8 @@ Keep `mute` and `disabled` behavior unchanged. Preserve the first original audio
 Update the controller contract:
 
 ```ts
-prepareAudio: (
-  mode: AudioMode,
-  listeningVolumePercent: number,
-) => Promise<AppResult<VoiceFlowStep>>;
+prepareAudio: (mode: AudioMode, listeningVolumePercent: number) =>
+  Promise<AppResult<VoiceFlowStep>>;
 ```
 
 Invoke Tauri with:
@@ -412,10 +410,7 @@ export type AutostartApi = {
   isEnabled: () => Promise<boolean>;
 };
 
-export async function setAutostart(
-  api: AutostartApi,
-  enabled: boolean,
-): Promise<void> {
+export async function setAutostart(api: AutostartApi, enabled: boolean): Promise<void> {
   await (enabled ? api.enable() : api.disable());
 }
 ```
@@ -855,4 +850,3 @@ git commit -m "feat: redesign QoLayer as a compact toolbox"
 ```
 
 Do not include unrelated pre-existing changes accidentally.
-

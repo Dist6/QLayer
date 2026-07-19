@@ -43,7 +43,6 @@ fn exchange_requests(child: &mut Child) -> Result<Vec<RecentChat>, ()> {
     write_json_line(
         &mut stdin,
         &json!({
-            "jsonrpc": "2.0",
             "id": 1,
             "method": "initialize",
             "params": {
@@ -55,12 +54,11 @@ fn exchange_requests(child: &mut Child) -> Result<Vec<RecentChat>, ()> {
     wait_for_response(&receiver, 1, deadline)?;
     write_json_line(
         &mut stdin,
-        &json!({ "jsonrpc": "2.0", "method": "initialized", "params": {} }),
+        &json!({ "method": "initialized", "params": {} }),
     )?;
     write_json_line(
         &mut stdin,
         &json!({
-            "jsonrpc": "2.0",
             "id": 2,
             "method": "thread/list",
             "params": {

@@ -164,4 +164,3 @@ The approved visual direction is the generated mockup with:
 - Settings anchored at the bottom.
 - A `Lower` audio state with a visible listening-volume slider.
 - No compatibility footer text.
-

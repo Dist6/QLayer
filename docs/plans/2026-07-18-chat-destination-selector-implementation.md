@@ -128,11 +128,7 @@ expect(parseCodexThreadInput("019f72d8-d02e-75d1-9969-d6c5a647c95e")).toEqual({
   ok: true,
   threadId: "019f72d8-d02e-75d1-9969-d6c5a647c95e",
 });
-expect(
-  parseCodexThreadInput(
-    "codex://threads/019f72d8-d02e-75d1-9969-d6c5a647c95e",
-  ),
-).toEqual({
+expect(parseCodexThreadInput("codex://threads/019f72d8-d02e-75d1-9969-d6c5a647c95e")).toEqual({
   ok: true,
   threadId: "019f72d8-d02e-75d1-9969-d6c5a647c95e",
 });
@@ -454,9 +450,7 @@ Define narrow payloads:
 
 ```ts
 type VoiceSelectorOpenPayload = { destinations: ChatDestination[] };
-type VoiceSelectorSelection =
-  | { kind: "current" }
-  | { kind: "saved"; destinationId: string };
+type VoiceSelectorSelection = { kind: "current" } | { kind: "saved"; destinationId: string };
 ```
 
 Test `Digit0` through `Digit9`, numpad equivalents, `Escape`, invalid payloads, duplicate numbers, and out-of-range keys.
@@ -758,4 +752,3 @@ Report:
 - Any unavailable Rust components.
 - That App Server discovery is optional and experimental.
 - That no auth files, tokens, chat content, internal databases, telemetry, or cloud sync were added.
-

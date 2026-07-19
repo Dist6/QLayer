@@ -7,7 +7,7 @@ QoLayer uses the official, experimental Codex App Server only as an optional, re
 - ChatGPT package: `OpenAI.Codex_26.715.4045.0_x64__2p2nqsd0c76g0`
 - Packaged runtime location: derived from the verified ChatGPT process as `resources/codex.exe`
 - Schema generator used for compatibility verification: `codex-cli 0.133.0`
-- Protocol transport: newline-delimited JSON-RPC over standard input/output
+- Protocol transport: newline-delimited JSON-RPC over standard input/output, with the `jsonrpc` header omitted as required by App Server
 
 Windows allows QoLayer to derive the packaged runtime from the verified process, but denied direct developer-shell execution of that file. The generated schema therefore records the compatible local CLI contract. Runtime parsing remains tolerant of additional fields and fails closed if the installed App Server is incompatible.
 
