@@ -1,9 +1,10 @@
-import { ChevronDown, Info, Settings } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useMemo, useState } from "react";
 
 import { AboutPanel } from "../features/about/AboutPanel";
-import { openCodexAction, type CodexAction } from "../features/codex/codexController";
-import { GlobalHotkeysDetailPanel } from "../features/global-hotkeys/GlobalHotkeysDetailPanel";
+import { ChatShortcutsPanel } from "../features/chat-shortcuts/ChatShortcutsPanel";
+import { openCodexAction } from "../features/codex/codexController";
 import {
   getGlobalHotkeyStatus,
   listenForGlobalHotkeyActions,
@@ -13,109 +14,52 @@ import {
   DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
   type GlobalHotkeyStatus,
 } from "../features/global-hotkeys/globalHotkeyEvents";
-import { QuickToolsPanel } from "../features/quick-tools/QuickToolsPanel";
-import {
-  getQuickToolTarget,
-  quickTools,
-  type QuickToolId,
-} from "../features/quick-tools/quickTools";
+import { SavedPromptsPanel } from "../features/saved-prompts/SavedPromptsPanel";
 import { SettingsPage } from "../features/settings/SettingsPage";
+import { syncLaunchAtStartup } from "../features/settings/autostartClient";
 import { createSettingsStorage } from "../features/settings/settingsStorage";
 import type { AppSettings } from "../features/settings/settingsTypes";
-import {
-  getTrayStatus,
-  listenForTrayActions,
-  listenForTrayStatus,
-} from "../features/tray/trayClient";
-import type { TrayStatus } from "../features/tray/trayEvents";
+import { setCloseToTray } from "../features/settings/windowBehaviorClient";
+import { ToolboxSidebar } from "../features/toolbox/ToolboxSidebar";
+import type { ToolboxView } from "../features/toolbox/toolboxViews";
+import { listenForTrayActions } from "../features/tray/trayClient";
 import { VoiceFlowDetailPanel } from "../features/voice-flow/VoiceFlowDetailPanel";
-import { useVoiceFlow, type VoiceFlowState } from "../features/voice-flow/useVoiceFlow";
+import { useVoiceFlow } from "../features/voice-flow/useVoiceFlow";
 
-type AppView = "quickTools" | "voiceFlow" | "globalHotkeys" | "plannedTool" | "settings" | "about";
+type AppView = ToolboxView | "about";
+
+const initialHotkeyStatus: GlobalHotkeyStatus = {
+  state: "notAvailable",
+  shortcut: DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
+  message: "Checking global hotkey status.",
+};
 
 export function App() {
   const storage = useMemo(() => createSettingsStorage(window.localStorage), []);
   const loaded = useMemo(() => storage.load(), [storage]);
-  const [activeView, setActiveView] = useState<AppView>("quickTools");
-  const [plannedToolId, setPlannedToolId] = useState<"addOns">("addOns");
-  const [codexOpen, setCodexOpen] = useState(false);
-  const [busyCodexAction, setBusyCodexAction] = useState<CodexAction | null>(null);
+  const [activeView, setActiveView] = useState<AppView>("voiceFlow");
   const [settings, setSettingsState] = useState<AppSettings>(loaded.settings);
-  const [globalHotkeyStatus, setGlobalHotkeyStatus] = useState<GlobalHotkeyStatus>({
-    state: "notAvailable",
-    shortcut: DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
-    message: "Checking global hotkey status.",
-  });
-  const [, setTrayStatus] = useState<TrayStatus>({
-    available: false,
-    message: "Checking system tray status.",
-  });
+  const [globalHotkeyStatus, setGlobalHotkeyStatus] =
+    useState<GlobalHotkeyStatus>(initialHotkeyStatus);
   const voiceFlow = useVoiceFlow(settings);
-  const { reportMessage, restore, start } = voiceFlow;
-
-  const runCodexAction = async (action: CodexAction) => {
-    setBusyCodexAction(action);
-
-    await openCodexAction(action);
-
-    setBusyCodexAction(null);
-    setCodexOpen(false);
-  };
+  const { reportMessage, restore, startHold, stopHold } = voiceFlow;
 
   const setSettings = (next: AppSettings) => {
     setSettingsState(next);
     storage.save(next);
   };
 
-  const openQuickTool = (toolId: QuickToolId) => {
-    const target = getQuickToolTarget(toolId);
-
-    if (target.view === "voiceFlow") {
-      setActiveView("voiceFlow");
-      return;
-    }
-
-    if (target.view === "globalHotkeys") {
-      setActiveView("globalHotkeys");
-      return;
-    }
-
-    setPlannedToolId(target.toolId);
-    setActiveView("plannedTool");
-  };
-
-  useEffect(() => {
-    void getTrayStatus().then(setTrayStatus);
-  }, []);
-
   useEffect(() => {
     void getGlobalHotkeyStatus().then(setGlobalHotkeyStatus);
   }, []);
 
   useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    let cancelled = false;
+    void setCloseToTray(settings.general.closeToTray).catch(() => undefined);
+  }, [settings.general.closeToTray]);
 
-    void listenForTrayStatus(setTrayStatus)
-      .then((nextUnlisten) => {
-        if (cancelled) {
-          nextUnlisten();
-        } else {
-          unlisten = nextUnlisten;
-        }
-      })
-      .catch(() => {
-        setTrayStatus({
-          available: false,
-          message: "System tray status is available only in the desktop app.",
-        });
-      });
-
-    return () => {
-      cancelled = true;
-      unlisten?.();
-    };
-  }, []);
+  useEffect(() => {
+    void syncLaunchAtStartup(settings.general.launchAtStartup).catch(() => undefined);
+  }, [settings.general.launchAtStartup]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -149,14 +93,14 @@ export function App() {
 
     void listenForGlobalHotkeyActions(
       (action) => {
-        if (action === "startVoiceFlow") {
+        if (action === "startVoiceFlowHold") {
           setActiveView("voiceFlow");
-          void start();
+          void startHold();
+        } else {
+          void stopHold();
         }
       },
-      (message) => {
-        reportMessage({ status: "failed", message });
-      },
+      (message) => reportMessage({ status: "failed", message }),
     )
       .then((nextUnlisten) => {
         if (cancelled) {
@@ -165,19 +109,13 @@ export function App() {
           unlisten = nextUnlisten;
         }
       })
-      .catch(() => {
-        setGlobalHotkeyStatus({
-          state: "notAvailable",
-          shortcut: DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
-          message: "Global hotkeys are available only in the desktop app.",
-        });
-      });
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
       unlisten?.();
     };
-  }, [reportMessage, start]);
+  }, [reportMessage, startHold, stopHold]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -185,17 +123,15 @@ export function App() {
 
     void listenForTrayActions(
       (action) => {
-        setActiveView("voiceFlow");
-
-        if (action === "startVoiceFlow") {
-          void start();
-        } else {
+        if (action === "openCodex") {
+          void openCodexAction("home");
+        } else if (action === "restoreAudio") {
           void restore();
+        } else {
+          setActiveView("about");
         }
       },
-      (message) => {
-        reportMessage({ status: "failed", message });
-      },
+      (message) => reportMessage({ status: "failed", message }),
     )
       .then((nextUnlisten) => {
         if (cancelled) {
@@ -204,105 +140,41 @@ export function App() {
           unlisten = nextUnlisten;
         }
       })
-      .catch(() => {
-        setTrayStatus({
-          available: false,
-          message: "System tray is available only in the desktop app.",
-        });
-      });
+      .catch(() => undefined);
 
     return () => {
       cancelled = true;
       unlisten?.();
     };
-  }, [reportMessage, restore, start]);
+  }, [reportMessage, restore]);
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <div className="brand-block">
-          <div className="brand-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          <button
-            className="brand-button"
-            onClick={() => setActiveView("quickTools")}
-            type="button"
-          >
-            <div className="brand-name">QoLayer</div>
-          </button>
-        </div>
+      <div
+        aria-hidden="true"
+        className="window-drag-region"
+        data-tauri-drag-region
+        onPointerDown={(event) => {
+          if (event.button === 0) {
+            void getCurrentWindow().startDragging();
+          }
+        }}
+      />
+      <button
+        aria-label="Close QoLayer"
+        className="window-close"
+        onClick={() => void getCurrentWindow().close()}
+        title={settings.general.closeToTray ? "Close to tray" : "Close QoLayer"}
+        type="button"
+      >
+        <IconX aria-hidden="true" size={16} stroke={1.7} />
+      </button>
 
-        <div className="header-actions">
-          <div className="integration-wrap">
-            <button
-              className="integration-button"
-              onClick={() => setCodexOpen((open) => !open)}
-              type="button"
-            >
-              Codex <ChevronDown size={16} aria-hidden="true" />
-            </button>
-            {codexOpen ? (
-              <div className="integration-menu">
-                <button
-                  disabled={busyCodexAction !== null}
-                  onClick={() => void runCodexAction("home")}
-                  type="button"
-                >
-                  Open Codex
-                </button>
-                <button
-                  disabled={busyCodexAction !== null}
-                  onClick={() => void runCodexAction("settings")}
-                  type="button"
-                >
-                  Codex Settings
-                </button>
-                <button
-                  disabled={busyCodexAction !== null}
-                  onClick={() => void runCodexAction("newThread")}
-                  type="button"
-                >
-                  New Thread
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </header>
+      <ToolboxSidebar activeView={activeView} onSelect={setActiveView} />
 
       <main className="main-panel">
-        {renderView(
-          activeView,
-          settings,
-          setSettings,
-          voiceFlow,
-          globalHotkeyStatus,
-          () => setActiveView("quickTools"),
-          openQuickTool,
-          plannedToolId,
-        )}
+        {renderView(activeView, settings, setSettings, voiceFlow, globalHotkeyStatus)}
       </main>
-
-      <footer className="app-footer">
-        <button
-          className={activeView === "settings" ? "footer-link footer-link-active" : "footer-link"}
-          onClick={() => setActiveView("settings")}
-          type="button"
-        >
-          <Settings size={17} aria-hidden="true" /> Settings
-        </button>
-        <button
-          className={activeView === "about" ? "footer-link footer-link-active" : "footer-link"}
-          onClick={() => setActiveView("about")}
-          type="button"
-        >
-          <Info size={17} aria-hidden="true" /> About
-        </button>
-        <span className="app-version">v0.1.0</span>
-      </footer>
     </div>
   );
 }
@@ -311,49 +183,31 @@ function renderView(
   activeView: AppView,
   settings: AppSettings,
   setSettings: (settings: AppSettings) => void,
-  voiceFlow: VoiceFlowState,
+  voiceFlow: ReturnType<typeof useVoiceFlow>,
   globalHotkeyStatus: GlobalHotkeyStatus,
-  onBack: () => void,
-  onOpenTool: (toolId: QuickToolId) => void,
-  plannedToolId: "addOns",
 ) {
   switch (activeView) {
-    case "voiceFlow":
-      return <VoiceFlowDetailPanel settings={settings} voiceFlow={voiceFlow} onBack={onBack} />;
-    case "globalHotkeys":
-      return <GlobalHotkeysDetailPanel status={globalHotkeyStatus} onBack={onBack} />;
-    case "plannedTool":
-      return <PlannedToolPanel onBack={onBack} toolId={plannedToolId} />;
+    case "chatShortcuts":
+      return <ChatShortcutsPanel />;
+    case "savedPrompts":
+      return <SavedPromptsPanel />;
     case "settings":
       return (
         <SettingsPage
           globalHotkeyStatus={globalHotkeyStatus}
-          settings={settings}
           onSettingsChange={setSettings}
+          settings={settings}
         />
       );
     case "about":
-      return <AboutPanel onBack={onBack} />;
+      return <AboutPanel />;
     default:
-      return <QuickToolsPanel globalHotkeyStatus={globalHotkeyStatus} onOpenTool={onOpenTool} />;
+      return (
+        <VoiceFlowDetailPanel
+          onSettingsChange={setSettings}
+          settings={settings}
+          voiceFlow={voiceFlow}
+        />
+      );
   }
-}
-
-function PlannedToolPanel({ toolId, onBack }: { toolId: "addOns"; onBack: () => void }) {
-  const tool = quickTools.find((item) => item.id === toolId);
-
-  return (
-    <section className="secondary-view">
-      <button className="back-button" onClick={onBack} type="button">
-        Quick Tools
-      </button>
-      <div className="detail-heading">
-        <h1>{tool?.title ?? "Planned tool"}</h1>
-        <span className="status-chip">Planned</span>
-      </div>
-      <article className="compact-card">
-        <p>Coming later.</p>
-      </article>
-    </section>
-  );
 }

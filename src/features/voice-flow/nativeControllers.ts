@@ -1,11 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import { failed, notImplemented, type AppResult } from "../../shared/result";
-import { openCodexAction } from "../codex/codexController";
 import type { AudioMode } from "../settings/settingsTypes";
 import type {
   AudioController,
-  CodexController,
   KeyboardController,
   VoiceFlowStep,
   WindowController,
@@ -17,7 +15,10 @@ type NativeVoiceFlowStep = {
 };
 
 export const audioController: AudioController = {
-  prepareAudio: async (mode: AudioMode): Promise<AppResult<VoiceFlowStep>> => {
+  prepareAudio: async (
+    mode: AudioMode,
+    listeningVolumePercent: number,
+  ): Promise<AppResult<VoiceFlowStep>> => {
     if (mode === "disabled") {
       return {
         ok: true,
@@ -28,23 +29,23 @@ export const audioController: AudioController = {
       };
     }
 
-    return invokeAudioCommand("prepare_audio", { mode });
+    return invokeAudioCommand("prepare_audio", { mode, listeningVolumePercent });
   },
   restoreAudio: async () => invokeAudioCommand("restore_audio"),
 };
 
 export const keyboardController: KeyboardController = {
-  triggerDictationShortcut: async (shortcut: string) => invokeKeyboardCommand({ shortcut }),
+  triggerDictationShortcut: async (shortcut: string) =>
+    invokeKeyboardCommand("send_dictation_shortcut", { shortcut }),
+  pressDictationShortcut: async (shortcut: string) =>
+    invokeKeyboardCommand("press_dictation_shortcut", { shortcut }),
+  releaseDictationShortcut: async (shortcut: string) =>
+    invokeKeyboardCommand("release_dictation_shortcut", { shortcut }),
 };
 
 export const windowController: WindowController = {
   focusCodex: async () => invokeWindowCommand(),
-};
-
-export const codexController: CodexController = {
-  openCodex: () => openCodexAction("home"),
-  openSettings: () => openCodexAction("settings"),
-  openNewThread: () => openCodexAction("newThread"),
+  showQoLayer: async () => invokeShowMainWindow(),
 };
 
 async function invokeAudioCommand(
@@ -73,11 +74,14 @@ function parseNativeAudioStep(value: unknown): AppResult<VoiceFlowStep> {
   return { ok: true, value };
 }
 
-async function invokeKeyboardCommand(args: {
-  shortcut: string;
-}): Promise<AppResult<VoiceFlowStep>> {
+async function invokeKeyboardCommand(
+  command: "send_dictation_shortcut" | "press_dictation_shortcut" | "release_dictation_shortcut",
+  args: {
+    shortcut: string;
+  },
+): Promise<AppResult<VoiceFlowStep>> {
   try {
-    const step = await invoke<unknown>("send_dictation_shortcut", args);
+    const step = await invoke<unknown>(command, args);
     return parseNativeKeyboardStep(step);
   } catch (error) {
     const message = typeof error === "string" ? error : "Dictation automation is not available.";
@@ -103,13 +107,22 @@ async function invokeWindowCommand(): Promise<AppResult<VoiceFlowStep>> {
     const step = await invoke<unknown>("focus_codex_window");
     return parseNativeWindowStep(step);
   } catch {
-    return notImplemented("Codex opened, but focus could not be confirmed.");
+    return notImplemented("Codex could not be focused.");
+  }
+}
+
+async function invokeShowMainWindow(): Promise<AppResult<void>> {
+  try {
+    await invoke("show_main_window");
+    return { ok: true, value: undefined };
+  } catch (error) {
+    return failed(typeof error === "string" ? error : "QoLayer window could not be shown.");
   }
 }
 
 export function parseNativeWindowStep(value: unknown): AppResult<VoiceFlowStep> {
   if (!isNativeWindowStep(value)) {
-    return failed("Codex opened, but focus could not be confirmed.");
+    return failed("Codex could not be focused.");
   }
 
   return { ok: true, value };
@@ -120,7 +133,12 @@ function isNativeAudioStep(value: unknown): value is NativeVoiceFlowStep {
 }
 
 function isNativeKeyboardStep(value: unknown): value is NativeVoiceFlowStep {
-  return isNativeVoiceFlowStep(value) && value.status === "dictationSent";
+  return (
+    isNativeVoiceFlowStep(value) &&
+    (value.status === "dictationSent" ||
+      value.status === "dictationStarted" ||
+      value.status === "dictationStopped")
+  );
 }
 
 function isNativeWindowStep(value: unknown): value is NativeVoiceFlowStep {
@@ -146,10 +164,13 @@ function isVoiceFlowStatus(value: unknown): value is VoiceFlowStep["status"] {
     value === "audioMuted" ||
     value === "codexFocused" ||
     value === "codexFocusNotConfirmed" ||
+    value === "waitingForCodex" ||
     value === "restored" ||
     value === "nothingToRestore" ||
     value === "audioUnavailable" ||
     value === "dictationSent" ||
+    value === "dictationStarted" ||
+    value === "dictationStopped" ||
     value === "failed"
   );
 }

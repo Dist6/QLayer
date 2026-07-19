@@ -3,321 +3,151 @@ import { describe, expect, it } from "vitest";
 import { defaultSettings } from "../settings/defaultSettings";
 import type {
   AudioController,
-  CodexController,
   KeyboardController,
+  VoiceFlowStep,
   WindowController,
 } from "./controllers";
-import { startVoiceFlow, restoreVoiceFlowAudio } from "./voiceFlowService";
+import {
+  restoreVoiceFlowAudio,
+  startVoiceFlow,
+  startVoiceFlowHold,
+  stopVoiceFlowHold,
+} from "./voiceFlowService";
 
-const keyboard: KeyboardController = {
+const successfulKeyboard: KeyboardController = {
   triggerDictationShortcut: async () => ({
     ok: true,
-    value: {
-      status: "dictationSent",
-      message: "Dictation shortcut sent.",
-    },
+    value: { status: "dictationSent", message: "Dictation shortcut sent." },
   }),
-};
-
-const unavailableKeyboard: KeyboardController = {
-  triggerDictationShortcut: async () => ({
-    ok: false,
-    reason: "notImplemented",
-    message: "Dictation automation is not available.",
+  pressDictationShortcut: async () => ({
+    ok: true,
+    value: { status: "dictationStarted", message: "Dictation shortcut is held." },
+  }),
+  releaseDictationShortcut: async () => ({
+    ok: true,
+    value: { status: "dictationStopped", message: "Dictation shortcut released." },
   }),
 };
 
 const focusedWindow: WindowController = {
   focusCodex: async () => ({
     ok: true,
-    value: {
-      status: "codexFocused",
-      message: "Codex focused.",
-    },
+    value: { status: "codexFocused", message: "Codex focused." },
   }),
+  showQoLayer: async () => ({ ok: true, value: undefined }),
 };
 
-const unconfirmedWindow: WindowController = {
-  focusCodex: async () => ({
-    ok: true,
-    value: {
-      status: "codexFocusNotConfirmed",
-      message: "Codex opened, but focus could not be confirmed.",
-    },
-  }),
-};
+function createAudioController(
+  prepared: VoiceFlowStep = { status: "audioDisabled", message: "Audio unchanged." },
+  restored: VoiceFlowStep = { status: "restored", message: "Audio restored." },
+): AudioController {
+  return {
+    prepareAudio: async () => ({ ok: true, value: prepared }),
+    restoreAudio: async () => ({ ok: true, value: restored }),
+  };
+}
 
 describe("Voice Flow service", () => {
-  it("starts with disabled audio and opens Codex", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: {
-          status: "audioDisabled",
-          message: "Audio unchanged.",
-        },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "nothingToRestore", message: "Nothing to restore." },
-      }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => ({ ok: true, value: undefined }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
-    };
-
-    const result = await startVoiceFlow({
-      settings: defaultSettings,
-      audio,
-      codex,
-      window: focusedWindow,
-      keyboard,
-    });
-
-    expect(result.status).toBe("ready");
-    expect(result.steps.map((step) => step.status)).toEqual([
-      "audioDisabled",
-      "openingCodex",
-      "codexOpened",
-      "codexFocused",
-      "dictationSent",
-      "ready",
-    ]);
-    expect(result.steps.map((step) => step.message)).toEqual([
-      "Audio unchanged.",
-      "Opening Codex.",
-      "Codex opened.",
-      "Codex focused.",
-      "Dictation shortcut sent.",
-      "Codex opened. Codex focused. Dictation shortcut sent.",
-    ]);
-  });
-
-  it("continues to dictation when Codex focus cannot be confirmed", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: {
-          status: "audioDisabled",
-          message: "Audio unchanged.",
-        },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "nothingToRestore", message: "Nothing to restore." },
-      }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => ({ ok: true, value: undefined }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
-    };
-
-    const result = await startVoiceFlow({
-      settings: defaultSettings,
-      audio,
-      codex,
-      window: unconfirmedWindow,
-      keyboard,
-    });
-
-    expect(result.status).toBe("ready");
-    expect(result.steps.map((step) => step.status)).toEqual([
-      "audioDisabled",
-      "openingCodex",
-      "codexOpened",
-      "codexFocusNotConfirmed",
-      "dictationSent",
-      "ready",
-    ]);
-    expect(result.steps.at(-1)?.message).toBe(
-      "Codex opened. Codex opened, but focus could not be confirmed. Dictation shortcut sent.",
-    );
-  });
-
-  it("waits for Codex readiness before focusing and sending dictation", async () => {
+  it("prepares audio, focuses Codex, and sends the tap shortcut", async () => {
     const events: string[] = [];
     const audio: AudioController = {
       prepareAudio: async () => {
         events.push("audio");
         return {
           ok: true,
-          value: {
-            status: "audioDisabled",
-            message: "Audio unchanged.",
-          },
+          value: { status: "audioDisabled", message: "Audio unchanged." },
         };
       },
       restoreAudio: async () => ({
         ok: true,
-        value: { status: "nothingToRestore", message: "Nothing to restore." },
+        value: { status: "restored", message: "Audio restored." },
       }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => {
-        events.push("open");
-        return { ok: true, value: undefined };
-      },
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
     };
     const window: WindowController = {
       focusCodex: async () => {
         events.push("focus");
         return {
           ok: true,
-          value: {
-            status: "codexFocused",
-            message: "Codex focused.",
-          },
+          value: { status: "codexFocused", message: "Codex focused." },
         };
       },
+      showQoLayer: async () => ({ ok: true, value: undefined }),
     };
     const keyboard: KeyboardController = {
+      ...successfulKeyboard,
       triggerDictationShortcut: async () => {
         events.push("dictation");
         return {
           ok: true,
-          value: {
-            status: "dictationSent",
-            message: "Dictation shortcut sent.",
-          },
+          value: { status: "dictationSent", message: "Dictation shortcut sent." },
         };
       },
     };
 
-    await startVoiceFlow({
+    const result = await startVoiceFlow({
       settings: defaultSettings,
       audio,
-      codex,
       window,
       keyboard,
-      waitAfterCodexOpen: async () => {
-        events.push("wait-open");
-      },
       waitAfterCodexFocus: async () => {
         events.push("wait-focus");
       },
     });
 
-    expect(events).toEqual(["audio", "open", "wait-open", "focus", "wait-focus", "dictation"]);
-  });
-
-  it("lowers audio before opening Codex", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: { status: "audioDucked", message: "Audio lowered." },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "restored", message: "Audio restored." },
-      }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => ({ ok: true, value: undefined }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
-    };
-
-    const result = await startVoiceFlow({
-      settings: {
-        ...defaultSettings,
-        voiceFlow: { ...defaultSettings.voiceFlow, audioMode: "duck" },
-      },
-      audio,
-      codex,
-      window: focusedWindow,
-      keyboard,
-    });
-
-    expect(result.status).toBe("ready");
-    expect(result.steps.map((step) => step.message)).toContain("Audio lowered.");
-    expect(result.steps.at(-1)?.message).toBe(
-      "Audio lowered. Codex opened. Codex focused. Dictation shortcut sent.",
-    );
-  });
-
-  it("mutes audio before opening Codex", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: { status: "audioMuted", message: "Audio muted." },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "restored", message: "Audio restored." },
-      }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => ({ ok: true, value: undefined }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
-    };
-
-    const result = await startVoiceFlow({
-      settings: {
-        ...defaultSettings,
-        voiceFlow: { ...defaultSettings.voiceFlow, audioMode: "mute" },
-      },
-      audio,
-      codex,
-      window: focusedWindow,
-      keyboard,
-    });
-
-    expect(result.status).toBe("ready");
-    expect(result.steps.map((step) => step.message)).toContain("Audio muted.");
-    expect(result.steps.at(-1)?.message).toBe(
-      "Audio muted. Codex opened. Codex focused. Dictation shortcut sent.",
-    );
-  });
-
-  it("reports unavailable dictation automation without faking success", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: {
-          status: "audioDisabled",
-          message: "Audio unchanged.",
-        },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "nothingToRestore", message: "Nothing to restore." },
-      }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => ({ ok: true, value: undefined }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
-    };
-
-    const result = await startVoiceFlow({
-      settings: defaultSettings,
-      audio,
-      codex,
-      window: focusedWindow,
-      keyboard: unavailableKeyboard,
-    });
-
-    expect(result.status).toBe("ready");
+    expect(events).toEqual(["audio", "focus", "wait-focus", "dictation"]);
     expect(result.steps.map((step) => step.status)).toEqual([
       "audioDisabled",
-      "openingCodex",
-      "codexOpened",
+      "focusingCodex",
       "codexFocused",
-      "dictationUnavailable",
+      "dictationSent",
       "ready",
     ]);
-    expect(result.steps.at(-1)?.message).toBe(
-      "Codex opened. Codex focused. Dictation automation is not available.",
-    );
+    expect(result.steps.at(-1)?.message).toBe("Codex focused. Dictation shortcut sent.");
   });
 
-  it("reports unavailable audio control without faking success", async () => {
+  it.each([
+    ["duck", "audioDucked", "Audio lowered."],
+    ["mute", "audioMuted", "Audio muted."],
+  ] as const)("applies %s audio before focusing Codex", async (mode, status, message) => {
+    const events: string[] = [];
+    const audio: AudioController = {
+      prepareAudio: async () => {
+        events.push("audio");
+        return { ok: true, value: { status, message } };
+      },
+      restoreAudio: async () => ({
+        ok: true,
+        value: { status: "restored", message: "Audio restored." },
+      }),
+    };
+    const window: WindowController = {
+      focusCodex: async () => {
+        events.push("focus");
+        return {
+          ok: true,
+          value: { status: "codexFocused", message: "Codex focused." },
+        };
+      },
+      showQoLayer: async () => ({ ok: true, value: undefined }),
+    };
+
+    const result = await startVoiceFlow({
+      settings: {
+        ...defaultSettings,
+        voiceFlow: { ...defaultSettings.voiceFlow, audioMode: mode },
+      },
+      audio,
+      window,
+      keyboard: successfulKeyboard,
+      waitAfterCodexFocus: async () => undefined,
+    });
+
+    expect(events).toEqual(["audio", "focus"]);
+    expect(result.steps.map((step) => step.status)).toContain(status);
+    expect(result.steps.at(-1)?.message).toContain(message);
+  });
+
+  it("does not fake success when audio control is unavailable", async () => {
     const audio: AudioController = {
       prepareAudio: async () => ({
         ok: false,
@@ -329,21 +159,12 @@ describe("Voice Flow service", () => {
         value: { status: "nothingToRestore", message: "Nothing to restore." },
       }),
     };
-    const codex: CodexController = {
-      openCodex: async () => ({ ok: true, value: undefined }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
-    };
 
     const result = await startVoiceFlow({
-      settings: {
-        ...defaultSettings,
-        voiceFlow: { ...defaultSettings.voiceFlow, audioMode: "duck" },
-      },
+      settings: defaultSettings,
       audio,
-      codex,
       window: focusedWindow,
-      keyboard,
+      keyboard: successfulKeyboard,
     });
 
     expect(result.status).toBe("failed");
@@ -353,59 +174,41 @@ describe("Voice Flow service", () => {
     });
   });
 
-  it("reports Codex open failures", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: { status: "audioDisabled", message: "Audio disabled." },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "nothingToRestore", message: "Nothing to restore." },
-      }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => ({
+  it("reports unavailable dictation automation", async () => {
+    const unavailableKeyboard: KeyboardController = {
+      triggerDictationShortcut: async () => ({
         ok: false,
-        reason: "failed",
-        message: "Codex could not be opened.",
+        reason: "notImplemented",
+        message: "Dictation automation is not available.",
       }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
+      pressDictationShortcut: async () => ({
+        ok: false,
+        reason: "notImplemented",
+        message: "Dictation automation is not available.",
+      }),
+      releaseDictationShortcut: async () => ({
+        ok: false,
+        reason: "notImplemented",
+        message: "Dictation automation is not available.",
+      }),
     };
 
     const result = await startVoiceFlow({
       settings: defaultSettings,
-      audio,
-      codex,
+      audio: createAudioController(),
       window: focusedWindow,
-      keyboard,
+      keyboard: unavailableKeyboard,
+      waitAfterCodexFocus: async () => undefined,
     });
 
-    expect(result.status).toBe("failed");
-    expect(result.steps.at(-1)).toEqual({
-      status: "failed",
-      message: "Codex could not be opened.",
-    });
+    expect(result.status).toBe("dictationUnavailable");
+    expect(result.steps.map((step) => step.status)).toContain("dictationUnavailable");
+    expect(result.steps.at(-1)?.message).toBe("Dictation automation is not available.");
   });
 
-  it("reports keyboard automation failures that are not NotImplemented", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: { status: "audioDisabled", message: "Audio disabled." },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "nothingToRestore", message: "Nothing to restore." },
-      }),
-    };
-    const codex: CodexController = {
-      openCodex: async () => ({ ok: true, value: undefined }),
-      openSettings: async () => ({ ok: true, value: undefined }),
-      openNewThread: async () => ({ ok: true, value: undefined }),
-    };
+  it("reports keyboard failures", async () => {
     const failingKeyboard: KeyboardController = {
+      ...successfulKeyboard,
       triggerDictationShortcut: async () => ({
         ok: false,
         reason: "failed",
@@ -415,10 +218,10 @@ describe("Voice Flow service", () => {
 
     const result = await startVoiceFlow({
       settings: defaultSettings,
-      audio,
-      codex,
+      audio: createAudioController(),
       window: focusedWindow,
       keyboard: failingKeyboard,
+      waitAfterCodexFocus: async () => undefined,
     });
 
     expect(result.status).toBe("failed");
@@ -428,52 +231,105 @@ describe("Voice Flow service", () => {
     });
   });
 
-  it("restores audio through the audio controller", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: { status: "audioDisabled", message: "Audio disabled." },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "restored", message: "Audio restored." },
-      }),
+  it("starts push-to-talk by holding the Codex shortcut", async () => {
+    const result = await startVoiceFlowHold({
+      settings: defaultSettings,
+      audio: createAudioController(),
+      window: focusedWindow,
+      keyboard: successfulKeyboard,
+      shouldContinue: () => true,
+      waitAfterCodexFocus: async () => undefined,
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.steps.map((step) => step.status)).toEqual([
+      "audioDisabled",
+      "focusingCodex",
+      "codexFocused",
+      "dictationStarted",
+      "ready",
+    ]);
+    expect(result.steps.at(-1)?.message).toBe("Codex focused. Dictation is listening.");
+  });
+
+  it("does not press dictation after the hold ends during setup", async () => {
+    const events: string[] = [];
+    const keyboard: KeyboardController = {
+      ...successfulKeyboard,
+      pressDictationShortcut: async () => {
+        events.push("press");
+        return {
+          ok: true,
+          value: { status: "dictationStarted", message: "Dictation shortcut is held." },
+        };
+      },
     };
 
-    const result = await restoreVoiceFlowAudio(audio);
+    const result = await startVoiceFlowHold({
+      settings: defaultSettings,
+      audio: createAudioController(),
+      window: focusedWindow,
+      keyboard,
+      shouldContinue: () => false,
+      waitAfterCodexFocus: async () => undefined,
+    });
 
-    expect(result).toEqual({ status: "restored", message: "Audio restored." });
+    expect(events).toEqual([]);
+    expect(result.steps.at(-1)?.status).toBe("dictationStopped");
+  });
+
+  it("releases push-to-talk dictation", async () => {
+    await expect(
+      stopVoiceFlowHold(
+        successfulKeyboard,
+        createAudioController(),
+        defaultSettings.codex.dictationShortcut,
+      ),
+    ).resolves.toEqual([
+      {
+        status: "dictationStopped",
+        message: "Dictation shortcut released.",
+      },
+      {
+        status: "restored",
+        message: "Audio restored.",
+      },
+    ]);
+  });
+
+  it("restores audio", async () => {
+    await expect(restoreVoiceFlowAudio(createAudioController())).resolves.toEqual({
+      status: "restored",
+      message: "Audio restored.",
+    });
   });
 
   it("reports restore failures", async () => {
     const audio: AudioController = {
       prepareAudio: async () => ({
         ok: true,
-        value: { status: "audioDisabled", message: "Audio disabled." },
+        value: { status: "audioDisabled", message: "Audio unchanged." },
       }),
-      restoreAudio: async () => ({ ok: false, reason: "failed", message: "Restore failed." }),
+      restoreAudio: async () => ({
+        ok: false,
+        reason: "failed",
+        message: "Restore failed.",
+      }),
     };
 
-    const result = await restoreVoiceFlowAudio(audio);
-
-    expect(result).toEqual({ status: "failed", message: "Restore failed." });
+    await expect(restoreVoiceFlowAudio(audio)).resolves.toEqual({
+      status: "failed",
+      message: "Restore failed.",
+    });
   });
 
   it("reports when there is nothing to restore", async () => {
-    const audio: AudioController = {
-      prepareAudio: async () => ({
-        ok: true,
-        value: { status: "audioDisabled", message: "Audio disabled." },
-      }),
-      restoreAudio: async () => ({
-        ok: true,
-        value: { status: "nothingToRestore", message: "Nothing to restore." },
-      }),
-    };
+    const audio = createAudioController(
+      { status: "audioDisabled", message: "Audio unchanged." },
+      { status: "nothingToRestore", message: "Nothing to restore." },
+    );
 
-    const result = await restoreVoiceFlowAudio(audio);
-
-    expect(result).toEqual({
+    await expect(restoreVoiceFlowAudio(audio)).resolves.toEqual({
       status: "nothingToRestore",
       message: "Nothing to restore.",
     });

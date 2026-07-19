@@ -3,10 +3,7 @@ import type { AppSettings } from "./settingsTypes";
 export const defaultSettings: AppSettings = {
   general: {
     launchAtStartup: false,
-  },
-  appearance: {
-    theme: "dark",
-    language: "en",
+    closeToTray: true,
   },
   codex: {
     enabled: true,
@@ -15,7 +12,6 @@ export const defaultSettings: AppSettings = {
   voiceFlow: {
     hotkey: "Ctrl+Alt+Space",
     audioMode: "disabled",
-    restoreMode: "manual",
-    restoreTimeoutSeconds: 15,
+    listeningVolumePercent: 20,
   },
 };

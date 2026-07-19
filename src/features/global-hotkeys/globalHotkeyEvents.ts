@@ -2,7 +2,7 @@ export const QOLAYER_GLOBAL_HOTKEY_ACTION_EVENT = "qolayer://global-hotkey-actio
 export const QOLAYER_GLOBAL_HOTKEY_STATUS_EVENT = "qolayer://global-hotkey-status";
 export const DEFAULT_GLOBAL_HOTKEY_SHORTCUT = "Ctrl+Alt+Space";
 
-export type GlobalHotkeyAction = "startVoiceFlow";
+export type GlobalHotkeyAction = "startVoiceFlowHold" | "stopVoiceFlowHold";
 export type GlobalHotkeyStatusState = "active" | "failed" | "notAvailable";
 
 export type GlobalHotkeyActionPayload = {
@@ -20,7 +20,7 @@ export type GlobalHotkeyActionParseResult =
   | { ok: false; message: string };
 
 export function parseGlobalHotkeyActionPayload(payload: unknown): GlobalHotkeyActionParseResult {
-  if (!isRecord(payload) || payload.action !== "startVoiceFlow") {
+  if (!isRecord(payload) || !isGlobalHotkeyAction(payload.action)) {
     return { ok: false, message: "Unsupported global hotkey action payload." };
   }
 
@@ -61,6 +61,10 @@ export function getGlobalHotkeyStatusLabel(state: GlobalHotkeyStatusState): stri
 
 function isGlobalHotkeyStatusState(value: unknown): value is GlobalHotkeyStatusState {
   return value === "active" || value === "failed" || value === "notAvailable";
+}
+
+function isGlobalHotkeyAction(value: unknown): value is GlobalHotkeyAction {
+  return value === "startVoiceFlowHold" || value === "stopVoiceFlowHold";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

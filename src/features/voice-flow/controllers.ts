@@ -3,15 +3,17 @@ import type { AudioMode } from "../settings/settingsTypes";
 
 export type VoiceFlowStatus =
   | "ready"
-  | "openingCodex"
-  | "codexOpened"
+  | "focusingCodex"
   | "codexFocused"
   | "codexFocusNotConfirmed"
+  | "waitingForCodex"
   | "audioDisabled"
   | "audioDucked"
   | "audioMuted"
   | "audioUnavailable"
   | "dictationSent"
+  | "dictationStarted"
+  | "dictationStopped"
   | "dictationUnavailable"
   | "restored"
   | "nothingToRestore"
@@ -23,20 +25,20 @@ export type VoiceFlowStep = {
 };
 
 export type AudioController = {
-  prepareAudio: (mode: AudioMode) => Promise<AppResult<VoiceFlowStep>>;
+  prepareAudio: (
+    mode: AudioMode,
+    listeningVolumePercent: number,
+  ) => Promise<AppResult<VoiceFlowStep>>;
   restoreAudio: () => Promise<AppResult<VoiceFlowStep>>;
 };
 
 export type KeyboardController = {
   triggerDictationShortcut: (shortcut: string) => Promise<AppResult<VoiceFlowStep>>;
+  pressDictationShortcut: (shortcut: string) => Promise<AppResult<VoiceFlowStep>>;
+  releaseDictationShortcut: (shortcut: string) => Promise<AppResult<VoiceFlowStep>>;
 };
 
 export type WindowController = {
   focusCodex: () => Promise<AppResult<VoiceFlowStep>>;
-};
-
-export type CodexController = {
-  openCodex: () => Promise<AppResult<void>>;
-  openSettings: () => Promise<AppResult<void>>;
-  openNewThread: () => Promise<AppResult<void>>;
+  showQoLayer: () => Promise<AppResult<void>>;
 };

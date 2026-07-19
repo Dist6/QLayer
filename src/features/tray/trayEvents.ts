@@ -1,7 +1,7 @@
 export const QOLAYER_TRAY_ACTION_EVENT = "qolayer://tray-action";
 export const QOLAYER_TRAY_STATUS_EVENT = "qolayer://tray-status";
 
-export type TrayAction = "startVoiceFlow" | "restoreAudio";
+export type TrayAction = "openCodex" | "restoreAudio" | "showAbout";
 
 export type TrayActionPayload = {
   action: TrayAction;
@@ -17,8 +17,9 @@ export type TrayActionParseResult =
   | { ok: false; message: string };
 
 export const trayActionLabels: Record<TrayAction, string> = {
-  startVoiceFlow: "Start Voice Flow",
+  openCodex: "Open Codex / ChatGPT",
   restoreAudio: "Restore Audio",
+  showAbout: "About QoLayer",
 };
 
 export function parseTrayActionPayload(payload: unknown): TrayActionParseResult {
@@ -49,5 +50,5 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isTrayAction(value: unknown): value is TrayAction {
-  return value === "startVoiceFlow" || value === "restoreAudio";
+  return value === "openCodex" || value === "restoreAudio" || value === "showAbout";
 }

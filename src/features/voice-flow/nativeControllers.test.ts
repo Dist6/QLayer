@@ -18,11 +18,39 @@ describe("native keyboard controller parsing", () => {
     });
   });
 
+  it("accepts dictation hold steps", () => {
+    expect(
+      parseNativeKeyboardStep({
+        status: "dictationStarted",
+        message: "Dictation shortcut is held.",
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        status: "dictationStarted",
+        message: "Dictation shortcut is held.",
+      },
+    });
+
+    expect(
+      parseNativeKeyboardStep({
+        status: "dictationStopped",
+        message: "Dictation shortcut released.",
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        status: "dictationStopped",
+        message: "Dictation shortcut released.",
+      },
+    });
+  });
+
   it("rejects unsupported native keyboard payloads", () => {
     expect(
       parseNativeKeyboardStep({
-        status: "codexOpened",
-        message: "Codex opened.",
+        status: "focusingCodex",
+        message: "Looking for Codex.",
       }),
     ).toEqual({
       ok: false,
@@ -52,13 +80,13 @@ describe("native window controller parsing", () => {
     expect(
       parseNativeWindowStep({
         status: "codexFocusNotConfirmed",
-        message: "Codex opened, but focus could not be confirmed.",
+        message: "Codex could not be focused.",
       }),
     ).toEqual({
       ok: true,
       value: {
         status: "codexFocusNotConfirmed",
-        message: "Codex opened, but focus could not be confirmed.",
+        message: "Codex could not be focused.",
       },
     });
   });
@@ -72,7 +100,7 @@ describe("native window controller parsing", () => {
     ).toEqual({
       ok: false,
       reason: "failed",
-      message: "Codex opened, but focus could not be confirmed.",
+      message: "Codex could not be focused.",
     });
   });
 });

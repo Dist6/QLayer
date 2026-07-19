@@ -1,117 +1,126 @@
-import { ArrowLeft, RotateCcw, Waves } from "lucide-react";
-
-import { Button } from "../../shared/ui/Button";
-import { StatusChip } from "../../shared/ui/StatusChip";
-import type { AppSettings } from "../settings/settingsTypes";
+import type { AppSettings, AudioMode } from "../settings/settingsTypes";
+import { listeningVolumeBounds } from "../settings/settingsValidation";
 import type { VoiceFlowState } from "./useVoiceFlow";
-import { readVoiceFlowMessages } from "./voiceFlowStatus";
 
 type VoiceFlowDetailPanelProps = {
   settings: AppSettings;
   voiceFlow: VoiceFlowState;
-  onBack: () => void;
+  onSettingsChange: (settings: AppSettings) => void;
 };
 
-export function VoiceFlowDetailPanel({ settings, voiceFlow, onBack }: VoiceFlowDetailPanelProps) {
-  const messages = readVoiceFlowMessages(voiceFlow.steps);
+const audioOptions: ReadonlyArray<{ value: AudioMode; label: string }> = [
+  { value: "disabled", label: "Off" },
+  { value: "duck", label: "Lower" },
+  { value: "mute", label: "Mute" },
+];
+
+export function VoiceFlowDetailPanel({
+  settings,
+  voiceFlow,
+  onSettingsChange,
+}: VoiceFlowDetailPanelProps) {
+  const displayStatus = getDisplayStatus(voiceFlow);
+  const updateVoiceFlow = (next: Partial<AppSettings["voiceFlow"]>) => {
+    onSettingsChange({
+      ...settings,
+      voiceFlow: { ...settings.voiceFlow, ...next },
+    });
+  };
 
   return (
-    <section className="secondary-view">
-      <button className="back-button" onClick={onBack} type="button">
-        <ArrowLeft size={16} aria-hidden="true" /> Quick Tools
-      </button>
-
-      <div className="detail-heading">
-        <h1>Voice Flow</h1>
-        <StatusChip tone="warning">Ready</StatusChip>
+    <section className="tool-view voice-flow-view">
+      <div className="view-heading">
+        <div>
+          <p className="eyebrow">Voice utility</p>
+          <h1>Voice Flow</h1>
+        </div>
+        <div className={`flow-status flow-status-${displayStatus.tone}`}>
+          <span aria-hidden="true" />
+          {displayStatus.label}
+        </div>
       </div>
 
-      <article className="compact-card">
-        <div className="button-row">
-          <Button
-            disabled={voiceFlow.running}
-            onClick={() => void voiceFlow.start()}
-            variant="primary"
-          >
-            <Waves size={17} aria-hidden="true" /> Start Voice Flow
-          </Button>
-          <Button disabled={voiceFlow.running} onClick={() => void voiceFlow.restore()}>
-            <RotateCcw size={17} aria-hidden="true" /> Restore Audio
-          </Button>
+      <div className="shortcut-block">
+        <p>Hold to talk</p>
+        <div className="shortcut-row" aria-label="Hold Control Alt Space to talk">
+          <Keycap>Ctrl</Keycap>
+          <span>+</span>
+          <Keycap>Alt</Keycap>
+          <span>+</span>
+          <Keycap wide>Space</Keycap>
         </div>
+      </div>
 
-        {messages.length > 0 ? (
-          <div className="status-list">
-            {messages.map((message) => (
-              <p key={message}>{message}</p>
-            ))}
-          </div>
-        ) : null}
-      </article>
+      <div className="settings-section">
+        <div className="section-label-row">
+          <label id="background-audio-label">Background audio</label>
+          <span>Restores on release</span>
+        </div>
+        <div className="segmented-control" aria-labelledby="background-audio-label">
+          {audioOptions.map((option) => (
+            <button
+              aria-pressed={settings.voiceFlow.audioMode === option.value}
+              key={option.value}
+              onClick={() => updateVoiceFlow({ audioMode: option.value })}
+              type="button"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <article className="compact-card settings-grid">
-        <h2>Status</h2>
-        <dl className="detail-list">
-          <div>
-            <dt>Integration</dt>
-            <dd>Codex</dd>
+      {settings.voiceFlow.audioMode === "duck" ? (
+        <div className="volume-setting">
+          <div className="section-label-row">
+            <label htmlFor="listening-volume">Listening volume</label>
+            <output htmlFor="listening-volume">{settings.voiceFlow.listeningVolumePercent}%</output>
           </div>
-          <div>
-            <dt>Voice Flow hotkey</dt>
-            <dd>{settings.voiceFlow.hotkey}</dd>
-          </div>
-          <div>
-            <dt>Codex command sent</dt>
-            <dd>{settings.codex.dictationShortcut}</dd>
-          </div>
-          <div>
-            <dt>Audio mode</dt>
-            <dd>{formatAudioMode(settings.voiceFlow.audioMode)}</dd>
-          </div>
-          <div>
-            <dt>Audio status</dt>
-            <dd>{formatAudioStatus(voiceFlow.status.status)}</dd>
-          </div>
-          <div>
-            <dt>Restore mode</dt>
-            <dd>{formatRestoreMode(settings.voiceFlow.restoreMode)}</dd>
-          </div>
-        </dl>
-      </article>
+          <input
+            aria-label="Listening volume"
+            id="listening-volume"
+            max={listeningVolumeBounds.max}
+            min={listeningVolumeBounds.min}
+            onChange={(event) =>
+              updateVoiceFlow({ listeningVolumePercent: Number(event.target.value) })
+            }
+            step="1"
+            type="range"
+            value={settings.voiceFlow.listeningVolumePercent}
+          />
+        </div>
+      ) : null}
+
+      {displayStatus.message ? <p className="flow-message">{displayStatus.message}</p> : null}
     </section>
   );
 }
 
-function formatAudioMode(mode: AppSettings["voiceFlow"]["audioMode"]): string {
-  switch (mode) {
-    case "disabled":
-      return "Disabled";
-    case "duck":
-      return "Duck audio";
-    case "mute":
-      return "Mute audio";
-  }
+function Keycap({ children, wide = false }: { children: string; wide?: boolean }) {
+  return <kbd className={wide ? "keycap keycap-wide" : "keycap"}>{children}</kbd>;
 }
 
-function formatRestoreMode(mode: AppSettings["voiceFlow"]["restoreMode"]): string {
-  return mode === "manual" ? "Manual" : "After timeout";
-}
-
-function formatAudioStatus(status: VoiceFlowState["status"]["status"]): string {
-  switch (status) {
-    case "audioDucked":
-      return "Lowered";
-    case "audioMuted":
-      return "Muted";
-    case "restored":
-      return "Restored";
-    case "nothingToRestore":
-      return "Nothing to restore";
-    case "audioUnavailable":
-      return "Not available";
-    case "failed":
-      return "Failed";
-    default:
-      return "Ready";
+function getDisplayStatus(voiceFlow: VoiceFlowState): {
+  label: string;
+  tone: "ready" | "listening" | "attention";
+  message?: string;
+} {
+  if (voiceFlow.status.status === "dictationStarted") {
+    return { label: "Listening", tone: "listening" };
   }
+
+  if (
+    voiceFlow.status.status === "failed" ||
+    voiceFlow.status.status === "waitingForCodex" ||
+    voiceFlow.status.status === "audioUnavailable" ||
+    voiceFlow.status.status === "dictationUnavailable"
+  ) {
+    return {
+      label: "Needs attention",
+      tone: "attention",
+      message: voiceFlow.status.message,
+    };
+  }
+
+  return { label: "Ready", tone: "ready" };
 }

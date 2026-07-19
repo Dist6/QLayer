@@ -80,18 +80,23 @@ pub fn global_hotkey_status(app: AppHandle) -> GlobalHotkeyStatus {
 }
 
 pub fn handle_global_hotkey(app: &AppHandle, shortcut: &Shortcut, event: ShortcutState) {
-    if should_emit_start_voice_flow(shortcut, event) {
+    if let Some(action) = action_for_global_hotkey(shortcut, event) {
         let _ = app.emit(
             GLOBAL_HOTKEY_ACTION_EVENT,
-            GlobalHotkeyActionPayload {
-                action: "startVoiceFlow",
-            },
+            GlobalHotkeyActionPayload { action },
         );
     }
 }
 
-fn should_emit_start_voice_flow(shortcut: &Shortcut, event: ShortcutState) -> bool {
-    event == ShortcutState::Released && shortcut == &default_shortcut()
+fn action_for_global_hotkey(shortcut: &Shortcut, event: ShortcutState) -> Option<&'static str> {
+    if shortcut != &default_shortcut() {
+        return None;
+    }
+
+    match event {
+        ShortcutState::Pressed => Some("startVoiceFlowHold"),
+        ShortcutState::Released => Some("stopVoiceFlowHold"),
+    }
 }
 
 fn update_status(app: &AppHandle, state: &'static str, message: impl Into<String>) {
@@ -102,32 +107,44 @@ fn update_status(app: &AppHandle, state: &'static str, message: impl Into<String
 
 #[cfg(test)]
 mod tests {
-    use super::{default_shortcut, should_emit_start_voice_flow};
+    use super::{action_for_global_hotkey, default_shortcut};
     use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
     #[test]
-    fn starts_voice_flow_when_global_hotkey_is_released() {
-        assert!(should_emit_start_voice_flow(
-            &default_shortcut(),
-            ShortcutState::Released
-        ));
+    fn starts_voice_flow_hold_when_global_hotkey_is_pressed() {
+        assert_eq!(
+            action_for_global_hotkey(&default_shortcut(), ShortcutState::Pressed),
+            Some("startVoiceFlowHold")
+        );
     }
 
     #[test]
-    fn does_not_start_voice_flow_while_global_hotkey_is_still_pressed() {
-        assert!(!should_emit_start_voice_flow(
-            &default_shortcut(),
-            ShortcutState::Pressed
-        ));
+    fn stops_voice_flow_hold_when_global_hotkey_is_released() {
+        assert_eq!(
+            action_for_global_hotkey(&default_shortcut(), ShortcutState::Released),
+            Some("stopVoiceFlowHold")
+        );
     }
 
     #[test]
-    fn ignores_other_released_shortcuts() {
+    fn ignores_other_shortcuts() {
         let other_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyM);
 
-        assert!(!should_emit_start_voice_flow(
-            &other_shortcut,
-            ShortcutState::Released
-        ));
+        assert_eq!(
+            action_for_global_hotkey(&other_shortcut, ShortcutState::Released),
+            None
+        );
+        assert_eq!(
+            action_for_global_hotkey(&other_shortcut, ShortcutState::Pressed),
+            None
+        );
+    }
+
+    #[test]
+    fn does_not_use_the_old_tap_action() {
+        assert_ne!(
+            action_for_global_hotkey(&default_shortcut(), ShortcutState::Released),
+            Some("startVoiceFlow")
+        );
     }
 }

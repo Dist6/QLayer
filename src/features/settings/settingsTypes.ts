@@ -1,16 +1,10 @@
 export type AudioMode = "disabled" | "duck" | "mute";
-export type RestoreMode = "manual" | "afterTimeout";
-export type Theme = "dark";
-export type AppLanguage = "en";
 export type CodexDictationShortcut = "Ctrl+Shift+D";
 
 export type AppSettings = {
   general: {
-    launchAtStartup: false;
-  };
-  appearance: {
-    theme: Theme;
-    language: AppLanguage;
+    launchAtStartup: boolean;
+    closeToTray: boolean;
   };
   codex: {
     enabled: boolean;
@@ -19,8 +13,7 @@ export type AppSettings = {
   voiceFlow: {
     hotkey: string;
     audioMode: AudioMode;
-    restoreMode: RestoreMode;
-    restoreTimeoutSeconds: number;
+    listeningVolumePercent: number;
   };
 };
 

@@ -1,21 +1,16 @@
 import { defaultSettings } from "./defaultSettings";
 import type {
-  AppLanguage,
   AppSettings,
   AudioMode,
   CodexDictationShortcut,
-  RestoreMode,
   StoredSettingsParseResult,
-  Theme,
 } from "./settingsTypes";
 
 type ValidationResult = { ok: true; settings: AppSettings } | { ok: false; settings: AppSettings };
 
 const audioModes = new Set<AudioMode>(["disabled", "duck", "mute"]);
-const restoreModes = new Set<RestoreMode>(["manual", "afterTimeout"]);
 const dictationShortcuts = new Set<CodexDictationShortcut>(["Ctrl+Shift+D"]);
-const themes = new Set<Theme>(["dark"]);
-const languages = new Set<AppLanguage>(["en"]);
+export const listeningVolumeBounds = { min: 5, max: 50 } as const;
 
 export function validateSettings(value: unknown): ValidationResult {
   if (!isRecord(value)) {
@@ -44,17 +39,17 @@ export function parseStoredSettings(raw: string | null): StoredSettingsParseResu
 }
 
 function mergeSettings(value: Record<string, unknown>): AppSettings {
-  const appearance = readRecord(value.appearance);
+  const general = readRecord(value.general);
   const codex = readRecord(value.codex);
   const voiceFlow = readRecord(value.voiceFlow);
 
   return {
     general: {
-      launchAtStartup: false,
-    },
-    appearance: {
-      theme: readEnum(appearance.theme, themes, defaultSettings.appearance.theme),
-      language: readEnum(appearance.language, languages, defaultSettings.appearance.language),
+      launchAtStartup: readBoolean(
+        general.launchAtStartup,
+        defaultSettings.general.launchAtStartup,
+      ),
+      closeToTray: readBoolean(general.closeToTray, defaultSettings.general.closeToTray),
     },
     codex: {
       enabled: readBoolean(codex.enabled, defaultSettings.codex.enabled),
@@ -67,14 +62,9 @@ function mergeSettings(value: Record<string, unknown>): AppSettings {
     voiceFlow: {
       hotkey: readNonEmptyString(voiceFlow.hotkey, defaultSettings.voiceFlow.hotkey),
       audioMode: readEnum(voiceFlow.audioMode, audioModes, defaultSettings.voiceFlow.audioMode),
-      restoreMode: readEnum(
-        voiceFlow.restoreMode,
-        restoreModes,
-        defaultSettings.voiceFlow.restoreMode,
-      ),
-      restoreTimeoutSeconds: readTimeout(
-        voiceFlow.restoreTimeoutSeconds,
-        defaultSettings.voiceFlow.restoreTimeoutSeconds,
+      listeningVolumePercent: readListeningVolume(
+        voiceFlow.listeningVolumePercent,
+        defaultSettings.voiceFlow.listeningVolumePercent,
       ),
     },
   };
@@ -82,20 +72,17 @@ function mergeSettings(value: Record<string, unknown>): AppSettings {
 
 function isSettingsFullyValid(value: Record<string, unknown>): boolean {
   const general = readRecord(value.general);
-  const appearance = readRecord(value.appearance);
   const codex = readRecord(value.codex);
   const voiceFlow = readRecord(value.voiceFlow);
 
   return (
-    general.launchAtStartup === false &&
-    themes.has(appearance.theme as Theme) &&
-    languages.has(appearance.language as AppLanguage) &&
+    typeof general.launchAtStartup === "boolean" &&
+    typeof general.closeToTray === "boolean" &&
     typeof codex.enabled === "boolean" &&
     dictationShortcuts.has(codex.dictationShortcut as CodexDictationShortcut) &&
     isNonEmptyString(voiceFlow.hotkey) &&
     audioModes.has(voiceFlow.audioMode as AudioMode) &&
-    restoreModes.has(voiceFlow.restoreMode as RestoreMode) &&
-    isValidTimeout(voiceFlow.restoreTimeoutSeconds)
+    isValidListeningVolume(voiceFlow.listeningVolumePercent)
   );
 }
 
@@ -123,10 +110,15 @@ function readEnum<T extends string>(value: unknown, allowed: Set<T>, fallback: T
   return typeof value === "string" && allowed.has(value as T) ? (value as T) : fallback;
 }
 
-function readTimeout(value: unknown, fallback: number): number {
-  return isValidTimeout(value) ? value : fallback;
+function readListeningVolume(value: unknown, fallback: number): number {
+  return isValidListeningVolume(value) ? value : fallback;
 }
 
-function isValidTimeout(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 3 && value <= 300;
+function isValidListeningVolume(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= listeningVolumeBounds.min &&
+    value <= listeningVolumeBounds.max
+  );
 }

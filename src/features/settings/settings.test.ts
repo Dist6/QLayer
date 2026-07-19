@@ -8,9 +8,8 @@ describe("settings defaults", () => {
     expect(defaultSettings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
     expect(defaultSettings.voiceFlow.hotkey).toBe("Ctrl+Alt+Space");
     expect(defaultSettings.voiceFlow.audioMode).toBe("disabled");
-    expect(defaultSettings.voiceFlow.restoreMode).toBe("manual");
-    expect(defaultSettings.appearance.theme).toBe("dark");
-    expect(defaultSettings.appearance.language).toBe("en");
+    expect(defaultSettings.voiceFlow.listeningVolumePercent).toBe(20);
+    expect(defaultSettings.general).toEqual({ launchAtStartup: false, closeToTray: true });
   });
 });
 
@@ -31,18 +30,45 @@ describe("settings validation", () => {
   it("merges partial valid stored settings with defaults", () => {
     const parsed = parseStoredSettings(
       JSON.stringify({
+        general: {
+          launchAtStartup: true,
+          closeToTray: false,
+        },
         voiceFlow: {
           audioMode: "mute",
-          restoreMode: "afterTimeout",
-          restoreTimeoutSeconds: 20,
+          listeningVolumePercent: 35,
         },
       }),
     );
 
     expect(parsed.settings.voiceFlow.audioMode).toBe("mute");
-    expect(parsed.settings.voiceFlow.restoreMode).toBe("afterTimeout");
-    expect(parsed.settings.voiceFlow.restoreTimeoutSeconds).toBe(20);
+    expect(parsed.settings.voiceFlow.listeningVolumePercent).toBe(35);
+    expect(parsed.settings.general).toEqual({ launchAtStartup: true, closeToTray: false });
     expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
+  });
+
+  it.each([5, 20, 50])("accepts a %i percent listening volume", (value) => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        ...defaultSettings,
+        voiceFlow: { ...defaultSettings.voiceFlow, listeningVolumePercent: value },
+      }),
+    );
+
+    expect(parsed.settings.voiceFlow.listeningVolumePercent).toBe(value);
+    expect(parsed.recovered).toBe(false);
+  });
+
+  it.each([4, 51, 20.5])("rejects an invalid listening volume of %s", (value) => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        ...defaultSettings,
+        voiceFlow: { ...defaultSettings.voiceFlow, listeningVolumePercent: value },
+      }),
+    );
+
+    expect(parsed.settings.voiceFlow.listeningVolumePercent).toBe(20);
+    expect(parsed.recovered).toBe(true);
   });
 
   it("rejects invalid enum values and keeps defaults", () => {

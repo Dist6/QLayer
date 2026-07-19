@@ -1,10 +1,12 @@
-use tauri_plugin_opener::OpenerExt;
 use tauri::{Manager, WindowEvent};
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_opener::OpenerExt;
 
 mod audio;
 mod global_hotkeys;
 mod keyboard;
 mod tray;
+mod window_behavior;
 mod window_focus;
 
 #[tauri::command]
@@ -32,8 +34,17 @@ fn get_global_hotkey_status(app: tauri::AppHandle) -> global_hotkeys::GlobalHotk
 }
 
 #[tauri::command]
-fn prepare_audio(app: tauri::AppHandle, mode: String) -> Result<audio::AudioStep, String> {
-    audio::prepare_audio(app, mode)
+fn show_main_window(app: tauri::AppHandle) -> Result<(), String> {
+    tray::show_main_window(&app)
+}
+
+#[tauri::command]
+fn prepare_audio(
+    app: tauri::AppHandle,
+    mode: String,
+    listening_volume_percent: u8,
+) -> Result<audio::AudioStep, String> {
+    audio::prepare_audio(app, mode, listening_volume_percent)
 }
 
 #[tauri::command]
@@ -47,8 +58,23 @@ fn send_dictation_shortcut(shortcut: String) -> Result<keyboard::KeyboardStep, S
 }
 
 #[tauri::command]
-fn focus_codex_window() -> window_focus::WindowFocusStep {
-    window_focus::focus_codex_window()
+fn press_dictation_shortcut(shortcut: String) -> Result<keyboard::KeyboardStep, String> {
+    keyboard::press_dictation_shortcut(shortcut)
+}
+
+#[tauri::command]
+fn release_dictation_shortcut(shortcut: String) -> Result<keyboard::KeyboardStep, String> {
+    keyboard::release_dictation_shortcut(shortcut)
+}
+
+#[tauri::command]
+fn focus_codex_window(app: tauri::AppHandle) -> window_focus::WindowFocusStep {
+    window_focus::focus_codex_window(|| app.opener().open_url("codex://", None::<&str>).is_ok())
+}
+
+#[tauri::command]
+fn set_close_to_tray(state: tauri::State<window_behavior::WindowBehaviorState>, enabled: bool) {
+    state.set_close_to_tray(enabled);
 }
 
 fn is_allowed_codex_url(url: &str) -> bool {
@@ -67,28 +93,67 @@ fn main() {
         .manage(tray::TrayState::default())
         .manage(global_hotkeys::GlobalHotkeyState::default())
         .manage(audio::AudioState::default())
+        .manage(window_behavior::WindowBehaviorState::default())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--minimized"]),
+        ))
         .setup(|app| {
             tray::setup_tray(app);
             global_hotkeys::setup_global_hotkeys(app);
+            if should_start_minimized(std::env::args()) {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                    tray::record_window_hidden(app.handle());
+                }
+            }
             Ok(())
         })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                api.prevent_close();
-                let _ = window.hide();
-                tray::record_window_hidden(window.app_handle());
+                if window
+                    .app_handle()
+                    .state::<window_behavior::WindowBehaviorState>()
+                    .close_to_tray()
+                {
+                    api.prevent_close();
+                    let _ = window.hide();
+                    tray::record_window_hidden(window.app_handle());
+                }
             }
         })
         .invoke_handler(tauri::generate_handler![
             open_codex_url,
             get_tray_status,
             get_global_hotkey_status,
+            show_main_window,
             prepare_audio,
             restore_audio,
             send_dictation_shortcut,
-            focus_codex_window
+            press_dictation_shortcut,
+            release_dictation_shortcut,
+            focus_codex_window,
+            set_close_to_tray
         ])
         .run(tauri::generate_context!())
         .expect("error while running QoLayer");
+}
+
+fn should_start_minimized(args: impl IntoIterator<Item = String>) -> bool {
+    args.into_iter().any(|argument| argument == "--minimized")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_start_minimized;
+
+    #[test]
+    fn recognizes_the_autostart_minimized_argument() {
+        assert!(should_start_minimized([
+            "qolayer.exe".to_string(),
+            "--minimized".to_string(),
+        ]));
+        assert!(!should_start_minimized(["qolayer.exe".to_string()]));
+    }
 }

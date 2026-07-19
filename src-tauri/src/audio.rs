@@ -2,7 +2,8 @@ use serde::Serialize;
 use std::sync::Mutex;
 use tauri::Manager;
 
-const DUCK_VOLUME: f32 = 0.2;
+const MIN_LISTENING_VOLUME_PERCENT: u8 = 5;
+const MAX_LISTENING_VOLUME_PERCENT: u8 = 50;
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -11,7 +12,7 @@ pub struct AudioStep {
     message: &'static str,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 struct SavedAudioState {
     volume: f32,
     muted: bool,
@@ -23,11 +24,13 @@ pub struct AudioState {
 }
 
 impl AudioState {
-    fn save(&self, next: SavedAudioState) -> Result<(), &'static str> {
+    fn save_once(&self, next: SavedAudioState) -> Result<(), &'static str> {
         self.saved
             .lock()
             .map(|mut saved| {
-                *saved = Some(next);
+                if saved.is_none() {
+                    *saved = Some(next);
+                }
             })
             .map_err(|_| "Audio control failed.")
     }
@@ -40,9 +43,13 @@ impl AudioState {
     }
 }
 
-pub fn prepare_audio(app: tauri::AppHandle, mode: String) -> Result<AudioStep, String> {
+pub fn prepare_audio(
+    app: tauri::AppHandle,
+    mode: String,
+    listening_volume_percent: u8,
+) -> Result<AudioStep, String> {
     match mode.as_str() {
-        "duck" => duck_audio(app),
+        "duck" => duck_audio(app, listening_volume_scalar(listening_volume_percent)?),
         "mute" => mute_audio(app),
         "disabled" => Ok(AudioStep {
             status: "audioDisabled",
@@ -73,12 +80,12 @@ pub fn restore_audio(app: tauri::AppHandle) -> Result<AudioStep, String> {
     }
 }
 
-fn duck_audio(app: tauri::AppHandle) -> Result<AudioStep, String> {
+fn duck_audio(app: tauri::AppHandle, listening_volume: f32) -> Result<AudioStep, String> {
     let current = platform::read_audio_state().map_err(|message| message.to_string())?;
-    let temporary_volume = current.volume.min(DUCK_VOLUME);
+    let temporary_volume = current.volume.min(listening_volume);
     let muted = current.muted;
     app.state::<AudioState>()
-        .save(current)
+        .save_once(current)
         .map_err(|message: &'static str| message.to_string())?;
     platform::set_audio_state(temporary_volume, muted).map_err(|message| message.to_string())?;
 
@@ -88,11 +95,19 @@ fn duck_audio(app: tauri::AppHandle) -> Result<AudioStep, String> {
     })
 }
 
+fn listening_volume_scalar(percent: u8) -> Result<f32, String> {
+    if !(MIN_LISTENING_VOLUME_PERCENT..=MAX_LISTENING_VOLUME_PERCENT).contains(&percent) {
+        return Err("Listening volume must be between 5 and 50 percent.".to_string());
+    }
+
+    Ok(f32::from(percent) / 100.0)
+}
+
 fn mute_audio(app: tauri::AppHandle) -> Result<AudioStep, String> {
     let current = platform::read_audio_state().map_err(|message| message.to_string())?;
     let volume = current.volume;
     app.state::<AudioState>()
-        .save(current)
+        .save_once(current)
         .map_err(|message: &'static str| message.to_string())?;
     platform::set_audio_state(volume, true).map_err(|message| message.to_string())?;
 
@@ -181,6 +196,43 @@ mod platform {
                 CoUninitialize();
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{listening_volume_scalar, AudioState, SavedAudioState};
+
+    #[test]
+    fn preserves_the_first_audio_state_until_restore() {
+        let state = AudioState::default();
+        let original = SavedAudioState {
+            volume: 0.8,
+            muted: false,
+        };
+
+        state.save_once(original.clone()).unwrap();
+        state
+            .save_once(SavedAudioState {
+                volume: 0.2,
+                muted: true,
+            })
+            .unwrap();
+
+        assert_eq!(state.take().unwrap(), Some(original));
+    }
+
+    #[test]
+    fn converts_supported_listening_volumes() {
+        assert_eq!(listening_volume_scalar(5).unwrap(), 0.05);
+        assert_eq!(listening_volume_scalar(20).unwrap(), 0.2);
+        assert_eq!(listening_volume_scalar(50).unwrap(), 0.5);
+    }
+
+    #[test]
+    fn rejects_unsupported_listening_volumes() {
+        assert!(listening_volume_scalar(4).is_err());
+        assert!(listening_volume_scalar(51).is_err());
     }
 }
 

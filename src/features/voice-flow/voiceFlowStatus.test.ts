@@ -7,8 +7,7 @@ describe("Voice Flow status messages", () => {
   it("keeps only short human messages after a Voice Flow run", () => {
     const steps: VoiceFlowStep[] = [
       { status: "audioDucked", message: "Audio lowered." },
-      { status: "openingCodex", message: "Opening Codex." },
-      { status: "codexOpened", message: "Codex opened." },
+      { status: "focusingCodex", message: "Looking for Codex." },
       { status: "codexFocused", message: "Codex focused." },
       {
         status: "dictationSent",
@@ -16,13 +15,12 @@ describe("Voice Flow status messages", () => {
       },
       {
         status: "ready",
-        message: "Audio lowered. Codex opened. Dictation shortcut sent.",
+        message: "Audio lowered. Codex focused. Dictation shortcut sent.",
       },
     ];
 
     expect(readVoiceFlowMessages(steps)).toEqual([
       "Audio lowered.",
-      "Codex opened.",
       "Codex focused.",
       "Dictation shortcut sent.",
     ]);
@@ -33,10 +31,21 @@ describe("Voice Flow status messages", () => {
       readVoiceFlowMessages([
         {
           status: "codexFocusNotConfirmed",
-          message: "Codex opened, but focus could not be confirmed.",
+          message: "Codex could not be focused.",
         },
       ]),
-    ).toEqual(["Codex opened, but focus could not be confirmed."]);
+    ).toEqual(["Codex could not be focused."]);
+  });
+
+  it("shows the Codex recovery instruction", () => {
+    expect(
+      readVoiceFlowMessages([
+        {
+          status: "waitingForCodex",
+          message: "Waiting for Codex. Open Codex, then hold Ctrl+Alt+Space again.",
+        },
+      ]),
+    ).toEqual(["Waiting for Codex. Open Codex, then hold Ctrl+Alt+Space again."]);
   });
 
   it("uses a short unavailable message for dictation automation", () => {
@@ -48,6 +57,21 @@ describe("Voice Flow status messages", () => {
         },
       ]),
     ).toEqual(["Dictation automation is not available."]);
+  });
+
+  it("uses short push-to-talk dictation messages", () => {
+    expect(
+      readVoiceFlowMessages([
+        {
+          status: "dictationStarted",
+          message: "Dictation shortcut is held.",
+        },
+        {
+          status: "dictationStopped",
+          message: "Dictation shortcut released.",
+        },
+      ]),
+    ).toEqual(["Dictation is listening.", "Dictation shortcut released."]);
   });
 
   it("uses a compact restore audio message", () => {

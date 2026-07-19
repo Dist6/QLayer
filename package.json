@@ -17,8 +17,9 @@
     "rust:check": "cargo check --manifest-path src-tauri/Cargo.toml"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.45.0",
     "@tauri-apps/api": "2.11.1",
-    "lucide-react": "1.21.0",
+    "@tauri-apps/plugin-autostart": "^2.5.1",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },

@@ -10,8 +10,9 @@ const TRAY_EVENT: &str = "qolayer://tray-action";
 const TRAY_STATUS_EVENT: &str = "qolayer://tray-status";
 const FALLBACK_ICON_RGBA: &[u8] = &[0x54, 0xd3, 0xa1, 0xff];
 const SHOW_ITEM_ID: &str = "show-qolayer";
-const START_VOICE_FLOW_ITEM_ID: &str = "start-voice-flow";
+const OPEN_CODEX_ITEM_ID: &str = "open-codex";
 const RESTORE_AUDIO_ITEM_ID: &str = "restore-audio";
+const ABOUT_ITEM_ID: &str = "about-qolayer";
 const QUIT_ITEM_ID: &str = "quit";
 
 #[derive(Clone, Serialize)]
@@ -91,8 +92,9 @@ pub fn tray_status(app: AppHandle) -> TrayStatus {
 fn try_setup_tray(app: &mut App) -> tauri::Result<()> {
     let menu = MenuBuilder::new(app)
         .text(SHOW_ITEM_ID, "Show QoLayer")
-        .text(START_VOICE_FLOW_ITEM_ID, "Start Voice Flow")
+        .text(OPEN_CODEX_ITEM_ID, "Open Codex / ChatGPT")
         .text(RESTORE_AUDIO_ITEM_ID, "Restore Audio")
+        .text(ABOUT_ITEM_ID, "About QoLayer")
         .separator()
         .text(QUIT_ITEM_ID, "Quit")
         .build()?;
@@ -115,36 +117,43 @@ fn try_setup_tray(app: &mut App) -> tauri::Result<()> {
 
 fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
     match event.id().as_ref() {
-        SHOW_ITEM_ID => show_main_window(app),
-        START_VOICE_FLOW_ITEM_ID => emit_tray_action(app, "startVoiceFlow"),
+        SHOW_ITEM_ID => {
+            let _ = show_main_window(app);
+        }
+        OPEN_CODEX_ITEM_ID => emit_tray_action(app, "openCodex"),
         RESTORE_AUDIO_ITEM_ID => emit_tray_action(app, "restoreAudio"),
+        ABOUT_ITEM_ID => {
+            let _ = show_main_window(app);
+            emit_tray_action(app, "showAbout");
+        }
         QUIT_ITEM_ID => app.exit(0),
         _ => {}
     }
 }
 
-fn show_main_window(app: &AppHandle) {
+pub fn show_main_window(app: &AppHandle) -> Result<(), String> {
     let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) else {
         update_status(app, false, "QoLayer window is unavailable.");
-        return;
+        return Err("QoLayer window is unavailable.".to_string());
     };
 
     if window.show().is_err() {
         update_status(app, false, "QoLayer window could not be shown.");
-        return;
+        return Err("QoLayer window could not be shown.".to_string());
     }
 
     if window.unminimize().is_err() {
         update_status(app, false, "QoLayer window could not be restored.");
-        return;
+        return Err("QoLayer window could not be restored.".to_string());
     }
 
     if window.set_focus().is_err() {
         update_status(app, false, "QoLayer window could not be focused.");
-        return;
+        return Err("QoLayer window could not be focused.".to_string());
     }
 
     update_status(app, true, "QoLayer window is visible.");
+    Ok(())
 }
 
 fn emit_tray_action(app: &AppHandle, action: &'static str) {

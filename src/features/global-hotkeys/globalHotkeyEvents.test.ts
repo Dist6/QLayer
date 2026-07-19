@@ -7,10 +7,17 @@ import {
 } from "./globalHotkeyEvents";
 
 describe("global hotkey events", () => {
-  it("parses start Voice Flow actions", () => {
-    expect(parseGlobalHotkeyActionPayload({ action: "startVoiceFlow" })).toEqual({
+  it("parses start Voice Flow hold actions", () => {
+    expect(parseGlobalHotkeyActionPayload({ action: "startVoiceFlowHold" })).toEqual({
       ok: true,
-      action: "startVoiceFlow",
+      action: "startVoiceFlowHold",
+    });
+  });
+
+  it("parses stop Voice Flow hold actions", () => {
+    expect(parseGlobalHotkeyActionPayload({ action: "stopVoiceFlowHold" })).toEqual({
+      ok: true,
+      action: "stopVoiceFlowHold",
     });
   });
 

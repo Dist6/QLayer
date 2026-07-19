@@ -19,7 +19,7 @@ describe("tray events", () => {
   });
 
   it("parses supported tray action payloads", () => {
-    const actions: TrayAction[] = ["startVoiceFlow", "restoreAudio"];
+    const actions: TrayAction[] = ["openCodex", "restoreAudio", "showAbout"];
 
     for (const action of actions) {
       expect(parseTrayActionPayload({ action })).toEqual({ ok: true, action });
@@ -38,8 +38,9 @@ describe("tray events", () => {
   });
 
   it("keeps labels English-only and user-facing", () => {
-    expect(trayActionLabels.startVoiceFlow).toBe("Start Voice Flow");
+    expect(trayActionLabels.openCodex).toBe("Open Codex / ChatGPT");
     expect(trayActionLabels.restoreAudio).toBe("Restore Audio");
+    expect(trayActionLabels.showAbout).toBe("About QoLayer");
   });
 
   it("parses tray status from native command results", () => {
