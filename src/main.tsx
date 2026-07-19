@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 
 import { App } from "./app/App";
 import "./app/App.css";
+import { VoiceDestinationSelectorApp } from "./features/chat-shortcuts/VoiceDestinationSelectorApp";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const root = document.getElementById("root");
 
@@ -12,6 +14,6 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    {getCurrentWindow().label === "voice-selector" ? <VoiceDestinationSelectorApp /> : <App />}
   </StrictMode>,
 );

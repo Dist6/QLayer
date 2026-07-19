@@ -9,6 +9,7 @@ mod codex_threads;
 mod global_hotkeys;
 mod keyboard;
 mod tray;
+mod voice_selector;
 mod window_behavior;
 mod window_focus;
 
@@ -144,6 +145,8 @@ fn main() {
             release_dictation_shortcut,
             focus_codex_window,
             list_recent_codex_chats,
+            voice_selector::show_voice_selector,
+            voice_selector::hide_voice_selector,
             set_close_to_tray
         ])
         .run(tauri::generate_context!())

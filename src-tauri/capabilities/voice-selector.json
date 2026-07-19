@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "voice-selector",
+  "description": "Minimal event capability for the Voice Flow destination selector.",
+  "windows": ["voice-selector"],
+  "permissions": ["core:event:default"]
+}

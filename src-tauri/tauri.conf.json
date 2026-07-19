@@ -24,6 +24,23 @@
         "resizable": false,
         "decorations": false,
         "skipTaskbar": true
+      },
+      {
+        "label": "voice-selector",
+        "title": "Choose a voice destination",
+        "url": "index.html?window=voice-selector",
+        "width": 320,
+        "height": 280,
+        "minWidth": 320,
+        "minHeight": 120,
+        "maxWidth": 320,
+        "maxHeight": 280,
+        "visible": false,
+        "resizable": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "focus": false,
+        "skipTaskbar": true
       }
     ],
     "security": {
