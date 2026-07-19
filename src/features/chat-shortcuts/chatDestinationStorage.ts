@@ -27,7 +27,10 @@ export function createChatDestinationStorage(storage: Storage): ChatDestinationS
       }
     },
     save: (destinations) => {
-      storage.setItem(CHAT_DESTINATION_STORAGE_KEY, JSON.stringify(normalizeDestinations(destinations)));
+      storage.setItem(
+        CHAT_DESTINATION_STORAGE_KEY,
+        JSON.stringify(normalizeDestinations(destinations)),
+      );
     },
   };
 }

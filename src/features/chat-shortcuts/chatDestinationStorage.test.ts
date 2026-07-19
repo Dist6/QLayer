@@ -16,7 +16,9 @@ function destination(index: number): ChatDestination {
 function memoryStorage(): Storage {
   const values = new Map<string, string>();
   return {
-    get length() { return values.size; },
+    get length() {
+      return values.size;
+    },
     clear: () => values.clear(),
     getItem: (key) => values.get(key) ?? null,
     key: (index) => [...values.keys()][index] ?? null,
@@ -36,7 +38,10 @@ describe("chat destination storage", () => {
 
   it("round-trips, deduplicates, and caps valid destinations", () => {
     const storage = createChatDestinationStorage(memoryStorage());
-    storage.save([...Array.from({ length: 11 }, (_, index) => destination(index + 1)), destination(1)]);
+    storage.save([
+      ...Array.from({ length: 11 }, (_, index) => destination(index + 1)),
+      destination(1),
+    ]);
     const loaded = storage.load();
     expect(loaded).toHaveLength(9);
     expect(loaded.map((item) => item.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -45,7 +50,10 @@ describe("chat destination storage", () => {
 
   it("discards invalid records independently", () => {
     const backing = memoryStorage();
-    backing.setItem("qolayer.chat-destinations.v0", JSON.stringify([destination(1), { nope: true }]));
+    backing.setItem(
+      "qolayer.chat-destinations.v0",
+      JSON.stringify([destination(1), { nope: true }]),
+    );
     expect(createChatDestinationStorage(backing).load()).toEqual([{ ...destination(1), order: 1 }]);
   });
 });

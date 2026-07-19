@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AboutPanel } from "../features/about/AboutPanel";
 import { ChatShortcutsPanel } from "../features/chat-shortcuts/ChatShortcutsPanel";
+import { useChatDestinations } from "../features/chat-shortcuts/useChatDestinations";
 import { openCodexAction } from "../features/codex/codexController";
 import {
   getGlobalHotkeyStatus,
@@ -41,6 +42,7 @@ export function App() {
   const [settings, setSettingsState] = useState<AppSettings>(loaded.settings);
   const [globalHotkeyStatus, setGlobalHotkeyStatus] =
     useState<GlobalHotkeyStatus>(initialHotkeyStatus);
+  const chatDestinations = useChatDestinations();
   const voiceFlow = useVoiceFlow(settings);
   const { reportMessage, restore, startHold, stopHold } = voiceFlow;
 
@@ -173,7 +175,14 @@ export function App() {
       <ToolboxSidebar activeView={activeView} onSelect={setActiveView} />
 
       <main className="main-panel">
-        {renderView(activeView, settings, setSettings, voiceFlow, globalHotkeyStatus)}
+        {renderView(
+          activeView,
+          settings,
+          setSettings,
+          voiceFlow,
+          globalHotkeyStatus,
+          chatDestinations,
+        )}
       </main>
     </div>
   );
@@ -185,10 +194,11 @@ function renderView(
   setSettings: (settings: AppSettings) => void,
   voiceFlow: ReturnType<typeof useVoiceFlow>,
   globalHotkeyStatus: GlobalHotkeyStatus,
+  chatDestinations: ReturnType<typeof useChatDestinations>,
 ) {
   switch (activeView) {
     case "chatShortcuts":
-      return <ChatShortcutsPanel />;
+      return <ChatShortcutsPanel state={chatDestinations} />;
     case "savedPrompts":
       return <SavedPromptsPanel />;
     case "settings":

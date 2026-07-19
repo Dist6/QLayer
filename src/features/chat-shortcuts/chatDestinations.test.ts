@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { moveDestination, pinDestination, removeDestination, renameDestination } from "./chatDestinations";
+import {
+  moveDestination,
+  pinDestination,
+  removeDestination,
+  renameDestination,
+} from "./chatDestinations";
 import type { ChatDestination } from "./chatDestinationTypes";
 
 const first: ChatDestination = {
@@ -27,7 +32,10 @@ describe("chat destinations", () => {
     const original = [first, second];
     expect(renameDestination(original, "first", "  New   name ")[0].displayName).toBe("New name");
     expect(removeDestination(original, "first")).toEqual([{ ...second, order: 1 }]);
-    expect(moveDestination(original, "second", "up").map((item) => item.id)).toEqual(["second", "first"]);
+    expect(moveDestination(original, "second", "up").map((item) => item.id)).toEqual([
+      "second",
+      "first",
+    ]);
     expect(original).toEqual([first, second]);
   });
 });
