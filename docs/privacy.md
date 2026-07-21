@@ -1,6 +1,6 @@
 # Privacy
 
-QoLayer is local-first.
+QLayer is local-first.
 
 v0.1 does not:
 

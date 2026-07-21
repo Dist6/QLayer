@@ -19,7 +19,7 @@ const snapshot: LocalhostSnapshot = {
       port: 5173,
       processName: "node.exe",
       projectId: "project-qolayer",
-      projectName: "QoLayer",
+      projectName: "QLayer",
       projectNameSource: "automatic",
       startedAtMs: null,
       uptimeSeconds: 125,
@@ -62,7 +62,7 @@ describe("LocalhostManagerContent", () => {
     expect(markup).toContain("Localhost Manager");
     expect(markup).toContain("1 running");
     expect(markup).toContain("localhost:5173");
-    expect(markup).toContain("(QoLayer)");
+    expect(markup).toContain("(QLayer)");
     expect(markup).toContain("Frontend · node.exe");
     expect(markup).toContain("47 MB · 1.4% CPU · Up 2m");
     expect(markup).toContain('aria-label="Open localhost:5173"');

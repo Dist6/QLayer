@@ -11,8 +11,12 @@ pub(crate) fn process_chain(pid: u32, parents: &HashMap<u32, u32>) -> Vec<u32> {
     let mut visited = HashSet::from([pid]);
     let mut current = pid;
     for _ in 0..MAX_PARENT_DEPTH {
-        let Some(parent) = parents.get(&current).copied() else { break };
-        if parent == 0 || !visited.insert(parent) { break }
+        let Some(parent) = parents.get(&current).copied() else {
+            break;
+        };
+        if parent == 0 || !visited.insert(parent) {
+            break;
+        }
         chain.push(parent);
         current = parent;
     }
@@ -31,7 +35,11 @@ mod platform {
 
     struct Snapshot(HANDLE);
     impl Drop for Snapshot {
-        fn drop(&mut self) { unsafe { let _ = CloseHandle(self.0); } }
+        fn drop(&mut self) {
+            unsafe {
+                let _ = CloseHandle(self.0);
+            }
+        }
     }
 
     pub(super) fn discover_parent_map() -> Option<HashMap<u32, u32>> {
@@ -44,7 +52,9 @@ mod platform {
         let mut parents = HashMap::new();
         loop {
             parents.insert(entry.th32ProcessID, entry.th32ParentProcessID);
-            if unsafe { Process32NextW(snapshot.0, &mut entry) }.is_err() { break }
+            if unsafe { Process32NextW(snapshot.0, &mut entry) }.is_err() {
+                break;
+            }
         }
         Some(parents)
     }
@@ -53,7 +63,9 @@ mod platform {
 #[cfg(not(windows))]
 mod platform {
     use std::collections::HashMap;
-    pub(super) fn discover_parent_map() -> Option<HashMap<u32, u32>> { None }
+    pub(super) fn discover_parent_map() -> Option<HashMap<u32, u32>> {
+        None
+    }
 }
 
 #[cfg(test)]

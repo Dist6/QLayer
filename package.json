@@ -1,6 +1,7 @@
 {
-  "name": "qolayer",
+  "name": "qlayer",
   "version": "0.1.0",
+  "description": "A local-first Windows companion for Codex and ChatGPT.",
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -10,6 +11,7 @@
     "build": "tsc --noEmit && vite build",
     "desktop": "tauri dev",
     "desktop:build": "tauri build",
+    "desktop:portable": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-portable.ps1",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",

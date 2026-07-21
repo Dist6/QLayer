@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { emitTo, listen } from "@tauri-apps/api/event";
 import { IconArrowLeft, IconFolder } from "@tabler/icons-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -9,6 +9,7 @@ import {
   getVoiceSelectorNumber,
   parseVoiceSelectorOpenPayload,
   VOICE_SELECTOR_OPEN_EVENT,
+  VOICE_SELECTOR_READY_EVENT,
   type VoiceSelectorProject,
   type VoiceSelectorSelection,
 } from "./voiceSelectorEvents";
@@ -36,6 +37,7 @@ export function VoiceDestinationSelectorApp() {
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
+    let cancelled = false;
     void listen(VOICE_SELECTOR_OPEN_EVENT, (event) => {
       const payload = parseVoiceSelectorOpenPayload(event.payload);
       if (!payload) return;
@@ -43,12 +45,24 @@ export function VoiceDestinationSelectorApp() {
       setDestinations(payload.destinations);
       setProjects(payload.projects);
       setProjectId(undefined);
-      if (mode === "projects" && payload.projects.length === 0) setMode("chats");
+      setModeState((current) => {
+        if (current !== "projects" || payload.projects.length > 0) return current;
+        window.localStorage.setItem(MODE_STORAGE_KEY, "chats");
+        return "chats";
+      });
     }).then((next) => {
+      if (cancelled) {
+        next();
+        return;
+      }
       unlisten = next;
+      void emitTo("main", VOICE_SELECTOR_READY_EVENT);
     });
-    return () => unlisten?.();
-  }, [mode]);
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, []);
 
   const choose = (selection: VoiceSelectorSelection) => {
     if (consumedRef.current) return;

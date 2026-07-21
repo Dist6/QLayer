@@ -19,8 +19,8 @@ const destination: ChatDestination = {
 
 const project: Project = {
   id: "project",
-  name: "QoLayer",
-  rootPath: "C:\\Projects\\QoLayer",
+  name: "QLayer",
+  rootPath: "C:\\Projects\\QLayer",
   rootIdentity: "root",
   linkedChats: [
     {

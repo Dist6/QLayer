@@ -8,7 +8,7 @@ Improve Localhost Manager so it can reliably identify more native Windows develo
 
 ## Current limitation
 
-The current resolver identifies a project only when the listener process command line contains an absolute `node_modules` path. This works for QoLayer's Vite process but misses relative entry points, parent package-manager processes, compiled applications, and non-Node ecosystems.
+The current resolver identifies a project only when the listener process command line contains an absolute `node_modules` path. This works for QLayer's Vite process but misses relative entry points, parent package-manager processes, compiled applications, and non-Node ecosystems.
 
 Listener discovery, process ownership, memory, CPU, uptime, safe URL opening, and unknown-listener isolation remain sound and should not be replaced.
 

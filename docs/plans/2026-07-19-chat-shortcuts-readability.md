@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make Chat shortcuts readable and efficient inside QoLayer's compact desktop
+Make Chat shortcuts readable and efficient inside QLayer's compact desktop
 window while improving the native tray interaction and icon legibility.
 
 ## Design
@@ -15,7 +15,7 @@ window while improving the native tray interaction and icon legibility.
   genuinely exceed the available height.
 - The voice selector uses inset choices and the same 14 px minimum.
 - A left-button double click on the Windows tray icon restores and focuses the
-  existing QoLayer window. The context menu remains available separately.
+  existing QLayer window. The context menu remains available separately.
 - Native icons use a tighter optical crop of the official logo without changing
   its geometry or colors.
 - Reduced-motion preferences continue to disable disclosure motion.

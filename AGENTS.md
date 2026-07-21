@@ -1,6 +1,6 @@
 # Agent Instructions
 
-These rules apply to future Codex sessions working on QoLayer.
+These rules apply to future Codex sessions working on QLayer.
 
 - Keep code modular and simple.
 - Do not add dead code.

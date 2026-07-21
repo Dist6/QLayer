@@ -7,7 +7,7 @@ import {
   IconMessages,
   IconPencil,
   IconPlus,
-  IconServer,
+  IconRefresh,
   IconTrash,
 } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
@@ -17,7 +17,9 @@ import type { ChatDestinationsState } from "../chat-shortcuts/useChatDestination
 import { buildCodexThreadLink } from "../codex/deepLinks";
 import type { LocalhostAutoRefreshSeconds } from "../settings/settingsTypes";
 import { useLocalhostServers } from "../localhost-manager/useLocalhostServers";
+import { useVisibleInterval } from "../localhost-manager/useVisibleInterval";
 import { ProjectActionDialog } from "./ProjectActionDialog";
+import { ProjectChatLinkView } from "./ProjectChatLinkView";
 import { ProjectEditorView } from "./ProjectEditorView";
 import { runProjectAction } from "./projectActionClient";
 import { deriveProjectPortStates, type ProjectPortState } from "./projectLocalhostStatus";
@@ -34,7 +36,8 @@ type ProjectsView =
   | { kind: "list" }
   | { kind: "detail"; projectId: string }
   | { kind: "create" }
-  | { kind: "edit"; projectId: string };
+  | { kind: "edit"; projectId: string }
+  | { kind: "linkChats"; projectId: string };
 
 export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPanelProps) {
   const [view, setView] = useState<ProjectsView>({ kind: "list" });
@@ -46,29 +49,35 @@ export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPane
   const [actionMessage, setActionMessage] = useState<string>();
   const [fallbackText, setFallbackText] = useState<string>();
   const [actionFeedback, setActionFeedback] = useState<string>();
-  const verificationTimerRef = useRef<number | undefined>(undefined);
+  const [verificationChecksRemaining, setVerificationChecksRemaining] = useState<number | null>(
+    null,
+  );
   const localhost = useLocalhostServers(autoRefreshSeconds);
+
+  useVisibleInterval(
+    () => {
+      void localhost.refresh();
+      setVerificationChecksRemaining((current) =>
+        current === null || current <= 1 ? null : current - 1,
+      );
+    },
+    verificationChecksRemaining === null ? null : 5_000,
+  );
 
   useEffect(() => {
     if (!chats.discoveryAttempted) void chats.refreshRecent();
   }, [chats]);
 
-  useEffect(
-    () => () => {
-      if (verificationTimerRef.current !== undefined) {
-        globalThis.clearInterval(verificationTimerRef.current);
-      }
-    },
-    [],
-  );
-
   const selectedProject =
-    view.kind === "detail" || view.kind === "edit"
+    view.kind === "detail" || view.kind === "edit" || view.kind === "linkChats"
       ? state.projects.find((project) => project.id === view.projectId)
       : undefined;
 
   useEffect(() => {
-    if ((view.kind === "detail" || view.kind === "edit") && !selectedProject) {
+    if (
+      (view.kind === "detail" || view.kind === "edit" || view.kind === "linkChats") &&
+      !selectedProject
+    ) {
       setView({ kind: "list" });
     }
   }, [selectedProject, view.kind]);
@@ -113,7 +122,8 @@ export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPane
     setActionRequest(undefined);
     setActionFeedback(outcome.message);
     if (outcome.status === "completed") {
-      startPortVerification(localhost.refresh, verificationTimerRef);
+      void localhost.refresh();
+      setVerificationChecksRemaining(11);
     }
   };
 
@@ -144,6 +154,30 @@ export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPane
     );
   }
 
+  if (view.kind === "linkChats" && selectedProject) {
+    return (
+      <ProjectChatLinkView
+        chats={chats}
+        onCancel={() => setView({ kind: "detail", projectId: selectedProject.id })}
+        onSave={(linkedChats) => {
+          state.update(selectedProject.id, {
+            name: selectedProject.name,
+            rootPath: selectedProject.rootPath,
+            rootIdentity: selectedProject.rootIdentity,
+            linkedChats,
+            preferredPorts: selectedProject.preferredPorts,
+            ...(selectedProject.lastSelectedChatId &&
+            linkedChats.some((chat) => chat.threadId === selectedProject.lastSelectedChatId)
+              ? { lastSelectedChatId: selectedProject.lastSelectedChatId }
+              : {}),
+          });
+          setView({ kind: "detail", projectId: selectedProject.id });
+        }}
+        project={selectedProject}
+      />
+    );
+  }
+
   if (view.kind === "detail" && selectedProject) {
     return (
       <>
@@ -157,6 +191,7 @@ export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPane
             setView({ kind: "list" });
           }}
           onEdit={() => setView({ kind: "edit", projectId: selectedProject.id })}
+          onLinkChats={() => setView({ kind: "linkChats", projectId: selectedProject.id })}
           onOpenChat={(threadId) => void openProjectChat(threadId)}
           onRefresh={() => void localhost.refresh()}
           portStates={deriveProjectPortStates(
@@ -307,6 +342,7 @@ function ProjectDetailView({
   actionFeedback,
   onBack,
   onEdit,
+  onLinkChats,
   onDelete,
   onOpenChat,
   onRefresh,
@@ -319,6 +355,7 @@ function ProjectDetailView({
   actionFeedback?: string;
   onBack: () => void;
   onEdit: () => void;
+  onLinkChats: () => void;
   onDelete: () => void;
   onOpenChat: (threadId: string) => void;
   onRefresh: () => void;
@@ -372,7 +409,7 @@ function ProjectDetailView({
                 }}
                 type="button"
               >
-                <IconPencil aria-hidden="true" size={17} stroke={1.7} /> Edit Project
+                <IconPencil aria-hidden="true" size={17} stroke={1.7} /> Edit
               </button>
               <button
                 className="is-danger"
@@ -382,7 +419,7 @@ function ProjectDetailView({
                 }}
                 type="button"
               >
-                <IconTrash aria-hidden="true" size={17} stroke={1.7} /> Delete Project
+                <IconTrash aria-hidden="true" size={17} stroke={1.7} /> Delete
               </button>
             </div>
           ) : null}
@@ -416,14 +453,22 @@ function ProjectDetailView({
           <header>
             <h2>Localhost</h2>
             <button
-              className={refreshing ? "icon-action is-spinning" : "icon-action"}
+              aria-label="Refresh localhost status"
+              className={
+                refreshing ? "project-refresh-action is-spinning" : "project-refresh-action"
+              }
               disabled={refreshing}
               onClick={onRefresh}
+              title="Check configured ports again"
               type="button"
             >
-              <IconServer aria-hidden="true" size={17} stroke={1.7} />
+              <IconRefresh aria-hidden="true" size={16} stroke={1.7} />
+              Refresh
             </button>
           </header>
+          <p className="project-section-help">
+            Compares configured ports with local servers detected for this folder.
+          </p>
           {project.preferredPorts.length === 0 ? (
             <p className="project-section-empty">No preferred ports configured.</p>
           ) : (
@@ -439,23 +484,38 @@ function ProjectDetailView({
                         {port.strict ? " · Strict" : ""}
                       </span>
                     </div>
-                    <code>{port.port}</code>
-                    <span className={`project-port-state is-${state.kind}`}>
-                      <i />
-                      {portStateLabel(state)}
-                    </span>
+                    <div className="project-port-result">
+                      <code>{port.port}</code>
+                      <span
+                        className={`project-port-state is-${state.kind}`}
+                        title={portStateDescription(state)}
+                      >
+                        <i />
+                        {portStateLabel(state)}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
+          {[...portStates.values()].some((state) => state.kind === "conflict") ? (
+            <p className="project-port-explanation">
+              Used elsewhere means another detected Project currently owns that port.
+            </p>
+          ) : null}
+          {[...portStates.values()].some((state) => state.kind === "unverified") ? (
+            <p className="project-port-explanation">
+              Port in use means QLayer found a listener but could not verify which Project owns it.
+            </p>
+          ) : null}
           {localhostError ? <p className="projects-warning">{localhostError}</p> : null}
         </section>
 
         <section className="project-detail-section">
           <header>
             <h2>Chats</h2>
-            <button className="project-link-action" onClick={onEdit} type="button">
+            <button className="project-link-action" onClick={onLinkChats} type="button">
               <IconPlus aria-hidden="true" size={17} stroke={1.8} /> Link
             </button>
           </header>
@@ -522,24 +582,6 @@ async function openProjectChat(threadId: string): Promise<void> {
   await invoke("open_codex_url", { url: buildCodexThreadLink(threadId) }).catch(() => undefined);
 }
 
-function startPortVerification(
-  refresh: () => Promise<void>,
-  timerRef: { current: number | undefined },
-): void {
-  if (timerRef.current !== undefined) globalThis.clearInterval(timerRef.current);
-  void refresh();
-  let remainingChecks = 12;
-  timerRef.current = globalThis.setInterval(() => {
-    remainingChecks -= 1;
-    if (remainingChecks <= 0) {
-      if (timerRef.current !== undefined) globalThis.clearInterval(timerRef.current);
-      timerRef.current = undefined;
-      return;
-    }
-    void refresh();
-  }, 5_000);
-}
-
 function shortProjectPath(path: string): string {
   const parts = path.replace(/\\/g, "/").split("/").filter(Boolean);
   return parts.slice(-2).join(" / ");
@@ -555,19 +597,38 @@ function roleLabel(role: Project["preferredPorts"][number]["role"]): string {
   }[role];
 }
 
-function portStateLabel(state: ProjectPortState): string {
+export function portStateLabel(state: ProjectPortState): string {
   switch (state.kind) {
     case "running":
       return "Running";
     case "checking":
       return "Checking";
     case "conflict":
-      return "Conflict";
+      return state.server.projectName ? `${state.server.projectName} uses it` : "Used elsewhere";
     case "unverified":
-      return "Unverified";
+      return "Port in use";
     case "alternate":
-      return `On ${state.server.port}`;
+      return `Running on ${state.server.port}`;
     case "missing":
-      return "Missing";
+      return "Not running";
+  }
+}
+
+export function portStateDescription(state: ProjectPortState): string {
+  switch (state.kind) {
+    case "running":
+      return "QLayer matched this local server to the Project folder.";
+    case "checking":
+      return "QLayer is checking active local servers.";
+    case "conflict":
+      return state.server.projectName
+        ? `Port ${state.server.port} is used by ${state.server.projectName}, not this Project.`
+        : `Port ${state.server.port} is used by another detected Project.`;
+    case "unverified":
+      return `Port ${state.server.port} is active, but QLayer cannot verify which Project owns it.`;
+    case "alternate":
+      return `This Project is running on port ${state.server.port} instead of the configured port.`;
+    case "missing":
+      return "No active local server was found on this port.";
   }
 }

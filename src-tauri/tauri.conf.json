@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "QoLayer",
+  "productName": "QLayer",
   "version": "0.1.0",
   "identifier": "dev.qolayer.app",
   "build": {
@@ -13,37 +13,18 @@
     "windows": [
       {
         "label": "main",
-        "title": "QoLayer",
-        "width": 440,
-        "height": 330,
-        "minWidth": 440,
-        "minHeight": 300,
-        "maxWidth": 440,
-        "maxHeight": 450,
+        "title": "QLayer",
+        "width": 480,
+        "height": 464,
+        "minWidth": 480,
+        "minHeight": 464,
+        "maxWidth": 480,
+        "maxHeight": 464,
         "center": true,
         "resizable": false,
         "decorations": false,
         "transparent": true,
         "shadow": false,
-        "skipTaskbar": true
-      },
-      {
-        "label": "voice-selector",
-        "title": "Choose a voice destination",
-        "url": "index.html?window=voice-selector",
-        "width": 320,
-        "height": 330,
-        "minWidth": 320,
-        "minHeight": 120,
-        "maxWidth": 320,
-        "maxHeight": 330,
-        "visible": false,
-        "resizable": false,
-        "decorations": false,
-        "transparent": true,
-        "shadow": false,
-        "alwaysOnTop": true,
-        "focus": false,
         "skipTaskbar": true
       }
     ],
@@ -53,7 +34,6 @@
   },
   "bundle": {
     "active": false,
-    "targets": "all",
     "category": "DeveloperTool",
     "license": "AGPL-3.0-only",
     "icon": [

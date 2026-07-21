@@ -8,8 +8,8 @@ const THREAD_ID = "019f72d8-d02e-75d1-9969-d6c5a647c95e";
 
 function candidate(): ProjectCandidate {
   return {
-    name: "QoLayer",
-    rootPath: "C:\\Projects\\QoLayer",
+    name: "QLayer",
+    rootPath: "C:\\Projects\\QLayer",
     rootIdentity: "project-0123456789abcdef",
     linkedChats: [
       {
@@ -67,12 +67,12 @@ describe("project storage and operations", () => {
     const updated = updateProject(
       created,
       "one",
-      { ...candidate(), name: "QoLayer Desktop" },
+      { ...candidate(), name: "QLayer Desktop" },
       "2026-07-20T01:00:00.000Z",
     );
     expect(updated[0]).toMatchObject({
       id: "one",
-      name: "QoLayer Desktop",
+      name: "QLayer Desktop",
       createdAt: "2026-07-20T00:00:00.000Z",
     });
     expect(deleteProject(updated, "one")).toEqual([]);

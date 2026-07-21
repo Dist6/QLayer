@@ -42,5 +42,5 @@ export type KeyboardController = {
 export type WindowController = {
   focusCodex: () => Promise<AppResult<VoiceFlowStep>>;
   focusCodexThread?: (threadId: string) => Promise<AppResult<VoiceFlowStep>>;
-  showQoLayer: () => Promise<AppResult<void>>;
+  showQLayer: () => Promise<AppResult<void>>;
 };

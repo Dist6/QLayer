@@ -1,4 +1,4 @@
-# QoLayer Codex Dictation Shortcut Plan
+# QLayer Codex Dictation Shortcut Plan
 
 ## Goal
 

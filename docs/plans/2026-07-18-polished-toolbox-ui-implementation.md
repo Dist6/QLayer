@@ -1,6 +1,6 @@
-# QoLayer Polished Toolbox UI Implementation Plan
+# QLayer Polished Toolbox UI Implementation Plan
 
-**Goal:** Apply the approved monochrome, flat QoLayer interface and make the
+**Goal:** Apply the approved monochrome, flat QLayer interface and make the
 Voice Flow global shortcut safely configurable without regressing the working
 Codex / ChatGPT dictation flow.
 
@@ -65,7 +65,7 @@ Vitest, Cargo tests.
 3. Render the audio control with a single sliding selection capsule positioned by
    mode. Keep buttons semantic and keyboard operable.
 4. Render `Listening volume` as one flat aligned row only for `Lower`.
-5. Replace the generated CSS logo with the supplied official QoLayer logo.
+5. Replace the generated CSS logo with the supplied official QLayer logo.
 6. Remove the sidebar selection stripe; selection uses neutral tonal contrast.
 7. Increase body and supporting typography to readable sizes and enforce the
    approved monochrome palette, outer rounding, spacing, hover/focus states,

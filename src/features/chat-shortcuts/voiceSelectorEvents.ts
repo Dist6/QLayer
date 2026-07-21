@@ -2,6 +2,8 @@ import type { ChatDestination } from "./chatDestinationTypes";
 import { parseCodexThreadInput } from "../codex/deepLinks";
 
 export const VOICE_SELECTOR_OPEN_EVENT = "qolayer://voice-selector-open";
+export const VOICE_SELECTOR_CLOSED_EVENT = "qolayer://voice-selector-closed";
+export const VOICE_SELECTOR_READY_EVENT = "qolayer://voice-selector-ready";
 export const VOICE_SELECTOR_SELECTION_EVENT = "qolayer://voice-selector-selection";
 
 export type VoiceSelectorOpenPayload = {

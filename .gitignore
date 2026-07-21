@@ -4,4 +4,15 @@ src-tauri/target/
 src-tauri/gen/
 .npm-cache/
 .pnpm-store/
+release/
+coverage/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
 *.log
+*.tmp
+*.bak

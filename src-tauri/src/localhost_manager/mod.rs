@@ -11,16 +11,16 @@ use models::{
     binding_for, localhost_address, localhost_url, ListenerBinding, ListenerRow, ProcessMetadata,
     ProjectNameSource, ServerClassification, TrustedServer,
 };
+pub(crate) use project_resolution::project_fingerprint;
 use project_resolution::{
     discover_parent_map, fallback_fingerprint, process_chain, resolve_project, AliasStore,
     ManifestCache, ProjectResolution,
 };
-pub(crate) use project_resolution::project_fingerprint;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use std::path::PathBuf;
 
 const SNAPSHOT_MAX_AGE: Duration = Duration::from_secs(120);
 const LOCALHOST_ERROR: &str = "Local development servers could not be inspected.";
@@ -78,7 +78,9 @@ impl LocalhostManagerState {
         let mut metadata = HashMap::new();
         for listener in &listeners {
             for pid in process_chain(listener.pid, &parents) {
-                metadata.entry(pid).or_insert_with(|| process_info::inspect_process(pid));
+                metadata
+                    .entry(pid)
+                    .or_insert_with(|| process_info::inspect_process(pid));
             }
         }
 
@@ -111,7 +113,9 @@ impl LocalhostManagerState {
             .trusted
             .get(server_id)
             .and_then(|server| server.project_id.clone())
-            .ok_or_else(|| "That local server can no longer be named. Refresh and try again.".to_string())?;
+            .ok_or_else(|| {
+                "That local server can no longer be named. Refresh and try again.".to_string()
+            })?;
         data.aliases.set(&project_id, name)
     }
 
@@ -121,13 +125,18 @@ impl LocalhostManagerState {
             .trusted
             .get(server_id)
             .and_then(|server| server.project_id.clone())
-            .ok_or_else(|| "That local server can no longer be renamed. Refresh and try again.".to_string())?;
+            .ok_or_else(|| {
+                "That local server can no longer be renamed. Refresh and try again.".to_string()
+            })?;
         data.aliases.remove(&project_id)
     }
 
     pub fn resolve_open_url(&self, server_id: &str) -> Result<String, String> {
         let trusted = {
-            let data = self.inner.lock().map_err(|_| SERVER_GONE_ERROR.to_string())?;
+            let data = self
+                .inner
+                .lock()
+                .map_err(|_| SERVER_GONE_ERROR.to_string())?;
             data.captured_at
                 .filter(|captured| captured.elapsed() <= SNAPSHOT_MAX_AGE)
                 .ok_or_else(|| SERVER_GONE_ERROR.to_string())?;
@@ -170,15 +179,14 @@ impl LocalhostManagerState {
         let mut cache = ManifestCache::default();
         let resolutions = metadata_by_pid
             .iter()
-            .map(|(pid, metadata)| (*pid, resolve_project(std::slice::from_ref(metadata), &mut cache)))
+            .map(|(pid, metadata)| {
+                (
+                    *pid,
+                    resolve_project(std::slice::from_ref(metadata), &mut cache),
+                )
+            })
             .collect();
-        self.refresh_from_resolutions(
-            listeners,
-            metadata_by_pid,
-            resolutions,
-            now_ms,
-            captured_at,
-        )
+        self.refresh_from_resolutions(listeners, metadata_by_pid, resolutions, now_ms, captured_at)
     }
 
     fn refresh_from_resolutions(
@@ -268,8 +276,8 @@ impl LocalhostManagerState {
                 .started_at_ms
                 .and_then(|started| now_ms.checked_sub(started))
                 .map(|elapsed| elapsed / 1_000);
-            let url = (classification == ServerClassification::Development)
-                .then(|| localhost_url(port));
+            let url =
+                (classification == ServerClassification::Development).then(|| localhost_url(port));
 
             servers.push(LocalhostServer {
                 id: id.clone(),
@@ -328,7 +336,9 @@ fn cpu_percent(
 ) -> Option<f32> {
     let previous = previous?;
     let current_ticks = current_ticks?;
-    let elapsed = captured_at.checked_duration_since(previous.captured_at)?.as_secs_f64();
+    let elapsed = captured_at
+        .checked_duration_since(previous.captured_at)?
+        .as_secs_f64();
     if elapsed <= 0.0 || current_ticks < previous.cpu_ticks {
         return None;
     }
@@ -338,7 +348,11 @@ fn cpu_percent(
 }
 
 fn fallback_project_id(metadata: &ProcessMetadata, port: u16) -> Option<String> {
-    if let Some(command) = metadata.command_line.as_deref().filter(|value| !value.trim().is_empty()) {
+    if let Some(command) = metadata
+        .command_line
+        .as_deref()
+        .filter(|value| !value.trim().is_empty())
+    {
         return Some(fallback_fingerprint(command));
     }
     let process = metadata.process_name.as_deref()?;
@@ -356,8 +370,7 @@ fn current_unix_ms() -> u64 {
 mod tests {
     use super::{CpuSample, LocalhostManagerState};
     use crate::localhost_manager::models::{
-        DevelopmentServerKind, ListenerBinding, ListenerRow, ProcessMetadata,
-        ServerClassification,
+        DevelopmentServerKind, ListenerBinding, ListenerRow, ProcessMetadata, ServerClassification,
     };
     use std::collections::HashMap;
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
@@ -368,7 +381,7 @@ mod tests {
             process_name: Some("node.exe".to_string()),
             executable_path: Some(r"C:\Program Files\nodejs\node.exe".to_string()),
             command_line: Some(
-                r#"node "C:\Projects\QoLayer\node_modules\vite\bin\vite.js""#.to_string(),
+                r#"node "C:\Projects\QLayer\node_modules\vite\bin\vite.js""#.to_string(),
             ),
             memory_bytes: Some(184_000_000),
             started_at_ms: Some(1_000),
@@ -405,7 +418,7 @@ mod tests {
         assert_eq!(server.binding, ListenerBinding::Loopback);
         assert_eq!(server.classification, ServerClassification::Development);
         assert_eq!(server.kind, DevelopmentServerKind::Frontend);
-        assert_eq!(server.project_name.as_deref(), Some("QoLayer"));
+        assert_eq!(server.project_name.as_deref(), Some("QLayer"));
         assert_eq!(server.uptime_seconds, Some(60));
         assert_eq!(server.cpu_percent, None);
     }
@@ -430,7 +443,10 @@ mod tests {
             .refresh_from(listeners, metadata, 1_000, Instant::now())
             .expect("snapshot");
 
-        assert_eq!(snapshot.servers[0].classification, ServerClassification::Unknown);
+        assert_eq!(
+            snapshot.servers[0].classification,
+            ServerClassification::Unknown
+        );
         assert_eq!(snapshot.servers[0].url, None);
     }
 

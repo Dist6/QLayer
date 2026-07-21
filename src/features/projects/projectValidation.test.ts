@@ -8,8 +8,8 @@ const THREAD_ID = "019f72d8-d02e-75d1-9969-d6c5a647c95e";
 function project(overrides: Partial<Project> = {}): Project {
   return {
     id: "project-id",
-    name: "QoLayer",
-    rootPath: "C:\\Users\\example\\QoLayer",
+    name: "QLayer",
+    rootPath: "C:\\Users\\example\\QLayer",
     rootIdentity: "project-0123456789abcdef",
     linkedChats: [
       { threadId: THREAD_ID, displayName: "Projects", linkedAt: "2026-07-20T00:00:00.000Z" },
@@ -26,8 +26,8 @@ function project(overrides: Partial<Project> = {}): Project {
 
 describe("project validation", () => {
   it("normalizes a valid project", () => {
-    expect(parseProject(project({ name: "  QoLayer   Desktop  " }))).toMatchObject({
-      name: "QoLayer Desktop",
+    expect(parseProject(project({ name: "  QLayer   Desktop  " }))).toMatchObject({
+      name: "QLayer Desktop",
       rootIdentity: "project-0123456789abcdef",
       lastSelectedChatId: THREAD_ID,
     });

@@ -1,5 +1,4 @@
 import {
-  IconBookmarks,
   IconFolders,
   IconMessages,
   IconMicrophone,
@@ -25,13 +24,12 @@ const navigationItems: ReadonlyArray<{
   { id: "localhostManager", label: "Localhost Manager", icon: IconServer },
   { id: "projects", label: "Projects", icon: IconFolders },
   { id: "chatShortcuts", label: "Chat shortcuts", icon: IconMessages },
-  { id: "savedPrompts", label: "Saved prompts", icon: IconBookmarks },
 ];
 
 export function ToolboxSidebar({ activeView, onSelect }: ToolboxSidebarProps) {
   return (
     <aside className="toolbox-sidebar" aria-label="Toolbox navigation">
-      <div className="sidebar-brand" aria-label="QoLayer">
+      <div className="sidebar-brand" aria-label="QLayer">
         <img alt="" src={qolayerLogo} />
       </div>
 

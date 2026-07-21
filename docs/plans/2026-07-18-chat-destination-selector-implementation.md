@@ -29,8 +29,8 @@
 Run:
 
 ```powershell
-git -c safe.directory='C:/Users/onb80/Documents/QoLayer' status --short
-git -c safe.directory='C:/Users/onb80/Documents/QoLayer' diff --stat
+git -c safe.directory='C:/Projects/QLayer' status --short
+git -c safe.directory='C:/Projects/QLayer' diff --stat
 ```
 
 Confirm that the diff contains the already validated Voice Flow, ChatGPT focus, compact UI, Tabler, tray, autostart, and window-drag work plus planning documents.
@@ -98,7 +98,7 @@ Write `docs/references/codex-app-server-thread-list.md` with:
 - Exact JSON-RPC method name.
 - Exact bounded-list parameters and sort field.
 - Exact response fields used for `threadId`, title, project/cwd metadata, and update time.
-- Which fields QoLayer explicitly ignores.
+- Which fields QLayer explicitly ignores.
 - Timeout and fallback behavior.
 
 **Step 4: Commit the protocol note**
@@ -328,7 +328,7 @@ pub struct RecentChat {
 
 1. Spawn the verified executable with exactly `app-server`.
 2. Pipe stdin/stdout and suppress unrelated window creation on Windows.
-3. Send `initialize` with QoLayer client metadata.
+3. Send `initialize` with QLayer client metadata.
 4. Wait for the matching response.
 5. Send `initialized`.
 6. Send the exact bounded `thread/list` request recorded in Task 1.
@@ -728,10 +728,10 @@ Expected: all installed checks pass.
 5. Saved chat: official deep link opens the exact chat, maximized, then dictation starts.
 6. Release before selection: no audio change and no dictation.
 7. Release during navigation: no stuck keys and audio restored.
-8. ChatGPT closed: it is not launched; QoLayer shows the waiting state.
+8. ChatGPT closed: it is not launched; QLayer shows the waiting state.
 9. Discovery unavailable: pinned/manual destinations continue working.
 10. Invalid/deleted destination: safe error, no arbitrary URL opened.
-11. Close/reopen QoLayer: pinned order persists.
+11. Close/reopen QLayer: pinned order persists.
 12. Selector works on each monitor and remains movable only through intended behavior.
 
 Do not claim completion until the user confirms exact-chat navigation and dictation in the real app.

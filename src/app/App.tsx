@@ -1,4 +1,3 @@
-import { IconX } from "@tabler/icons-react";
 import { isTauri } from "@tauri-apps/api/core";
 import { LogicalSize } from "@tauri-apps/api/dpi";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -18,7 +17,6 @@ import {
   DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
   type GlobalHotkeyStatus,
 } from "../features/global-hotkeys/globalHotkeyEvents";
-import { SavedPromptsPanel } from "../features/saved-prompts/SavedPromptsPanel";
 import { LocalhostManagerPanel } from "../features/localhost-manager/LocalhostManagerPanel";
 import { ProjectsPanel } from "../features/projects/ProjectsPanel";
 import { useProjects } from "../features/projects/useProjects";
@@ -29,9 +27,11 @@ import type { AppSettings } from "../features/settings/settingsTypes";
 import { setCloseToTray } from "../features/settings/windowBehaviorClient";
 import { ToolboxSidebar } from "../features/toolbox/ToolboxSidebar";
 import type { ToolboxView } from "../features/toolbox/toolboxViews";
-import { getToolboxWindowHeight, TOOLBOX_WINDOW_WIDTH } from "../features/toolbox/windowSizing";
+import { hideToolboxWindow } from "../features/toolbox/toolboxWindowClient";
+import { TOOLBOX_WINDOW_HEIGHT, TOOLBOX_WINDOW_WIDTH } from "../features/toolbox/windowSizing";
 import { listenForTrayActions } from "../features/tray/trayClient";
 import { VoiceFlowDetailPanel } from "../features/voice-flow/VoiceFlowDetailPanel";
+import { isWindowDismissSuspended } from "../shared/windowFocusGuard";
 import { useVoiceFlow } from "../features/voice-flow/useVoiceFlow";
 
 type AppView = ToolboxView | "about";
@@ -120,11 +120,31 @@ export function App() {
   useEffect(() => {
     if (!isTauri()) return;
 
-    const height = getToolboxWindowHeight(activeView, settings.voiceFlow.audioMode);
     void getCurrentWindow()
-      .setSize(new LogicalSize(TOOLBOX_WINDOW_WIDTH, height))
+      .setSize(new LogicalSize(TOOLBOX_WINDOW_WIDTH, TOOLBOX_WINDOW_HEIGHT))
       .catch(() => undefined);
-  }, [activeView, settings.voiceFlow.audioMode]);
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    let dismissTimer: number | undefined;
+    const hideWhenFocusLeaves = () => {
+      globalThis.clearTimeout(dismissTimer);
+      dismissTimer = globalThis.setTimeout(() => {
+        const modalOpen = document.querySelector("dialog[open]") !== null;
+        if (!document.hasFocus() && !modalOpen && !isWindowDismissSuspended()) {
+          void hideToolboxWindow();
+        }
+      }, 80);
+    };
+
+    window.addEventListener("blur", hideWhenFocusLeaves);
+    return () => {
+      globalThis.clearTimeout(dismissTimer);
+      window.removeEventListener("blur", hideWhenFocusLeaves);
+    };
+  }, []);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -227,30 +247,23 @@ export function App() {
           }
         }}
       />
-      <button
-        aria-label="Close QoLayer"
-        className="window-close"
-        onClick={() => void getCurrentWindow().close()}
-        title={settings.general.closeToTray ? "Close to tray" : "Close QoLayer"}
-        type="button"
-      >
-        <IconX aria-hidden="true" size={16} stroke={1.7} />
-      </button>
 
       <ToolboxSidebar activeView={activeView} onSelect={setActiveView} />
 
-      <main className="main-panel">
-        {renderView(
-          activeView,
-          settings,
-          setSettings,
-          voiceFlow,
-          globalHotkeyStatus,
-          chatDestinations,
-          projects,
-          changeGlobalHotkey,
-          setShortcutRecording,
-        )}
+      <main className="main-panel" id="main-content">
+        <div className="tool-view-stage" key={activeView}>
+          {renderView(
+            activeView,
+            settings,
+            setSettings,
+            voiceFlow,
+            globalHotkeyStatus,
+            chatDestinations,
+            projects,
+            changeGlobalHotkey,
+            setShortcutRecording,
+          )}
+        </div>
       </main>
     </div>
   );
@@ -270,8 +283,6 @@ function renderView(
   switch (activeView) {
     case "chatShortcuts":
       return <ChatShortcutsPanel state={chatDestinations} />;
-    case "savedPrompts":
-      return <SavedPromptsPanel />;
     case "localhostManager":
       return (
         <LocalhostManagerPanel autoRefreshSeconds={settings.localhostManager.autoRefreshSeconds} />

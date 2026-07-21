@@ -41,9 +41,9 @@ It is not a generic socket inspector, traffic proxy, process manager, or command
 
 ## Discovery architecture
 
-QoLayer will call the native Windows `GetExtendedTcpTable` API twice with `TCP_TABLE_OWNER_PID_LISTENER`: once for IPv4 and once for IPv6. The result supplies local addresses, ports, and owning PIDs without launching a subprocess.
+QLayer will call the native Windows `GetExtendedTcpTable` API twice with `TCP_TABLE_OWNER_PID_LISTENER`: once for IPv4 and once for IPv6. The result supplies local addresses, ports, and owning PIDs without launching a subprocess.
 
-Each unique process is opened with `PROCESS_QUERY_LIMITED_INFORMATION`. QoLayer may then use:
+Each unique process is opened with `PROCESS_QUERY_LIMITED_INFORMATION`. QLayer may then use:
 
 - `QueryFullProcessImageNameW` for the executable image name.
 - `GetProcessMemoryInfo` for working-set memory.
@@ -145,7 +145,7 @@ States:
 - Refresh immediately when the panel mounts.
 - Manual **Refresh** is always available.
 - Default auto-refresh interval is 15 seconds.
-- Auto-refresh runs only while the QoLayer window and Localhost Manager panel are visible.
+- Auto-refresh runs only while the QLayer window and Localhost Manager panel are visible.
 - Do not overlap discoveries; skip an interval when a previous discovery is still running.
 - Update displayed uptime locally once per minute without native discovery.
 - Preserve previous rows during background refresh to avoid visual flashing.

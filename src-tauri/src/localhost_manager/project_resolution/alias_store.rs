@@ -24,7 +24,10 @@ impl AliasStore {
             .and_then(|content| serde_json::from_str::<StoredAliases>(&content).ok())
             .map(|stored| stored.aliases)
             .unwrap_or_default();
-        Self { path: Some(path), aliases }
+        Self {
+            path: Some(path),
+            aliases,
+        }
     }
 
     pub(crate) fn get(&self, project_id: &str) -> Option<&str> {
@@ -43,12 +46,16 @@ impl AliasStore {
     }
 
     fn save(&self) -> Result<(), String> {
-        let Some(path) = self.path.as_ref() else { return Ok(()) };
+        let Some(path) = self.path.as_ref() else {
+            return Ok(());
+        };
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|_| ALIAS_ERROR.to_string())?;
         }
-        let content = serde_json::to_string_pretty(&StoredAliases { aliases: self.aliases.clone() })
-            .map_err(|_| ALIAS_ERROR.to_string())?;
+        let content = serde_json::to_string_pretty(&StoredAliases {
+            aliases: self.aliases.clone(),
+        })
+        .map_err(|_| ALIAS_ERROR.to_string())?;
         fs::write(path, content).map_err(|_| ALIAS_ERROR.to_string())
     }
 }

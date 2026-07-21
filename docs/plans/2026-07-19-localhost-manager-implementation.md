@@ -445,6 +445,6 @@ Perform a real Windows validation with user approval:
 4. Open a development server and verify only the trusted local URL is sent to the browser.
 5. Stop a test server externally and confirm it disappears on refresh.
 6. Confirm memory, uptime, and second-sample CPU degrade gracefully when access is denied.
-7. Hide QoLayer to tray and verify automatic discovery stops.
+7. Hide QLayer to tray and verify automatic discovery stops.
 
 Do not implement Pass 4 in this plan. Stop/restart, pins, history, and grouping require a separate approved design and security review.

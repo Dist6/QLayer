@@ -10,7 +10,7 @@ import { VoiceDestinationSelectorApp } from "./features/chat-shortcuts/VoiceDest
 const root = document.getElementById("root");
 
 if (!root) {
-  throw new Error("QoLayer root element was not found.");
+  throw new Error("QLayer root element was not found.");
 }
 
 createRoot(root).render(

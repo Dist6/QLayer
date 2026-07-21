@@ -47,7 +47,7 @@ fn exchange_requests(child: &mut Child) -> Result<Vec<RecentChat>, ()> {
             "id": 1,
             "method": "initialize",
             "params": {
-                "clientInfo": { "name": "qolayer", "title": "QoLayer", "version": "0.1.0" },
+                "clientInfo": { "name": "qolayer", "title": "QLayer", "version": "0.1.0" },
                 "capabilities": { "experimentalApi": false }
             }
         }),
@@ -174,8 +174,8 @@ mod tests {
             "data": [
                 {
                     "id": "019f72d8-d02e-75d1-9969-d6c5a647c95e",
-                    "name": " QoLayer selector ",
-                    "cwd": "C:\\Users\\example\\QoLayer",
+                    "name": " QLayer selector ",
+                    "cwd": "C:\\Users\\example\\QLayer",
                     "updatedAt": 200,
                     "preview": "ignored private content",
                     "turns": [{ "items": [{ "text": "ignored" }] }]
@@ -192,9 +192,12 @@ mod tests {
 
         let chats = parse_thread_list_response(&response).expect("valid list");
         assert_eq!(chats.len(), 2);
-        assert_eq!(chats[0].title, "QoLayer selector");
-        assert_eq!(chats[0].project_name.as_deref(), Some("QoLayer"));
-        assert!(chats[0].project_id.as_deref().is_some_and(|id| id.starts_with("project-")));
+        assert_eq!(chats[0].title, "QLayer selector");
+        assert_eq!(chats[0].project_name.as_deref(), Some("QLayer"));
+        assert!(chats[0]
+            .project_id
+            .as_deref()
+            .is_some_and(|id| id.starts_with("project-")));
         assert_eq!(chats[1].title, "Untitled chat");
         assert_eq!(chats[1].project_id, None);
     }

@@ -145,7 +145,7 @@
 
 1. Add tests for stable opaque fingerprints, alias validation, corrupted storage recovery, and path non-disclosure.
 2. Generate a deterministic opaque fingerprint from normalized private root evidence.
-3. Persist only fingerprint-to-display-name mappings under QoLayer's local app-data directory.
+3. Persist only fingerprint-to-display-name mappings under QLayer's local app-data directory.
 4. Add narrow commands to set and remove an alias by trusted server ID; never accept a path or PID.
 5. Validate alias length, whitespace, and control characters.
 6. Add `projectId` and alias-state fields to the serialized server contract without exposing raw evidence.
@@ -210,5 +210,5 @@
 6. Run `cargo check --manifest-path src-tauri/Cargo.toml`.
 7. Run `./node_modules/.bin/vite.cmd build`.
 8. Run `git diff --check`.
-9. Restart QoLayer and verify native Node, Python/.NET when available, multiple endpoints, alias persistence, and unknown-listener isolation.
+9. Restart QLayer and verify native Node, Python/.NET when available, multiple endpoints, alias persistence, and unknown-listener isolation.
 10. Do not commit existing unrelated working-tree changes. Create the planned commits only with explicit user authorization and precise staging.

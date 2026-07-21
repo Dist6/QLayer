@@ -19,11 +19,11 @@
 **Steps:**
 
 1. Add failing tests proving that Voice Flow prepares audio, focuses Codex directly, waits only for focus settling, and never calls a Codex opener.
-2. Add a failing test proving that unconfirmed focus prevents both tap and hold keyboard injection, restores prepared audio, and asks the window controller to reveal QoLayer.
+2. Add a failing test proving that unconfirmed focus prevents both tap and hold keyboard injection, restores prepared audio, and asks the window controller to reveal QLayer.
 3. Add a failing hold-race test proving that a shortcut released while the asynchronous Codex key press is completing is immediately released again.
 4. Run `node_modules\.bin\vitest.cmd run src/features/voice-flow/voiceFlowService.test.ts` and confirm the new tests fail.
 5. Remove `CodexController` and the Codex-open delay from Voice Flow inputs.
-6. Add `showQoLayer` to `WindowController`, fail closed on any unconfirmed Codex focus, and use a short 50 ms post-focus settle delay.
+6. Add `showQLayer` to `WindowController`, fail closed on any unconfirmed Codex focus, and use a short 50 ms post-focus settle delay.
 7. Re-check `shouldContinue()` after the asynchronous key press and release the Codex shortcut immediately if the user stopped holding.
 8. Re-run the focused Vitest file and confirm it passes.
 
@@ -38,9 +38,9 @@
 
 **Steps:**
 
-1. Add parsing/controller tests for showing the QoLayer main window.
+1. Add parsing/controller tests for showing the QLayer main window.
 2. Make the existing tray window-showing function reusable and return a narrow `Result`.
-3. Expose a `show_main_window` Tauri command and invoke it through `WindowController.showQoLayer`.
+3. Expose a `show_main_window` Tauri command and invoke it through `WindowController.showQLayer`.
 4. Run the focused native-controller tests.
 
 ### Task 3: Tighten Codex focus latency and recovery copy
@@ -85,6 +85,6 @@
 6. Run `cargo fmt --manifest-path src-tauri\Cargo.toml -- --check`, recording a toolchain-unavailable result if `rustfmt` is not installed.
 7. Run `cargo clippy --manifest-path src-tauri\Cargo.toml -- -D warnings`, recording a toolchain-unavailable result if `clippy` is not installed.
 8. Run `cargo test --manifest-path src-tauri\Cargo.toml` and `cargo check --manifest-path src-tauri\Cargo.toml`.
-9. Ensure no stale QoLayer development process owns port 1420, then launch one `corepack pnpm desktop` instance.
+9. Ensure no stale QLayer development process owns port 1420, then launch one `corepack pnpm desktop` instance.
 10. Ask the user to validate fast push-to-talk, unavailable-Codex recovery, duck audio, mute audio, and manual restoration.
 11. Commit only after successful real-world validation by the user.

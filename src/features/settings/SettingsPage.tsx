@@ -35,7 +35,7 @@ export function SettingsPage({
       <div className="setting-list">
         <ToggleSetting
           checked={settings.general.launchAtStartup}
-          description="Start QoLayer when you sign in."
+          description="Start QLayer when you sign in."
           label="Launch at startup"
           onChange={(checked) => updateGeneral({ launchAtStartup: checked })}
         />

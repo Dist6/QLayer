@@ -9,10 +9,9 @@ pub fn parse_thread_id(input: &str) -> Result<String, &'static str> {
     let parts: Vec<&str> = candidate.split('-').collect();
 
     if parts.len() != groups.len()
-        || parts
-            .iter()
-            .zip(groups)
-            .any(|(part, length)| part.len() != length || !part.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        || parts.iter().zip(groups).any(|(part, length)| {
+            part.len() != length || !part.bytes().all(|byte| byte.is_ascii_hexdigit())
+        })
     {
         return Err("A valid Codex thread ID is required.");
     }
@@ -75,7 +74,9 @@ mod tests {
         assert!(is_allowed_codex_url("codex://"));
         assert!(is_allowed_codex_url("codex://settings"));
         assert!(is_allowed_codex_url("codex://threads/new"));
-        assert!(is_allowed_codex_url(&format!("codex://threads/{THREAD_ID}")));
+        assert!(is_allowed_codex_url(&format!(
+            "codex://threads/{THREAD_ID}"
+        )));
         assert!(!is_allowed_codex_url("codex://auth"));
         assert!(!is_allowed_codex_url("https://example.com"));
     }

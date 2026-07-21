@@ -67,7 +67,7 @@ describe("Voice Flow latency and focus safety", () => {
           value: { status: "codexFocused" as const, message: "Codex focused." },
         };
       },
-      showQoLayer: async () => {
+      showQLayer: async () => {
         events.push("show");
         return { ok: true as const, value: undefined };
       },
@@ -96,7 +96,7 @@ describe("Voice Flow latency and focus safety", () => {
     expect(events).toEqual(["audio", "focus", "wait-focus", "press"]);
   });
 
-  it("restores audio, reveals QoLayer, and never sends keys when Codex is unavailable", async () => {
+  it("restores audio, reveals QLayer, and never sends keys when Codex is unavailable", async () => {
     const events: string[] = [];
     const window = {
       focusCodex: async () => {
@@ -109,7 +109,7 @@ describe("Voice Flow latency and focus safety", () => {
           },
         };
       },
-      showQoLayer: async () => {
+      showQLayer: async () => {
         events.push("show");
         return { ok: true as const, value: undefined };
       },
@@ -148,7 +148,7 @@ describe("Voice Flow latency and focus safety", () => {
         ok: true as const,
         value: { status: "codexFocused" as const, message: "Codex focused." },
       }),
-      showQoLayer: async () => ({ ok: true as const, value: undefined }),
+      showQLayer: async () => ({ ok: true as const, value: undefined }),
     } satisfies WindowController;
 
     const result = await startVoiceFlowHold(

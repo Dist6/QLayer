@@ -40,7 +40,7 @@ describe("tray events", () => {
   it("keeps labels English-only and user-facing", () => {
     expect(trayActionLabels.openCodex).toBe("Open Codex / ChatGPT");
     expect(trayActionLabels.restoreAudio).toBe("Restore Audio");
-    expect(trayActionLabels.showAbout).toBe("About QoLayer");
+    expect(trayActionLabels.showAbout).toBe("About QLayer");
   });
 
   it("parses tray status from native command results", () => {

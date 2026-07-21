@@ -19,7 +19,7 @@ function server(overrides: Partial<LocalhostServer> = {}): LocalhostServer {
     uptimeSeconds: null,
     cpuPercent: null,
     projectId: ROOT,
-    projectName: "QoLayer",
+    projectName: "QLayer",
     projectNameSource: "automatic",
     classification: "development",
     kind: "frontend",

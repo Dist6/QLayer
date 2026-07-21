@@ -121,7 +121,10 @@ mod tests {
             binding_for(IpAddr::V6(Ipv6Addr::UNSPECIFIED)),
             Some(ListenerBinding::AllInterfaces)
         );
-        assert_eq!(binding_for(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 10))), None);
+        assert_eq!(
+            binding_for(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 10))),
+            None
+        );
     }
 
     #[test]

@@ -1,41 +1,25 @@
 # Roadmap
 
-## v0.1
+## v0.1.0
 
-- Tauri 2 desktop foundation.
-- React app shell.
-- Codex deep-link foundation.
-- Voice Flow foundation.
-- Global hotkey foundation.
-- Global Windows audio duck, mute, and restore.
-- Allowlisted Codex dictation shortcut sending.
-- Best-effort Codex focus before dictation.
-- Minimal system tray foundation.
-- Typed local settings.
-- Privacy and security documentation.
+- Portable Windows tray utility.
+- Shortcut-driven push-to-talk Voice Flow.
+- Background audio Off, Lower, Mute, and Restore.
+- Configurable global Voice Flow shortcut.
+- Saved and recently discovered Chat Shortcuts.
+- Voice destination selection by Chat or Project.
+- Localhost Manager with safe listener classification and resource visibility.
+- Projects with linked chats, preferred ports, and predefined development actions.
+- Local-first settings, no telemetry, and narrow native permissions.
 
-## Future
+## Later
 
-- Real per-app audio ducking.
-- Media pause and resume.
-- Advanced Codex app detection and focus confirmation.
-- Custom dictation shortcut recorder.
-- Arbitrary keyboard input remains out of scope unless a specific safe use case is approved.
-- Arbitrary window control remains out of scope unless a specific safe use case is approved.
-- Custom hotkey editing.
-- Tray refinements.
-- Recoverable voice drafts.
-- Continue by Voice.
-- Last thread jump.
-- Task inbox.
-- Approval radar.
-- Context inspector.
-- Usage and quota dashboard.
-- Worktree manager.
-- Community add-ons.
-- Add-on permission model.
-- Claude Code support.
+Potential future work remains subject to product, privacy, and safety review:
+
+- Signed releases and automatic updates.
 - macOS support.
-- Signed releases.
-- Installer.
-- Auto-update.
+- Pinned localhost servers and project grouping refinements.
+- Explicitly confirmed development server stop or restart actions.
+- Additional safe chat and Project workflows.
+
+Arbitrary shell execution, credential access, traffic interception, and unrestricted process, keyboard, or window control remain out of scope.

@@ -2,7 +2,7 @@ export function AboutPanel() {
   return (
     <section className="tool-view about-view">
       <div className="view-heading">
-        <h1>QoLayer</h1>
+        <h1>QLayer</h1>
         <span className="version-label">v0.1.0</span>
       </div>
       <p>Compact shortcuts and utilities for Codex and ChatGPT.</p>

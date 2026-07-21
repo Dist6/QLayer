@@ -14,8 +14,8 @@ mod platform {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use windows::Win32::Foundation::ERROR_INSUFFICIENT_BUFFER;
     use windows::Win32::NetworkManagement::IpHelper::{
-        GetExtendedTcpTable, MIB_TCP6ROW_OWNER_PID, MIB_TCPROW_OWNER_PID,
-        MIB_TCP_STATE_LISTEN, TCP_TABLE_OWNER_PID_LISTENER,
+        GetExtendedTcpTable, MIB_TCP6ROW_OWNER_PID, MIB_TCPROW_OWNER_PID, MIB_TCP_STATE_LISTEN,
+        TCP_TABLE_OWNER_PID_LISTENER,
     };
     use windows::Win32::Networking::WinSock::{AF_INET, AF_INET6};
 
@@ -95,9 +95,8 @@ mod platform {
             return Err(DISCOVERY_ERROR.to_string());
         }
 
-        let rows = unsafe {
-            std::slice::from_raw_parts(buffer.as_ptr().add(1).cast::<Row>(), count)
-        };
+        let rows =
+            unsafe { std::slice::from_raw_parts(buffer.as_ptr().add(1).cast::<Row>(), count) };
         Ok(rows.to_vec())
     }
 }

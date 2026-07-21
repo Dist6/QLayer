@@ -2,6 +2,7 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 
 import { failed, type AppResult } from "../../shared/result";
+import { withWindowDismissSuspended } from "../../shared/windowFocusGuard";
 
 export type ProjectRoot = {
   rootPath: string;
@@ -12,11 +13,13 @@ export type ProjectRoot = {
 export async function chooseProjectFolder(): Promise<AppResult<ProjectRoot | null>> {
   if (!isTauri()) return failed("Project folders are available only in the desktop app.");
   try {
-    const selected = await open({
-      directory: true,
-      multiple: false,
-      title: "Choose project folder",
-    });
+    const selected = await withWindowDismissSuspended(() =>
+      open({
+        directory: true,
+        multiple: false,
+        title: "Choose project folder",
+      }),
+    );
     if (selected === null) return { ok: true, value: null };
     return parseProjectRoot(await invoke<unknown>("identify_project_root", { path: selected }));
   } catch (reason) {

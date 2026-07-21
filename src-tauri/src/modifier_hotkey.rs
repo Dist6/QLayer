@@ -160,7 +160,12 @@ mod platform {
         }
 
         let hook = unsafe {
-            SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_hook), Some(HINSTANCE::default()), 0)
+            SetWindowsHookExW(
+                WH_KEYBOARD_LL,
+                Some(keyboard_hook),
+                Some(HINSTANCE::default()),
+                0,
+            )
         };
         let Ok(hook) = hook else {
             clear_context();
@@ -224,9 +229,9 @@ mod platform {
             .unwrap_or(HookAction::Pass);
 
         match action {
-            HookAction::Suppress
-            | HookAction::StartAndSuppress
-            | HookAction::StopAndSuppress => LRESULT(1),
+            HookAction::Suppress | HookAction::StartAndSuppress | HookAction::StopAndSuppress => {
+                LRESULT(1)
+            }
             HookAction::Pass => CallNextHookEx(None, code, w_param, l_param),
         }
     }
@@ -274,7 +279,10 @@ mod tests {
     #[test]
     fn starts_once_when_control_then_windows_are_held() {
         let mut state = ChordState::default();
-        assert_eq!(state.transition(KeyKind::Control, true, false), HookAction::Pass);
+        assert_eq!(
+            state.transition(KeyKind::Control, true, false),
+            HookAction::Pass
+        );
         assert_eq!(
             state.transition(KeyKind::Windows, true, false),
             HookAction::StartAndSuppress
@@ -304,7 +312,10 @@ mod tests {
     #[test]
     fn passes_unrelated_and_injected_events_through() {
         let mut state = ChordState::default();
-        assert_eq!(state.transition(KeyKind::Other, true, false), HookAction::Pass);
+        assert_eq!(
+            state.transition(KeyKind::Other, true, false),
+            HookAction::Pass
+        );
         assert_eq!(
             state.transition(KeyKind::Control, true, true),
             HookAction::Pass

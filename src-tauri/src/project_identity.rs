@@ -71,4 +71,3 @@ mod tests {
         assert!(identify_root(&missing).is_err());
     }
 }
-

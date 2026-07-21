@@ -1,8 +1,8 @@
-# QoLayer Compact Toolbox UI Design
+# QLayer Compact Toolbox UI Design
 
 ## Summary
 
-QoLayer is a compact tray toolbox, not a traditional desktop dashboard. Its interface should be small, quiet, and focused on configuration and status while shortcuts perform the actual work.
+QLayer is a compact tray toolbox, not a traditional desktop dashboard. Its interface should be small, quiet, and focused on configuration and status while shortcuts perform the actual work.
 
 The redesigned app uses a narrow icon sidebar and a single content surface inspired by the restrained visual language of the Codex and ChatGPT desktop apps. Voice Flow is the first working tool. Chat shortcuts and Saved prompts reserve navigation positions for future releases but do not provide functionality in this phase.
 
@@ -28,7 +28,7 @@ The redesigned app uses a narrow icon sidebar and a single content surface inspi
 - Use one continuous charcoal surface with approximately 20-22 px outer
   corner radii, a subtle outer border, and a restrained shadow.
 - Use a 48 px left navigation rail separated by a low-contrast divider.
-- Use the official monochrome QoLayer logo at the top of the rail.
+- Use the official monochrome QLayer logo at the top of the rail.
 
 ## Navigation
 
@@ -128,7 +128,7 @@ Use concise labels:
 
 - `Open Codex / ChatGPT`
 - `Restore Audio`
-- `About QoLayer`
+- `About QLayer`
 - `Quit`
 
 Compatibility detection remains automatic. Do not add an application selector for standalone Codex versus the unified ChatGPT app.
@@ -139,7 +139,7 @@ Compatibility detection remains automatic. Do not add an application selector fo
 - Show one quiet state label during normal operation.
 - Replace supporting copy with one contextual error when attention is required.
 - Errors should distinguish detection, focus, dictation, and audio failures without technical noise.
-- Do not bring QoLayer to the foreground for ordinary success states.
+- Do not bring QLayer to the foreground for ordinary success states.
 
 ## Visual system
 
@@ -180,7 +180,7 @@ Compatibility detection remains automatic. Do not add an application selector fo
 The approved visual direction is the revised monochrome mockup with:
 
 - A 48 px icon rail.
-- The official QoLayer logo.
+- The official QLayer logo.
 - Voice Flow selected.
 - Visible Chat shortcuts and Saved prompts buttons.
 - Settings anchored at the bottom.

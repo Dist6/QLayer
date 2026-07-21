@@ -2,32 +2,32 @@
 
 ## Goal
 
-Make the existing push-to-talk Voice Flow feel immediate while preserving its validated behavior: prepare background audio, focus the already-running Codex desktop app, focus the composer, hold Codex dictation, and release dictation when the QoLayer shortcut is released.
+Make the existing push-to-talk Voice Flow feel immediate while preserving its validated behavior: prepare background audio, focus the already-running Codex desktop app, focus the composer, hold Codex dictation, and release dictation when the QLayer shortcut is released.
 
 ## Agreed behavior
 
-- QoLayer must never launch Codex as part of Voice Flow.
+- QLayer must never launch Codex as part of Voice Flow.
 - Codex is expected to already be running.
-- When Codex is available, QoLayer should focus it without the current fixed open delay.
-- When Codex is unavailable, QoLayer must fail closed and never send the dictation shortcut to another application.
-- The QoLayer main window should appear with a small status message:
+- When Codex is available, QLayer should focus it without the current fixed open delay.
+- When Codex is unavailable, QLayer must fail closed and never send the dictation shortcut to another application.
+- The QLayer main window should appear with a small status message:
   - `Waiting for Codex`
   - `Open Codex, then hold Ctrl+Alt+Space again.`
 - Voice Flow must continue to apply the configured background-audio mode before dictation:
   - leave audio unchanged,
   - lower background audio, or
   - mute background audio.
-- Releasing the QoLayer shortcut during preparation must not leave the Codex dictation shortcut held.
+- Releasing the QLayer shortcut during preparation must not leave the Codex dictation shortcut held.
 - Exact chat navigation is out of scope.
 
 ## Interaction sequence
 
 1. The user presses and holds `Ctrl+Alt+Space`.
-2. QoLayer prepares background audio using the current Voice Flow setting.
-3. QoLayer searches for an existing Codex window and focuses its composer.
-4. After a short settle interval, QoLayer holds `Ctrl+Shift+D` while the user continues holding the QoLayer shortcut.
+2. QLayer prepares background audio using the current Voice Flow setting.
+3. QLayer searches for an existing Codex window and focuses its composer.
+4. After a short settle interval, QLayer holds `Ctrl+Shift+D` while the user continues holding the QLayer shortcut.
 5. Releasing `Ctrl+Alt+Space` releases `Ctrl+Shift+D`.
-6. If Codex cannot be focused, QoLayer stops before keyboard injection and shows the recovery message in its main window.
+6. If Codex cannot be focused, QLayer stops before keyboard injection and shows the recovery message in its main window.
 
 ## Performance approach
 
@@ -44,4 +44,4 @@ Remove the unconditional Codex open action and its 600 ms delay. Keep only the s
 
 - Unit-test the fast path, unavailable-Codex path, and release race.
 - Run TypeScript typecheck, ESLint, Vitest, Vite build, Rust tests, Rust check, and available Rust formatting/lint checks.
-- Launch one QoLayer development instance and validate push-to-talk manually with the user.
+- Launch one QLayer development instance and validate push-to-talk manually with the user.

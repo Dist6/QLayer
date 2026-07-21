@@ -15,6 +15,6 @@ export const defaultSettings: AppSettings = {
     listeningVolumePercent: 20,
   },
   localhostManager: {
-    autoRefreshSeconds: 15,
+    autoRefreshSeconds: 30,
   },
 };

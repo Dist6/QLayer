@@ -19,7 +19,7 @@ describe("Project chat suggestions", () => {
           threadId: MATCHING,
           title: "Matching recent",
           projectId: "project-0123456789abcdef",
-          projectName: "QoLayer",
+          projectName: "QLayer",
           updatedAt: "200",
         },
         { threadId: LINKED, title: "Already linked", updatedAt: "300" },
@@ -27,7 +27,7 @@ describe("Project chat suggestions", () => {
     );
 
     expect(suggestions.map((chat) => chat.threadId)).toEqual([MATCHING, SAVED]);
-    expect(suggestions[0]).toMatchObject({ matchesProject: true, projectName: "QoLayer" });
+    expect(suggestions[0]).toMatchObject({ matchesProject: true, projectName: "QLayer" });
   });
 
   it("deduplicates saved and recent metadata by thread ID", () => {

@@ -18,7 +18,7 @@ const destination: ChatDestination = {
 
 const project = {
   id: "project",
-  name: "QoLayer",
+  name: "QLayer",
   chats: [{ threadId: destination.threadId, displayName: "Project chat" }],
 };
 

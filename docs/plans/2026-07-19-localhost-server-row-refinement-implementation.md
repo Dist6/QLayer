@@ -51,6 +51,6 @@
 
 1. Run focused Vitest and Rust tests.
 2. Run TypeScript, ESLint, Prettier, full Vitest, Cargo tests/check, Vite build, and `git diff --check`.
-3. Restart QoLayer and inspect the real Localhost Manager panel.
+3. Restart QLayer and inspect the real Localhost Manager panel.
 
 No intermediate commit will be created because the existing working tree contains previously approved uncommitted work.

@@ -229,45 +229,57 @@ export function ProjectEditorView({ project, chats, onCancel, onSave }: ProjectE
               Add port
             </button>
           </header>
+          <p className="project-field-help">
+            Add each local service QLayer should expect when this Project is running.
+          </p>
           {ports.map((port) => (
             <div className="project-port-editor" key={port.id}>
-              <input
-                aria-label="Port label"
-                maxLength={40}
-                onChange={(event) => updatePort(port.id, { label: event.currentTarget.value })}
-                placeholder="Label"
-                value={port.label}
-              />
-              <select
-                aria-label={`Role for ${port.label || "port"}`}
-                onChange={(event) =>
-                  updatePort(port.id, { role: event.currentTarget.value as ProjectPortRole })
-                }
-                value={port.role}
-              >
-                {PORT_ROLES.map((role) => (
-                  <option key={role.value} value={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                aria-label={`Port number for ${port.label || "port"}`}
-                max={65_535}
-                min={1}
-                onChange={(event) =>
-                  updatePort(port.id, { port: Number(event.currentTarget.value) })
-                }
-                type="number"
-                value={port.port}
-              />
+              <label className="project-port-field project-port-name">
+                <span>Service name</span>
+                <input
+                  maxLength={40}
+                  onChange={(event) => updatePort(port.id, { label: event.currentTarget.value })}
+                  placeholder="Web app"
+                  value={port.label}
+                />
+              </label>
+              <label className="project-port-field">
+                <span>Type</span>
+                <select
+                  onChange={(event) =>
+                    updatePort(port.id, { role: event.currentTarget.value as ProjectPortRole })
+                  }
+                  value={port.role}
+                >
+                  {PORT_ROLES.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="project-port-field">
+                <span>Port</span>
+                <input
+                  max={65_535}
+                  min={1}
+                  onChange={(event) =>
+                    updatePort(port.id, { port: Number(event.currentTarget.value) })
+                  }
+                  type="number"
+                  value={port.port}
+                />
+              </label>
               <label className="project-strict-toggle">
                 <input
                   checked={port.strict}
                   onChange={(event) => updatePort(port.id, { strict: event.currentTarget.checked })}
                   type="checkbox"
                 />
-                <span>Strict</span>
+                <span>
+                  <strong>Require this port</strong>
+                  <small>Codex should use this exact port.</small>
+                </span>
               </label>
               <button
                 aria-label={`Remove ${port.label || "port"}`}

@@ -1,7 +1,7 @@
 # Add Chat Subview Implementation Plan
 
 **Goal:** Replace the cramped manual-entry disclosure with the approved full
-content `Add chat` subview inside the existing QoLayer window.
+content `Add chat` subview inside the existing QLayer window.
 
 **Architecture:** `ChatShortcutsPanel` owns a two-state local view model:
 `list` and `add`. The list view keeps destination management and recent-chat

@@ -1,55 +1,62 @@
 # Development
 
+## Requirements
+
+- Windows 10 or Windows 11 x64
+- Node.js 22
+- pnpm 10.30.3
+- Stable Rust with `rustfmt` and `clippy`
+- Tauri 2 Windows prerequisites and Microsoft Edge WebView2 Runtime
+
+Install the Rust quality components once:
+
+```powershell
+rustup component add rustfmt clippy
+```
+
 ## Commands
 
 Install dependencies:
 
-```sh
-pnpm install
+```powershell
+pnpm install --frozen-lockfile
 ```
 
-Run frontend development server:
+Run the frontend or desktop development app:
 
-```sh
+```powershell
 pnpm dev
-```
-
-Run desktop development app:
-
-```sh
 pnpm desktop
 ```
 
-Run tests:
+Run all routine checks:
 
-```sh
-pnpm test
-```
-
-Run TypeScript checks:
-
-```sh
+```powershell
+pnpm format
 pnpm typecheck
-```
-
-Run lint:
-
-```sh
 pnpm lint
+pnpm test
+pnpm build
+cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
-Run Rust checks:
+Create the portable Windows release:
 
-```sh
-pnpm rust:check
+```powershell
+pnpm desktop:portable
 ```
 
-## Project Rules
+The command builds the release executable, creates `release/QLayer-v0.1.0-windows-x64-portable.zip`, and writes `release/SHA256SUMS.txt`. Generated release files are not committed.
+
+## Project rules
 
 - Keep feature code under `src/features/<feature-name>`.
 - Keep shared helpers under `src/shared`.
 - Keep native and system code under `src-tauri`.
 - Keep Tauri commands focused and validated.
 - Keep tray actions routed through typed frontend events when they need UI-side workflows.
-- Do not add telemetry, cloud sync, credential access, token access, browser cookie access, or proxy behavior.
-- Keep UI text English-only for v0.1.
+- Preserve local-only storage and minimum permissions.
+- Keep UI and documentation text in English for v0.1.

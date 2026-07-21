@@ -1,29 +1,41 @@
 # Contributing
 
-QoLayer is early-stage open-source software. Keep changes small, explicit, and aligned with the local-first privacy model.
+QLayer is early-stage open-source software. Keep changes focused, explicit, and aligned with its local-first privacy model.
 
-## Development Principles
+## Development principles
 
 - Keep code modular and simple.
-- Prefer focused files over large mixed-responsibility files.
-- Do not add dead code.
-- Do not leave commented-out old code.
-- Do not add unused abstractions.
-- Keep UI text in English for v0.1.
-- Use strict TypeScript.
-- Avoid `any`.
+- Put feature code under `src/features/<feature-name>`.
+- Put shared helpers under `src/shared`.
+- Route native capabilities through focused Tauri commands or official plugins.
+- Use strict TypeScript and avoid `any`.
+- Do not add dead code, commented-out code, or unused abstractions.
+- Keep UI, documentation, comments, and labels in English for v0.1.
 - Add meaningful tests when practical.
+- Keep permissions minimal.
 
-## Before Submitting Changes
+Do not add telemetry, cloud sync, credential or token access, Codex authentication access, browser cookie access, traffic interception, proxy behavior, arbitrary shell execution, or broad process control.
+
+## Before submitting changes
 
 Run:
 
-```sh
+```powershell
 pnpm format
 pnpm typecheck
 pnpm lint
 pnpm test
-pnpm rust:check
+pnpm build
+cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
-Do not add telemetry, cloud sync, credential access, token access, browser cookie access, proxy behavior, or broad native command execution.
+For release-related changes, also build and smoke-test the exact portable archive:
+
+```powershell
+pnpm desktop:portable
+```
+
+Never include private logs, machine-specific paths, credentials, tokens, chat content, or generated build directories in a contribution.

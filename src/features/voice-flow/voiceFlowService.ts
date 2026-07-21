@@ -88,7 +88,7 @@ export async function startTargetedVoiceFlowHold(
     steps.push(focusResult.value);
   }
   if (!focusResult?.ok || focusResult.value.status !== "codexFocused") {
-    await input.window.showQoLayer();
+    await input.window.showQLayer();
     return finish("waitingForCodex", steps, {
       status: "waitingForCodex",
       message: waitingForCodexMessage(input.settings.voiceFlow.hotkey),
@@ -225,7 +225,7 @@ async function prepareVoiceFlow(
 
   if (!focusResult.ok || focusResult.value.status !== "codexFocused") {
     await restorePreparedAudio(input.audio, steps);
-    await input.window.showQoLayer();
+    await input.window.showQLayer();
     return finish("waitingForCodex", steps, {
       status: "waitingForCodex",
       message: waitingForCodexMessage(input.settings.voiceFlow.hotkey),

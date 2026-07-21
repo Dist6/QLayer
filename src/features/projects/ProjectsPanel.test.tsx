@@ -7,8 +7,8 @@ import { ProjectListView } from "./ProjectsPanel";
 
 const project: Project = {
   id: "qolayer",
-  name: "QoLayer",
-  rootPath: "C:\\Users\\example\\Documents\\QoLayer",
+  name: "QLayer",
+  rootPath: "C:\\Users\\example\\Documents\\QLayer",
   rootIdentity: "project-0123456789abcdef",
   linkedChats: [
     {
@@ -37,7 +37,7 @@ const snapshot: LocalhostSnapshot = {
       uptimeSeconds: null,
       cpuPercent: null,
       projectId: project.rootIdentity,
-      projectName: "QoLayer",
+      projectName: "QLayer",
       projectNameSource: "automatic",
       classification: "development",
       kind: "frontend",
@@ -71,8 +71,8 @@ describe("Projects interface", () => {
         snapshot={snapshot}
       />,
     );
-    expect(markup).toContain("QoLayer");
-    expect(markup).toContain("Documents / QoLayer");
+    expect(markup).toContain("QLayer");
+    expect(markup).toContain("Documents / QLayer");
     expect(markup).toContain("1 chat · 1/1 running");
   });
 });

@@ -107,11 +107,7 @@ impl GlobalHotkeyState {
         previous
     }
 
-    fn set_active_plugin(
-        &self,
-        shortcut: Shortcut,
-        label: String,
-    ) -> Option<ModifierHotkeyHandle> {
+    fn set_active_plugin(&self, shortcut: Shortcut, label: String) -> Option<ModifierHotkeyHandle> {
         let mut registration = self.registration.lock().ok()?;
         registration.plugin_shortcut = Some(shortcut);
         let previous = registration.modifier_hotkey.take();
@@ -174,8 +170,7 @@ pub fn set_global_hotkey(app: AppHandle, shortcut: String) -> Result<GlobalHotke
             }
 
             app.global_shortcut().register(candidate).map_err(|_| {
-                "That shortcut is unavailable. Your previous shortcut is still active."
-                    .to_string()
+                "That shortcut is unavailable. Your previous shortcut is still active.".to_string()
             })?;
 
             if let Some(previous) = state.plugin_shortcut() {
@@ -223,7 +218,10 @@ fn action_for_global_hotkey(
 
 fn parse_supported_shortcut(value: &str) -> Result<(ShortcutCandidate, String), String> {
     if value.eq_ignore_ascii_case(DEFAULT_SHORTCUT) {
-        return Ok((ShortcutCandidate::ModifierCtrlWin, DEFAULT_SHORTCUT.to_string()));
+        return Ok((
+            ShortcutCandidate::ModifierCtrlWin,
+            DEFAULT_SHORTCUT.to_string(),
+        ));
     }
 
     let shortcut = Shortcut::from_str(value).map_err(|_| "That shortcut is not supported.")?;
@@ -238,10 +236,7 @@ fn parse_supported_shortcut(value: &str) -> Result<(ShortcutCandidate, String), 
 
     let main_key = supported_main_key_label(shortcut.key)
         .ok_or_else(|| "That key is not supported.".to_string())?;
-    let dictation_shortcut = Shortcut::new(
-        Some(Modifiers::CONTROL | Modifiers::SHIFT),
-        Code::KeyD,
-    );
+    let dictation_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyD);
     if shortcut == dictation_shortcut {
         return Err("This shortcut is reserved for Codex dictation.".to_string());
     }
@@ -269,25 +264,57 @@ fn parse_supported_shortcut(value: &str) -> Result<(ShortcutCandidate, String), 
 
 fn supported_main_key_label(key: Code) -> Option<&'static str> {
     match key {
-        Code::KeyA => Some("A"), Code::KeyB => Some("B"), Code::KeyC => Some("C"),
-        Code::KeyD => Some("D"), Code::KeyE => Some("E"), Code::KeyF => Some("F"),
-        Code::KeyG => Some("G"), Code::KeyH => Some("H"), Code::KeyI => Some("I"),
-        Code::KeyJ => Some("J"), Code::KeyK => Some("K"), Code::KeyL => Some("L"),
-        Code::KeyM => Some("M"), Code::KeyN => Some("N"), Code::KeyO => Some("O"),
-        Code::KeyP => Some("P"), Code::KeyQ => Some("Q"), Code::KeyR => Some("R"),
-        Code::KeyS => Some("S"), Code::KeyT => Some("T"), Code::KeyU => Some("U"),
-        Code::KeyV => Some("V"), Code::KeyW => Some("W"), Code::KeyX => Some("X"),
-        Code::KeyY => Some("Y"), Code::KeyZ => Some("Z"),
-        Code::F1 => Some("F1"), Code::F2 => Some("F2"), Code::F3 => Some("F3"),
-        Code::F4 => Some("F4"), Code::F5 => Some("F5"), Code::F6 => Some("F6"),
-        Code::F7 => Some("F7"), Code::F8 => Some("F8"), Code::F9 => Some("F9"),
-        Code::F10 => Some("F10"), Code::F11 => Some("F11"), Code::F12 => Some("F12"),
-        Code::Space => Some("Space"), Code::ArrowDown => Some("ArrowDown"),
-        Code::ArrowLeft => Some("ArrowLeft"), Code::ArrowRight => Some("ArrowRight"),
-        Code::ArrowUp => Some("ArrowUp"), Code::Delete => Some("Delete"),
-        Code::End => Some("End"), Code::Enter => Some("Enter"), Code::Home => Some("Home"),
-        Code::Insert => Some("Insert"), Code::PageDown => Some("PageDown"),
-        Code::PageUp => Some("PageUp"), Code::Tab => Some("Tab"),
+        Code::KeyA => Some("A"),
+        Code::KeyB => Some("B"),
+        Code::KeyC => Some("C"),
+        Code::KeyD => Some("D"),
+        Code::KeyE => Some("E"),
+        Code::KeyF => Some("F"),
+        Code::KeyG => Some("G"),
+        Code::KeyH => Some("H"),
+        Code::KeyI => Some("I"),
+        Code::KeyJ => Some("J"),
+        Code::KeyK => Some("K"),
+        Code::KeyL => Some("L"),
+        Code::KeyM => Some("M"),
+        Code::KeyN => Some("N"),
+        Code::KeyO => Some("O"),
+        Code::KeyP => Some("P"),
+        Code::KeyQ => Some("Q"),
+        Code::KeyR => Some("R"),
+        Code::KeyS => Some("S"),
+        Code::KeyT => Some("T"),
+        Code::KeyU => Some("U"),
+        Code::KeyV => Some("V"),
+        Code::KeyW => Some("W"),
+        Code::KeyX => Some("X"),
+        Code::KeyY => Some("Y"),
+        Code::KeyZ => Some("Z"),
+        Code::F1 => Some("F1"),
+        Code::F2 => Some("F2"),
+        Code::F3 => Some("F3"),
+        Code::F4 => Some("F4"),
+        Code::F5 => Some("F5"),
+        Code::F6 => Some("F6"),
+        Code::F7 => Some("F7"),
+        Code::F8 => Some("F8"),
+        Code::F9 => Some("F9"),
+        Code::F10 => Some("F10"),
+        Code::F11 => Some("F11"),
+        Code::F12 => Some("F12"),
+        Code::Space => Some("Space"),
+        Code::ArrowDown => Some("ArrowDown"),
+        Code::ArrowLeft => Some("ArrowLeft"),
+        Code::ArrowRight => Some("ArrowRight"),
+        Code::ArrowUp => Some("ArrowUp"),
+        Code::Delete => Some("Delete"),
+        Code::End => Some("End"),
+        Code::Enter => Some("Enter"),
+        Code::Home => Some("Home"),
+        Code::Insert => Some("Insert"),
+        Code::PageDown => Some("PageDown"),
+        Code::PageUp => Some("PageUp"),
+        Code::Tab => Some("Tab"),
         _ => None,
     }
 }
@@ -332,7 +359,9 @@ mod tests {
     #[test]
     fn parses_ctrl_win_as_the_native_modifier_chord() {
         let parsed = parse_supported_shortcut("Ctrl+Win");
-        assert!(matches!(parsed, Ok((ShortcutCandidate::ModifierCtrlWin, label)) if label == "Ctrl+Win"));
+        assert!(
+            matches!(parsed, Ok((ShortcutCandidate::ModifierCtrlWin, label)) if label == "Ctrl+Win")
+        );
     }
 
     #[test]

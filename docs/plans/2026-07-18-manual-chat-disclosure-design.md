@@ -21,7 +21,7 @@ the controls only when they are needed.
 
 ## Visual Direction
 
-The interaction follows QoLayer's refined monochrome toolbox language. The
+The interaction follows QLayer's refined monochrome toolbox language. The
 disclosure trigger is a compact secondary button rather than a new card. The
 form remains flat within the current section, with readable labels and one clear
 submit action.

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make QoLayer behave like a compact tray-based utility instead of a large dashboard.
+**Goal:** Make QLayer behave like a compact tray-based utility instead of a large dashboard.
 
 **Architecture:** Keep native window lifecycle and tray behavior in `src-tauri`, expose only typed tray status/action events to React, and keep Voice Flow behavior inside its service/controller boundary. Compact the existing UI shell without adding product surfaces.
 
@@ -20,7 +20,7 @@
 
 - [x] Add close-to-tray behavior with Tauri's close-request event.
 - [x] Keep Quit as the only full application exit path.
-- [x] Restore and focus the main QoLayer window from the tray.
+- [x] Restore and focus the main QLayer window from the tray.
 - [x] Keep tray initialization failure non-fatal.
 
 ### Task 2: Typed Tray Status Events
@@ -65,4 +65,4 @@
 - [x] Run requested `pnpm` scripts.
 - [x] Use direct equivalents if script PATH cannot resolve local tools.
 - [x] Run `cargo check --manifest-path src-tauri/Cargo.toml`.
-- [x] Commit with `fix: make QoLayer a compact tray utility`.
+- [x] Commit with `fix: make QLayer a compact tray utility`.

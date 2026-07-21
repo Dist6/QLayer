@@ -1,8 +1,8 @@
-# QoLayer v0.1 Foundation Implementation Plan
+# QLayer v0.1 Foundation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the conservative v0.1 foundation for QoLayer as a local-first desktop companion app for Codex.
+**Goal:** Build the conservative v0.1 foundation for QLayer as a local-first desktop companion app for Codex.
 
 **Architecture:** Create a Tauri 2 + React + TypeScript + Vite app with feature-local modules, narrow native commands, strongly typed settings, and a simple Voice Flow state machine. Keep unavailable native behavior explicit through typed `NotImplemented` results.
 

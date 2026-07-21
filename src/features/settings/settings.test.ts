@@ -10,7 +10,7 @@ describe("settings defaults", () => {
     expect(defaultSettings.voiceFlow.audioMode).toBe("disabled");
     expect(defaultSettings.voiceFlow.listeningVolumePercent).toBe(20);
     expect(defaultSettings.general).toEqual({ launchAtStartup: false, closeToTray: true });
-    expect(defaultSettings.localhostManager.autoRefreshSeconds).toBe(15);
+    expect(defaultSettings.localhostManager.autoRefreshSeconds).toBe(30);
   });
 });
 
@@ -131,7 +131,7 @@ describe("settings validation", () => {
       }),
     );
 
-    expect(parsed.settings.localhostManager.autoRefreshSeconds).toBe(15);
+    expect(parsed.settings.localhostManager.autoRefreshSeconds).toBe(30);
     expect(parsed.recovered).toBe(true);
   });
 

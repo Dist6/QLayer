@@ -1,4 +1,4 @@
-# QoLayer Tray Foundation Implementation Plan
+# QLayer Tray Foundation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -29,9 +29,9 @@
 - Create: `src-tauri/src/tray.rs`
 - Modify: `src-tauri/src/main.rs`
 
-- [x] Add a narrow tray module with Show QoLayer, Start Voice Flow, Restore Audio, and Quit.
+- [x] Add a narrow tray module with Show QLayer, Start Voice Flow, Restore Audio, and Quit.
 - [x] Emit frontend events for Start Voice Flow and Restore Audio.
-- [x] Show the main window for Show QoLayer when possible.
+- [x] Show the main window for Show QLayer when possible.
 - [x] Quit cleanly through the Tauri app handle.
 - [x] Store a minimal tray status that can be queried by the frontend.
 

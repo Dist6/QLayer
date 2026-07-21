@@ -19,7 +19,7 @@ export type TrayActionParseResult =
 export const trayActionLabels: Record<TrayAction, string> = {
   openCodex: "Open Codex / ChatGPT",
   restoreAudio: "Restore Audio",
-  showAbout: "About QoLayer",
+  showAbout: "About QLayer",
 };
 
 export function parseTrayActionPayload(payload: unknown): TrayActionParseResult {

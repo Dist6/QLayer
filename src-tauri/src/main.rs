@@ -12,25 +12,24 @@ mod global_hotkeys;
 mod keyboard;
 mod localhost_manager;
 mod modifier_hotkey;
-mod project_identity;
 mod project_actions;
+mod project_identity;
 mod tray;
 mod voice_selector;
 mod window_behavior;
 mod window_focus;
+mod window_placement;
 
 #[tauri::command]
 fn open_codex_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
     if !codex_threads::is_allowed_codex_url(&url) {
-        return Err("QoLayer blocked an unsupported Codex link.".to_string());
+        return Err("QLayer blocked an unsupported Codex link.".to_string());
     }
 
-    app.opener()
-        .open_url(url, None::<&str>)
-        .map_err(|_| {
-            "Codex could not be opened. Make sure Codex is installed and deep links are enabled."
-                .to_string()
-        })
+    app.opener().open_url(url, None::<&str>).map_err(|_| {
+        "Codex could not be opened. Make sure Codex is installed and deep links are enabled."
+            .to_string()
+    })
 }
 
 #[tauri::command]
@@ -54,6 +53,11 @@ fn set_global_hotkey(
 #[tauri::command]
 fn show_main_window(app: tauri::AppHandle) -> Result<(), String> {
     tray::show_main_window(&app)
+}
+
+#[tauri::command]
+fn hide_main_window(app: tauri::AppHandle) -> Result<(), String> {
+    tray::hide_main_window(&app)
 }
 
 #[tauri::command]
@@ -149,10 +153,7 @@ fn set_localhost_project_alias(
 }
 
 #[tauri::command]
-fn remove_localhost_project_alias(
-    app: tauri::AppHandle,
-    server_id: String,
-) -> Result<(), String> {
+fn remove_localhost_project_alias(app: tauri::AppHandle, server_id: String) -> Result<(), String> {
     app.state::<localhost_manager::LocalhostManagerState>()
         .remove_project_alias(&server_id)
 }
@@ -184,9 +185,15 @@ fn main() {
             Some(vec!["--minimized"]),
         ))
         .setup(|app| {
-            let alias_path = app.path().app_data_dir()?.join("localhost-project-aliases.json");
-            app.manage(localhost_manager::LocalhostManagerState::with_alias_path(alias_path));
+            let alias_path = app
+                .path()
+                .app_data_dir()?
+                .join("localhost-project-aliases.json");
+            app.manage(localhost_manager::LocalhostManagerState::with_alias_path(
+                alias_path,
+            ));
             tray::setup_tray(app);
+            let _ = window_placement::place_main_window(app.handle());
             global_hotkeys::setup_global_hotkeys(app);
             if should_start_minimized(std::env::args()) {
                 if let Some(window) = app.get_webview_window("main") {
@@ -198,10 +205,11 @@ fn main() {
         })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                if window
-                    .app_handle()
-                    .state::<window_behavior::WindowBehaviorState>()
-                    .close_to_tray()
+                if window.label() == "main"
+                    && window
+                        .app_handle()
+                        .state::<window_behavior::WindowBehaviorState>()
+                        .close_to_tray()
                 {
                     api.prevent_close();
                     let _ = window.hide();
@@ -215,6 +223,7 @@ fn main() {
             get_global_hotkey_status,
             set_global_hotkey,
             show_main_window,
+            hide_main_window,
             prepare_audio,
             restore_audio,
             send_dictation_shortcut,
@@ -234,7 +243,7 @@ fn main() {
             set_close_to_tray
         ])
         .run(tauri::generate_context!())
-        .expect("error while running QoLayer");
+        .expect("error while running QLayer");
 }
 
 fn should_start_minimized(args: impl IntoIterator<Item = String>) -> bool {

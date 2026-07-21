@@ -47,7 +47,7 @@ export const windowController: WindowController = {
   focusCodex: async () => invokeWindowCommand("focus_codex_window"),
   focusCodexThread: async (threadId: string) =>
     invokeWindowCommand("focus_codex_thread", { threadId }),
-  showQoLayer: async () => invokeShowMainWindow(),
+  showQLayer: async () => invokeShowMainWindow(),
 };
 
 async function invokeAudioCommand(
@@ -121,7 +121,7 @@ async function invokeShowMainWindow(): Promise<AppResult<void>> {
     await invoke("show_main_window");
     return { ok: true, value: undefined };
   } catch (error) {
-    return failed(typeof error === "string" ? error : "QoLayer window could not be shown.");
+    return failed(typeof error === "string" ? error : "QLayer window could not be shown.");
   }
 }
 

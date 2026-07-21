@@ -1,10 +1,9 @@
 [package]
-name = "qolayer"
+name = "qlayer"
 version = "0.1.0"
-description = "Quality-of-life tools for coding assistant apps."
-authors = ["QoLayer contributors"]
+description = "A local-first Windows companion for Codex and ChatGPT."
+authors = ["QLayer contributors"]
 license = "AGPL-3.0-only"
-repository = "https://github.com/qolayer/qolayer"
 edition = "2021"
 
 [build-dependencies]

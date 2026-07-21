@@ -9,7 +9,7 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { LocalhostAutoRefreshSeconds } from "../settings/settingsTypes";
 import {
@@ -27,6 +27,7 @@ import {
 import { groupDevelopmentServers } from "./localhostManagerGrouping";
 import type { LocalhostServer, LocalhostSnapshot } from "./localhostManagerTypes";
 import { useLocalhostServers } from "./useLocalhostServers";
+import { useVisibleInterval } from "./useVisibleInterval";
 
 type LocalhostManagerPanelProps = {
   autoRefreshSeconds: LocalhostAutoRefreshSeconds;
@@ -87,10 +88,7 @@ export function LocalhostManagerContent({
     [snapshot],
   );
 
-  useEffect(() => {
-    const interval = globalThis.setInterval(() => setMinuteTick((value) => value + 1), 60_000);
-    return () => globalThis.clearInterval(interval);
-  }, []);
+  useVisibleInterval(() => setMinuteTick((value) => value + 1), 60_000, true);
 
   const openServer = async (serverId: string) => {
     setOpenError(null);
@@ -112,7 +110,7 @@ export function LocalhostManagerContent({
       <header className="localhost-heading">
         <div>
           <h1>Localhost Manager</h1>
-          <span>{development.length} running</span>
+          <span>{snapshot ? `${development.length} running` : "Checking"}</span>
         </div>
         <button
           aria-label="Refresh local servers"

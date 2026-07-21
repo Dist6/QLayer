@@ -39,7 +39,7 @@ const focusedWindow: WindowController = {
     ok: true,
     value: { status: "codexFocused", message: "Codex focused." },
   }),
-  showQoLayer: async () => ({ ok: true, value: undefined }),
+  showQLayer: async () => ({ ok: true, value: undefined }),
 };
 
 function createAudioController(
@@ -147,7 +147,7 @@ describe("Voice Flow service", () => {
           value: { status: "codexFocused", message: "Codex focused." },
         };
       },
-      showQoLayer: async () => ({ ok: true, value: undefined }),
+      showQLayer: async () => ({ ok: true, value: undefined }),
     };
     const keyboard: KeyboardController = {
       ...successfulKeyboard,
@@ -204,7 +204,7 @@ describe("Voice Flow service", () => {
           value: { status: "codexFocused", message: "Codex focused." },
         };
       },
-      showQoLayer: async () => ({ ok: true, value: undefined }),
+      showQLayer: async () => ({ ok: true, value: undefined }),
     };
 
     const result = await startVoiceFlow({

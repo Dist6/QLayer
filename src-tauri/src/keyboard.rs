@@ -165,7 +165,6 @@ mod platform {
             },
         }
     }
-
 }
 
 #[cfg(not(windows))]
@@ -233,7 +232,10 @@ mod tests {
         let mut expected = press_plan_for_shortcut(DictationShortcut::CtrlShiftD);
         expected.extend(release_plan_for_shortcut(DictationShortcut::CtrlShiftD));
 
-        assert_eq!(input_plan_for_shortcut(DictationShortcut::CtrlShiftD), expected);
+        assert_eq!(
+            input_plan_for_shortcut(DictationShortcut::CtrlShiftD),
+            expected
+        );
     }
 
     #[test]

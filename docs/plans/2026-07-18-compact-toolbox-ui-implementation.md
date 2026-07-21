@@ -1,4 +1,4 @@
-# QoLayer Compact Toolbox UI Implementation Plan
+# QLayer Compact Toolbox UI Implementation Plan
 
 **Goal:** Replace the current dashboard-style UI with the approved compact Tabler-based toolbox, add configurable audio lowering with automatic restoration, and expose only functional app settings.
 
@@ -52,7 +52,7 @@ Use outline components from `@tabler/icons-react`. Verify exact export names fro
 <IconSettings aria-hidden="true" size={19} stroke={1.7} />
 ```
 
-Do not mix icon libraries. Keep the custom three-layer QoLayer mark as local markup or SVG.
+Do not mix icon libraries. Keep the custom three-layer QLayer mark as local markup or SVG.
 
 **Step 4: Verify removal**
 
@@ -177,7 +177,7 @@ Expected: PASS.
 
 ```powershell
 git add src/features/settings/settingsTypes.ts src/features/settings/defaultSettings.ts src/features/settings/settingsValidation.ts src/features/settings/settings.test.ts src/features/settings/settingsStorage.test.ts
-git commit -m "refactor: simplify QoLayer settings"
+git commit -m "refactor: simplify QLayer settings"
 ```
 
 ## Task 3: Make the Windows lower-volume target configurable
@@ -485,17 +485,17 @@ Reject unknown or obsolete `startVoiceFlow` payloads.
 Build this menu:
 
 ```text
-Show QoLayer
+Show QLayer
 Open Codex / ChatGPT
 Restore Audio
-About QoLayer
+About QLayer
 ────────────
 Quit
 ```
 
 Remove `Start Voice Flow`. Keep Voice Flow shortcut-driven.
 
-`Open Codex / ChatGPT` should reuse the existing allowlisted `codex://` opener. `About QoLayer` should show the window and select the About view.
+`Open Codex / ChatGPT` should reuse the existing allowlisted `codex://` opener. `About QLayer` should show the window and select the About view.
 
 **Step 3: Run focused tests and Rust checks**
 
@@ -513,7 +513,7 @@ Expected: PASS.
 
 ```powershell
 git add src-tauri/src/tray.rs src/features/tray src/app/App.tsx
-git commit -m "refactor: simplify the QoLayer tray menu"
+git commit -m "refactor: simplify the QLayer tray menu"
 ```
 
 ## Task 7: Build the compact toolbox shell and sidebar
@@ -742,7 +742,7 @@ Expected: PASS.
 
 ```powershell
 git add src/features/settings src/features/about src/app/App.tsx src/app/App.css
-git commit -m "feat: simplify QoLayer settings"
+git commit -m "feat: simplify QLayer settings"
 ```
 
 ## Task 10: Apply the approved window and visual system
@@ -846,7 +846,7 @@ Stage exact remaining paths and inspect the staged diff before committing:
 ```powershell
 git diff --cached --check
 git diff --cached
-git commit -m "feat: redesign QoLayer as a compact toolbox"
+git commit -m "feat: redesign QLayer as a compact toolbox"
 ```
 
 Do not include unrelated pre-existing changes accidentally.

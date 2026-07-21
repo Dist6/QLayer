@@ -12,7 +12,7 @@
 
 The repository currently contains extensive approved but uncommitted work across Voice Flow, Chat Shortcuts, Localhost Manager, UI, icons, and Tauri configuration. Do not stage or revert those changes accidentally.
 
-1. Run `git -c safe.directory="C:/Users/onb80/Documents/QoLayer" status --short`.
+1. Run `git -c safe.directory="C:/Projects/QLayer" status --short`.
 2. Run the existing validation suite before beginning.
 3. Obtain explicit approval to create a baseline commit for the already validated work, or use path-specific staging and inspect every staged diff.
 4. Never use `git add .` in this worktree.

@@ -1,12 +1,12 @@
-# QoLayer v0.1 Foundation Design
+# QLayer v0.1 Foundation Design
 
 ## Goal
 
-QoLayer v0.1 establishes a conservative, open-source-ready desktop foundation for a local-first companion app for coding assistant applications, starting with Codex.
+QLayer v0.1 establishes a conservative, open-source-ready desktop foundation for a local-first companion app for coding assistant applications, starting with Codex.
 
 ## Product Scope
 
-QoLayer v0.1 includes:
+QLayer v0.1 includes:
 
 - A Tauri 2 desktop app using React, TypeScript, Vite, Tailwind CSS, and pnpm.
 - A clean English-only app shell with Home, Codex, Voice Flow, Settings, Privacy, and About pages.
@@ -15,7 +15,7 @@ QoLayer v0.1 includes:
 - Strongly typed local settings with validation and safe defaults.
 - Local-only project documentation and open-source governance files.
 
-QoLayer v0.1 includes a minimal system tray foundation. It does not include global hotkeys, keyboard automation, audio control, project launchers, prompt templates, usage dashboards, task inboxes, add-on marketplaces, telemetry, cloud sync, proxy behavior, credential reading, token reading, or browser cookie access.
+QLayer v0.1 includes a minimal system tray foundation. It does not include global hotkeys, keyboard automation, audio control, project launchers, prompt templates, usage dashboards, task inboxes, add-on marketplaces, telemetry, cloud sync, proxy behavior, credential reading, token reading, or browser cookie access.
 
 ## Architecture
 
@@ -107,7 +107,7 @@ Documentation states the project is unofficial and not affiliated with OpenAI, A
 
 ## Security Constraints
 
-QoLayer v0.1:
+QLayer v0.1:
 
 - Stores no secrets.
 - Reads no Codex auth files.

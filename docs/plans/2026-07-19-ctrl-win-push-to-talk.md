@@ -71,4 +71,4 @@
 1. Replace hard-coded `Ctrl+Alt+Space` instructions with copy derived from the configured shortcut or neutral “Voice Flow shortcut” language.
 2. Run frontend typecheck, lint, tests, and build.
 3. Run Rust tests and `cargo check`.
-4. Launch QoLayer only with user approval, then validate press, focus, dictation hold, release, audio restore, and absence of Start-menu or typed-character leakage.
+4. Launch QLayer only with user approval, then validate press, focus, dictation hold, release, audio restore, and absence of Start-menu or typed-character leakage.

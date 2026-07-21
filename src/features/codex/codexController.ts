@@ -14,7 +14,7 @@ export async function openCodexAction(action: CodexAction): Promise<AppResult<vo
   const url = getCodexActionUrl(action);
 
   if (!isAllowedCodexLink(url)) {
-    return failed("QoLayer blocked an unsupported Codex link.");
+    return failed("QLayer blocked an unsupported Codex link.");
   }
 
   try {

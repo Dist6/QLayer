@@ -1,25 +1,26 @@
 # Security
 
-## Supported Versions
+## Supported versions
 
-QoLayer is pre-1.0 software. Security fixes target the active development branch.
+Security fixes target the current `0.1.x` release and the active `main` branch.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-Use the repository security advisory flow once the public repository is available. Until then, contact the maintainers privately.
+Use the repository's private GitHub security advisory flow. Do not publish credentials, private paths, chat identifiers, exploit details, or other sensitive information in a public issue.
 
-## Security Model
+Include the affected version, impact, reproduction steps, and any safe supporting material. Maintainers will acknowledge the report and coordinate remediation and disclosure when appropriate.
 
-QoLayer v0.1 is local-first and conservative:
+## Security boundaries
 
-- No telemetry.
-- No remote logging.
-- No cloud sync.
-- No credential or token access.
-- No Codex auth file access.
-- No browser cookie access.
-- No traffic interception.
-- No proxy behavior.
-- No arbitrary command execution.
+QLayer is local-first and intentionally must not:
 
-Native capabilities should stay narrow and purpose-specific.
+- Collect telemetry or analytics.
+- Add remote logging or cloud sync.
+- Access credentials, tokens, or Codex authentication files.
+- Read browser cookies or clipboard contents.
+- Record audio or inspect chat transcripts.
+- Intercept, proxy, or inspect network traffic contents.
+- Expose arbitrary shell commands or direct process management.
+- Expose general keyboard injection or arbitrary window control.
+
+Native capabilities must remain narrow, validated, and covered by the minimum practical Tauri permissions. Localhost inspection is limited to listener and sanitized process metadata. Project actions use fixed messages and never approve or execute development commands directly.

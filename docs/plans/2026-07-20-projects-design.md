@@ -176,11 +176,11 @@ Stop Development asks Codex to stop only development servers reliably associated
 App Server is the primary documented integration. If the action cannot be delivered before the turn is accepted:
 
 1. Native code returns the already-built fixed message as a fallback payload.
-2. QoLayer writes that message to the clipboard using write-only clipboard permission.
-3. QoLayer opens the selected Codex chat.
-4. QoLayer displays `Message copied. Paste it in Codex to continue.`
+2. QLayer writes that message to the clipboard using write-only clipboard permission.
+3. QLayer opens the selected Codex chat.
+4. QLayer displays `Message copied. Paste it in Codex to continue.`
 
-QoLayer never reports that development started or stopped merely because a message was sent or copied. Actual state comes from Localhost Manager.
+QLayer never reports that development started or stopped merely because a message was sent or copied. Actual state comes from Localhost Manager.
 
 ## Voice Flow integration
 
@@ -200,7 +200,7 @@ The existing Voice Flow selector remains the entry point and keeps its current p
 - Empty state: `No linked chats`.
 - Numeric shortcuts apply to the currently visible list.
 
-QoLayer remembers only the last selector mode as a convenience. It does not persist an authoritative destination. Releasing the push-to-talk shortcut while selecting continues to cancel the flow and restore audio safely.
+QLayer remembers only the last selector mode as a convenience. It does not persist an authoritative destination. Releasing the push-to-talk shortcut while selecting continues to cancel the flow and restore audio safely.
 
 ## Error handling
 

@@ -1,7 +1,12 @@
 use std::path::Path;
 
 pub(crate) fn project_fingerprint(path: &Path) -> String {
-    fingerprint(path.to_string_lossy().replace('/', "\\").to_ascii_lowercase().as_bytes())
+    fingerprint(
+        path.to_string_lossy()
+            .replace('/', "\\")
+            .to_ascii_lowercase()
+            .as_bytes(),
+    )
 }
 
 pub(crate) fn fallback_fingerprint(value: &str) -> String {
@@ -24,7 +29,10 @@ mod tests {
 
     #[test]
     fn creates_stable_case_insensitive_opaque_ids() {
-        assert_eq!(project_fingerprint(Path::new(r"C:\Projects\App")), project_fingerprint(Path::new(r"c:\projects\app")));
+        assert_eq!(
+            project_fingerprint(Path::new(r"C:\Projects\App")),
+            project_fingerprint(Path::new(r"c:\projects\app"))
+        );
         assert!(project_fingerprint(Path::new(r"C:\Projects\App")).starts_with("project-"));
     }
 }

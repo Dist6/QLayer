@@ -48,22 +48,32 @@ fn resolution_from_manifest(
     ProjectResolution {
         project_id: Some(project_fingerprint(root)),
         project_name: manifest.project_name.or_else(|| folder_name(root)),
-        kind: manifest.kind.unwrap_or_else(|| infer_kind_from_commands(processes)),
+        kind: manifest
+            .kind
+            .unwrap_or_else(|| infer_kind_from_commands(processes)),
     }
 }
 
 fn fallback_node_modules_resolution(processes: &[ProcessMetadata]) -> Option<ProjectResolution> {
     for process in processes {
-        let Some(command_line) = process.command_line.as_deref() else { continue };
+        let Some(command_line) = process.command_line.as_deref() else {
+            continue;
+        };
         let command = command_line.replace('/', "\\");
-        let Some(marker) = command.to_ascii_lowercase().find("\\node_modules\\") else { continue };
-        let Some(prefix) = command.get(..marker) else { continue };
+        let Some(marker) = command.to_ascii_lowercase().find("\\node_modules\\") else {
+            continue;
+        };
+        let Some(prefix) = command.get(..marker) else {
+            continue;
+        };
         let prefix = prefix.trim_end();
         let Some(candidate) = prefix
             .rsplit_once('"')
             .map(|(_, value)| value)
             .or_else(|| prefix.split_whitespace().next_back())
-        else { continue };
+        else {
+            continue;
+        };
         let root = Path::new(candidate.trim_matches('"'));
         if root.is_absolute() {
             return Some(ProjectResolution {
@@ -102,11 +112,13 @@ mod tests {
     #[test]
     fn retains_node_modules_fallback_without_reading_unrelated_files() {
         let processes = vec![ProcessMetadata {
-            command_line: Some(r#"node "C:\Projects\QoLayer\node_modules\vite\bin\vite.js""#.to_string()),
+            command_line: Some(
+                r#"node "C:\Projects\QLayer\node_modules\vite\bin\vite.js""#.to_string(),
+            ),
             ..ProcessMetadata::default()
         }];
         let resolution = resolve_project(&processes, &mut ManifestCache::default());
-        assert_eq!(resolution.project_name.as_deref(), Some("QoLayer"));
+        assert_eq!(resolution.project_name.as_deref(), Some("QLayer"));
         assert_eq!(resolution.kind, DevelopmentServerKind::Frontend);
         assert!(resolution.project_id.is_some());
     }

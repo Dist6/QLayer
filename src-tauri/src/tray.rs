@@ -71,7 +71,7 @@ impl TrayState {
 }
 
 pub fn record_window_hidden(app: &AppHandle) {
-    update_status(app, true, "QoLayer is still running in the system tray.");
+    update_status(app, true, "QLayer is still running in the system tray.");
 }
 
 pub fn setup_tray(app: &mut App) {
@@ -91,10 +91,10 @@ pub fn tray_status(app: AppHandle) -> TrayStatus {
 
 fn try_setup_tray(app: &mut App) -> tauri::Result<()> {
     let menu = MenuBuilder::new(app)
-        .text(SHOW_ITEM_ID, "Show QoLayer")
+        .text(SHOW_ITEM_ID, "Show QLayer")
         .text(OPEN_CODEX_ITEM_ID, "Open Codex / ChatGPT")
         .text(RESTORE_AUDIO_ITEM_ID, "Restore Audio")
-        .text(ABOUT_ITEM_ID, "About QoLayer")
+        .text(ABOUT_ITEM_ID, "About QLayer")
         .separator()
         .text(QUIT_ITEM_ID, "Quit")
         .build()?;
@@ -104,15 +104,13 @@ fn try_setup_tray(app: &mut App) -> tauri::Result<()> {
         .cloned()
         .unwrap_or_else(|| Image::new(FALLBACK_ICON_RGBA, 1, 1));
 
-    for label in [MAIN_WINDOW_LABEL, "voice-selector"] {
-        if let Some(window) = app.get_webview_window(label) {
-            window.set_icon(icon.clone())?;
-        }
+    if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
+        window.set_icon(icon.clone())?;
     }
 
     TrayIconBuilder::with_id("qolayer-main")
         .icon(icon)
-        .tooltip("QoLayer")
+        .tooltip("QLayer")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_tray_icon_event(|tray, event| {
@@ -148,26 +146,39 @@ fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
 
 pub fn show_main_window(app: &AppHandle) -> Result<(), String> {
     let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) else {
-        update_status(app, false, "QoLayer window is unavailable.");
-        return Err("QoLayer window is unavailable.".to_string());
+        update_status(app, false, "QLayer window is unavailable.");
+        return Err("QLayer window is unavailable.".to_string());
     };
 
     if window.show().is_err() {
-        update_status(app, false, "QoLayer window could not be shown.");
-        return Err("QoLayer window could not be shown.".to_string());
+        update_status(app, false, "QLayer window could not be shown.");
+        return Err("QLayer window could not be shown.".to_string());
     }
 
     if window.unminimize().is_err() {
-        update_status(app, false, "QoLayer window could not be restored.");
-        return Err("QoLayer window could not be restored.".to_string());
+        update_status(app, false, "QLayer window could not be restored.");
+        return Err("QLayer window could not be restored.".to_string());
     }
 
     if window.set_focus().is_err() {
-        update_status(app, false, "QoLayer window could not be focused.");
-        return Err("QoLayer window could not be focused.".to_string());
+        update_status(app, false, "QLayer window could not be focused.");
+        return Err("QLayer window could not be focused.".to_string());
     }
 
-    update_status(app, true, "QoLayer window is visible.");
+    update_status(app, true, "QLayer window is visible.");
+    Ok(())
+}
+
+pub(crate) fn hide_main_window(app: &AppHandle) -> Result<(), String> {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) else {
+        update_status(app, false, "QLayer window is unavailable.");
+        return Err("QLayer window is unavailable.".to_string());
+    };
+
+    window
+        .hide()
+        .map_err(|_| "QLayer window could not be hidden.".to_string())?;
+    record_window_hidden(app);
     Ok(())
 }
 

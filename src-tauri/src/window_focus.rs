@@ -66,7 +66,7 @@ where
     let Ok(link) = crate::codex_threads::build_thread_link(thread_id) else {
         return WindowFocusStep {
             status: "codexFocusNotConfirmed",
-            message: "QoLayer blocked an invalid Codex chat destination.",
+            message: "QLayer blocked an invalid Codex chat destination.",
         };
     };
     if !window_available() {
@@ -149,12 +149,11 @@ fn codex_composer_focus_point(rect: WindowRect) -> Option<Point> {
 mod platform {
     use super::{
         codex_composer_focus_point, is_supported_codex_window, FocusOutcome, WindowRect,
-        ACTIVATION_POLL_ATTEMPTS, FOCUS_ATTEMPTS, FOCUS_POLL_ATTEMPTS,
-        FOCUS_POLL_INTERVAL_MS,
+        ACTIVATION_POLL_ATTEMPTS, FOCUS_ATTEMPTS, FOCUS_POLL_ATTEMPTS, FOCUS_POLL_INTERVAL_MS,
     };
     use std::path::PathBuf;
     use std::time::Duration;
-    use windows::core::{BOOL, PWSTR, Result};
+    use windows::core::{Result, BOOL, PWSTR};
     use windows::Win32::Foundation::{
         CloseHandle, ERROR_INSUFFICIENT_BUFFER, ERROR_SUCCESS, HANDLE, HWND, LPARAM, RECT,
     };
@@ -244,9 +243,8 @@ mod platform {
             return None;
         }
 
-        let process = unsafe {
-            OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id).ok()?
-        };
+        let process =
+            unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id).ok()? };
         let mut buffer = vec![0_u16; 32_768];
         let mut length = buffer.len() as u32;
         let read = unsafe {
@@ -383,9 +381,8 @@ mod platform {
             return None;
         }
 
-        let process = unsafe {
-            OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id).ok()?
-        };
+        let process =
+            unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id).ok()? };
         let package_family = read_package_family(process);
         unsafe {
             let _ = CloseHandle(process);
@@ -401,9 +398,8 @@ mod platform {
         }
 
         let mut buffer = vec![0_u16; length as usize];
-        let read_result = unsafe {
-            GetPackageFamilyName(process, &mut length, Some(PWSTR(buffer.as_mut_ptr())))
-        };
+        let read_result =
+            unsafe { GetPackageFamilyName(process, &mut length, Some(PWSTR(buffer.as_mut_ptr()))) };
         if read_result != ERROR_SUCCESS {
             return None;
         }
@@ -464,7 +460,6 @@ mod platform {
             },
         }
     }
-
 }
 
 #[cfg(not(windows))]
@@ -521,11 +516,11 @@ mod tests {
 
     #[test]
     fn rejects_non_codex_window_titles() {
-        assert!(!is_supported_codex_window("QoLayer", None));
+        assert!(!is_supported_codex_window("QLayer", None));
         assert!(!is_supported_codex_window("Code", None));
         assert!(!is_supported_codex_window("My Codex Notes", None));
         assert!(!is_supported_codex_window(
-            "QoLayer",
+            "QLayer",
             Some("OpenAI.Codex_2p2nqsd0c76g0")
         ));
     }
@@ -567,7 +562,10 @@ mod tests {
             |_| panic!("opener must not run"),
             focused_step,
         );
-        assert_eq!(missing.message, "No supported Codex or ChatGPT window was detected.");
+        assert_eq!(
+            missing.message,
+            "No supported Codex or ChatGPT window was detected."
+        );
     }
 
     #[test]

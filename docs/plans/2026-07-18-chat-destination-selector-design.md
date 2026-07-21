@@ -2,7 +2,7 @@
 
 ## Summary
 
-QoLayer will let users choose a saved Codex chat at the moment Voice Flow starts. Holding `Ctrl+Alt+Space` opens a compact numbered selector. The user chooses `Current chat` or one of up to nine pinned destinations, QoLayer opens the corresponding official `codex://threads/<thread-id>` deep link, focuses ChatGPT, starts dictation, and restores audio when the shortcut is released.
+QLayer will let users choose a saved Codex chat at the moment Voice Flow starts. Holding `Ctrl+Alt+Space` opens a compact numbered selector. The user chooses `Current chat` or one of up to nine pinned destinations, QLayer opens the corresponding official `codex://threads/<thread-id>` deep link, focuses ChatGPT, starts dictation, and restores audio when the shortcut is released.
 
 The feature uses a hybrid source model. Codex App Server supplies recent chat metadata when available, while the user explicitly pins the small set of chats that should appear in Voice Flow. Manual entry remains available and saved destinations keep working if App Server discovery is unavailable.
 
@@ -25,7 +25,7 @@ The `Chat shortcuts` view contains two sections.
 - Contains zero to nine explicitly pinned chats.
 - Each destination has an automatically assigned number from `1` to `9` based on its order.
 - The user can rename, reorder, or remove a destination.
-- Removing a destination only removes it from QoLayer; it never deletes or archives the Codex chat.
+- Removing a destination only removes it from QLayer; it never deletes or archives the Codex chat.
 - Destinations persist locally and remain usable when recent-chat discovery fails.
 
 ### Recent chats
@@ -34,18 +34,18 @@ The `Chat shortcuts` view contains two sections.
 - Shows a bounded list of recent local Codex chats with title, project, and last activity.
 - Each result has a `Pin` action.
 - Already-pinned threads are visibly identified and cannot be duplicated.
-- QoLayer does not poll in the background.
-- QoLayer ignores messages, turns, response content, and other transcript data.
+- QLayer does not poll in the background.
+- QLayer ignores messages, turns, response content, and other transcript data.
 
 ### Manual entry
 
 - `Add manually` accepts a technical thread ID or a canonical `codex://threads/<thread-id>` link.
-- QoLayer validates the ID and derives the canonical deep link.
+- QLayer validates the ID and derives the canonical deep link.
 - Arbitrary URLs and unsupported `codex://` paths are rejected.
 
 ## Voice selector
 
-QoLayer creates a dedicated hidden Tauri window for target selection rather than reusing the main configuration window.
+QLayer creates a dedicated hidden Tauri window for target selection rather than reusing the main configuration window.
 
 - Approximate width: 320 px.
 - Frameless, non-resizable, focusable, always on top while visible, and absent from the taskbar.
@@ -60,31 +60,31 @@ The selector appears only when at least one destination is pinned. With no pinne
 ## Voice Flow sequence
 
 1. The user presses and holds `Ctrl+Alt+Space`.
-2. If no destination is pinned, QoLayer starts the existing current-chat Voice Flow.
-3. If destinations exist, QoLayer shows the selector and marks a native hold request active.
+2. If no destination is pinned, QLayer starts the existing current-chat Voice Flow.
+3. If destinations exist, QLayer shows the selector and marks a native hold request active.
 4. The user presses `0–9` or clicks a row while continuing to hold the shortcut.
-5. QoLayer atomically accepts the first valid selection and hides the selector.
-6. For `Current chat`, QoLayer proceeds directly to the existing focus flow.
-7. For a pinned destination, QoLayer opens its canonical `codex://threads/<thread-id>` deep link.
-8. QoLayer waits for the verified ChatGPT/Codex window to finish navigation, maximizes it, focuses it, and focuses the composer.
-9. QoLayer prepares background audio only after a destination has been selected successfully.
-10. QoLayer maintains the configured Codex dictation shortcut.
-11. When the physical `Ctrl+Alt+Space` hold ends, QoLayer releases dictation and restores audio.
+5. QLayer atomically accepts the first valid selection and hides the selector.
+6. For `Current chat`, QLayer proceeds directly to the existing focus flow.
+7. For a pinned destination, QLayer opens its canonical `codex://threads/<thread-id>` deep link.
+8. QLayer waits for the verified ChatGPT/Codex window to finish navigation, maximizes it, focuses it, and focuses the composer.
+9. QLayer prepares background audio only after a destination has been selected successfully.
+10. QLayer maintains the configured Codex dictation shortcut.
+11. When the physical `Ctrl+Alt+Space` hold ends, QLayer releases dictation and restores audio.
 
-If the shortcut is released before selection, QoLayer cancels without changing audio. A selection arriving after cancellation is ignored.
+If the shortcut is released before selection, QLayer cancels without changing audio. A selection arriving after cancellation is ignored.
 
 ## Discovery architecture
 
 Recent-chat discovery lives behind a focused adapter so the experimental protocol can change without affecting saved destinations or Voice Flow.
 
-- QoLayer launches only the fixed `codex app-server` command with fixed arguments.
+- QLayer launches only the fixed `codex app-server` command with fixed arguments.
 - Communication uses local JSON-RPC over `stdio`.
 - The client performs the required `initialize` / `initialized` handshake and a bounded thread-list request.
 - The response is parsed into a narrow metadata model: thread ID, title, project label or path-derived project name, and update time.
 - Unexpected fields are ignored and malformed entries are dropped.
 - The child process has a short timeout and is terminated after the request or on cancellation.
 - No broad shell command, arbitrary executable path, arbitrary arguments, or reusable app-server transport is exposed to the frontend.
-- QoLayer does not read Codex authentication files or tokens. Authentication remains internal to the official Codex process.
+- QLayer does not read Codex authentication files or tokens. Authentication remains internal to the official Codex process.
 
 The implementation must generate or inspect schemas from the installed Codex version before finalizing request and response types. Discovery failure produces a local fallback state rather than blocking the feature.
 
@@ -102,7 +102,7 @@ ChatDestination
   pinnedAt
 ```
 
-- `id` is a QoLayer-local stable identifier.
+- `id` is a QLayer-local stable identifier.
 - `threadId` is the validated technical Codex thread ID.
 - `displayName` is user-editable.
 - `projectName` is optional display metadata.
@@ -137,7 +137,7 @@ ChatDestination
 - Focus is trapped inside the selector only while it is visible.
 - `Escape` and shortcut release always cancel.
 - The recent list and pinned list use real buttons and accessible reorder controls.
-- Visible focus indicators remain consistent with the compact QoLayer design system.
+- Visible focus indicators remain consistent with the compact QLayer design system.
 
 ## Out of scope
 

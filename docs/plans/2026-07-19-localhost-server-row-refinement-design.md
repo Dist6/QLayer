@@ -4,14 +4,14 @@
 
 ## Goal
 
-Make every Localhost Manager row readable inside QoLayer's compact window while identifying the project and server role only when local process evidence is reliable.
+Make every Localhost Manager row readable inside QLayer's compact window while identifying the project and server role only when local process evidence is reliable.
 
 ## Information hierarchy
 
 Each development server uses three visible lines:
 
 ```text
-localhost:1420 (QoLayer)
+localhost:1420 (QLayer)
 Frontend · node.exe
 573 MB · 0.3% CPU · Up 3h 45m
 ```
@@ -33,7 +33,7 @@ Frontend · node.exe
 
 ## Visual treatment
 
-- Keep the existing dark, compact QoLayer shell and sidebar.
+- Keep the existing dark, compact QLayer shell and sidebar.
 - Use typography and spacing instead of cards or large badges.
 - Increase row height only enough for three 14px text lines.
 - Keep status and open icons optically aligned with the row.

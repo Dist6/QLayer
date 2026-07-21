@@ -67,7 +67,10 @@ mod tests {
     #[test]
     fn recognized_user_space_runtimes_are_development_servers() {
         assert_eq!(
-            classify(&metadata("node.exe", r"C:\Program Files\nodejs\node.exe"), 5173),
+            classify(
+                &metadata("node.exe", r"C:\Program Files\nodejs\node.exe"),
+                5173
+            ),
             ServerClassification::Development
         );
         assert_eq!(
@@ -79,7 +82,10 @@ mod tests {
     #[test]
     fn common_ports_do_not_establish_development_status_alone() {
         assert_eq!(
-            classify(&metadata("custom-service.exe", r"C:\Apps\custom-service.exe"), 3000),
+            classify(
+                &metadata("custom-service.exe", r"C:\Apps\custom-service.exe"),
+                3000
+            ),
             ServerClassification::Unknown
         );
     }
@@ -87,7 +93,10 @@ mod tests {
     #[test]
     fn system_processes_are_never_development_servers() {
         assert_eq!(
-            classify(&metadata("svchost.exe", r"C:\Windows\System32\svchost.exe"), 8080),
+            classify(
+                &metadata("svchost.exe", r"C:\Windows\System32\svchost.exe"),
+                8080
+            ),
             ServerClassification::Unknown
         );
         assert_eq!(
@@ -95,5 +104,4 @@ mod tests {
             ServerClassification::Unknown
         );
     }
-
 }

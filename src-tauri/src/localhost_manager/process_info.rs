@@ -27,9 +27,7 @@ mod platform {
         NtQueryInformationProcess, ProcessCommandLineInformation,
     };
     use windows::Win32::Foundation::{CloseHandle, FILETIME, HANDLE, UNICODE_STRING};
-    use windows::Win32::System::ProcessStatus::{
-        GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS,
-    };
+    use windows::Win32::System::ProcessStatus::{GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS};
     use windows::Win32::System::Threading::{
         GetProcessTimes, OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
         PROCESS_QUERY_LIMITED_INFORMATION,
@@ -166,7 +164,8 @@ mod platform {
         let mut exit = FILETIME::default();
         let mut kernel = FILETIME::default();
         let mut user = FILETIME::default();
-        unsafe { GetProcessTimes(handle, &mut creation, &mut exit, &mut kernel, &mut user) }.ok()?;
+        unsafe { GetProcessTimes(handle, &mut creation, &mut exit, &mut kernel, &mut user) }
+            .ok()?;
 
         Some(ProcessTiming {
             creation_ticks: filetime_ticks(creation.dwHighDateTime, creation.dwLowDateTime),
@@ -191,7 +190,10 @@ mod tests {
 
     #[test]
     fn combines_filetime_words() {
-        assert_eq!(filetime_ticks(0x0123_4567, 0x89ab_cdef), 0x0123_4567_89ab_cdef);
+        assert_eq!(
+            filetime_ticks(0x0123_4567, 0x89ab_cdef),
+            0x0123_4567_89ab_cdef
+        );
     }
 
     #[test]
