@@ -1,54 +1,75 @@
+<div align="center">
+
 # QLayer
 
-A compact, local-first Windows companion for Codex and ChatGPT.
+**A shortcut-first Windows companion for Codex and ChatGPT.**
 
-QLayer brings voice dictation, chat navigation, local development server visibility, and project context into a small tray utility designed for shortcut-first workflows.
+Voice dictation, chat navigation, development server visibility, and project context in one compact, local-first utility.
 
-QLayer is unofficial and is not affiliated with, endorsed by, or sponsored by OpenAI.
+[![CI](https://github.com/Dist6/QLayer/actions/workflows/ci.yml/badge.svg)](https://github.com/Dist6/QLayer/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Dist6/QLayer?display_name=tag&sort=semver)](https://github.com/Dist6/QLayer/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2563eb)](#requirements)
+[![License](https://img.shields.io/github/license/Dist6/QLayer)](./LICENSE)
 
-## Features
+[Download portable](https://github.com/Dist6/QLayer/releases/latest) | [Documentation](./docs/development.md) | [Report a bug](https://github.com/Dist6/QLayer/issues/new?template=bug_report.yml)
 
-### Voice Flow
+</div>
 
-- Hold a configurable global shortcut to focus Codex or ChatGPT and use push-to-talk dictation.
-- Choose the current chat, a saved chat, or a chat linked to a Project.
-- Keep background audio unchanged, lower it to a chosen level, or mute it while speaking.
-- Restore the previous Windows audio state when the shortcut is released.
-- Fail safely when Codex or ChatGPT is not running.
+<br>
 
-### Chat Shortcuts
+<p align="center">
+  <img src="./docs/assets/screenshots/voice-flow.png" width="480" alt="QLayer Voice Flow">
+</p>
 
-- Save Codex chats locally and open them through validated Codex deep links.
-- Discover recent chats through the local Codex App Server integration when available.
-- Remove a saved shortcut without modifying or deleting the Codex chat.
+## What QLayer does
 
-### Localhost Manager
+| Voice Flow                                                      | Localhost Manager                                                    | Projects                                                               | Chat shortcuts                                                      |
+| --------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Hold one global shortcut to focus Codex or ChatGPT and dictate. | See local development servers, ports, processes, memory, and uptime. | Connect a local folder with its chats and preferred development ports. | Save or discover Codex chats and choose where Voice Flow should go. |
 
-- Detect local development servers and distinguish them from unknown local listeners.
-- Show URL, port, server role, process, project identity, memory use, and uptime when safely available.
-- Open only listeners classified as development servers in the default browser.
-- Refresh manually or at a restrained interval that pauses while the tool is not visible.
-- Never intercept traffic or terminate processes.
+QLayer stays in the Windows tray and keeps the workflow available without becoming another full-size application. It stores preferences locally and does not require an account, API key, or cloud service.
 
-### Projects
+## Product tour
 
-- Group one local folder with linked Codex chats and preferred development ports.
-- Compare preferred ports against servers detected by Localhost Manager.
-- Send predefined Start Development or Stop Development messages to a chat selected for that action.
-- Copy the fixed message to the clipboard when direct delivery is unavailable.
-- Never run arbitrary commands or manage development processes directly.
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <img src="./docs/assets/screenshots/localhost-manager.png" alt="Localhost Manager"><br>
+      <sub><strong>Localhost Manager</strong><br>Restrained, local-only server discovery.</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="./docs/assets/screenshots/projects.png" alt="Projects"><br>
+      <sub><strong>Projects</strong><br>Folders, chats, and preferred ports in one context.</sub>
+    </td>
+    <td width="33%" align="center">
+      <img src="./docs/assets/screenshots/settings.png" alt="QLayer settings"><br>
+      <sub><strong>Settings</strong><br>Startup, tray, shortcut, and refresh preferences.</sub>
+    </td>
+  </tr>
+</table>
 
-### Windows utility
+## Voice Flow
 
-- Live in the Windows system tray and reopen with a double-click.
-- Optionally start with Windows and remain available after the window is dismissed.
-- Store preferences locally with no account or API key.
+1. Open Codex or ChatGPT for Windows.
+2. Hold the QLayer shortcut - **Ctrl+Win** by default.
+3. Choose a saved chat or Project destination when needed.
+4. Speak, then release the shortcut to finish dictation.
 
-## Download
+Background audio can remain unchanged, lower to a chosen level, or mute while speaking. QLayer restores the previous Windows audio state when the shortcut is released and fails safely when Codex or ChatGPT is not running.
 
-Download `QLayer-v0.1.0-windows-x64-portable.zip` from the GitHub Release for v0.1.0.
+## Localhost visibility without process control
 
-QLayer v0.1.0 is portable: extract the ZIP to a stable folder and run `QLayer.exe`. No installer or administrator access is required.
+Localhost Manager detects likely frontend and backend development servers and separates them from unknown local listeners. When available, it shows the URL, port, role, process, project identity, memory usage, and uptime.
+
+QLayer can open a detected development URL in the default browser. It does **not** intercept traffic, expose a shell, or start, stop, restart, suspend, or terminate development processes.
+
+## Install the portable release
+
+1. Download [QLayer v0.1.0 for Windows x64](https://github.com/Dist6/QLayer/releases/download/v0.1.0/QLayer-v0.1.0-windows-x64-portable.zip).
+2. Extract the archive to a stable folder.
+3. Run **QLayer.exe**.
+
+No installer or administrator access is required. The executable is currently unsigned, so Windows SmartScreen may display a warning on first launch. The checksum is published with every release.
 
 ## Requirements
 
@@ -57,98 +78,56 @@ QLayer v0.1.0 is portable: extract the ZIP to a stable folder and run `QLayer.ex
 - Microsoft Edge WebView2 Runtime
 - Codex or ChatGPT for Windows for Voice Flow and chat actions
 
-## Quick test
+## Privacy by design
 
-### Voice Flow
+QLayer is local-first and has no telemetry, advertising, analytics, cloud sync, or remote logging. It does not record audio, read chat transcripts, access credentials or tokens, read Codex authentication files, read browser cookies, intercept traffic, or proxy requests.
 
-1. Open Codex or ChatGPT for Windows.
-2. Optionally play audio in another application.
-3. Hold the configured QLayer shortcut. The default is `Ctrl+Win`.
-4. Select a destination if the chat selector appears.
-5. Speak, then release the shortcut.
-6. Confirm that dictation stops and the previous background audio state is restored.
+Native capabilities are exposed through narrow Tauri commands with minimal permissions. See [Privacy](./docs/privacy.md), [Security](./SECURITY.md), and [Architecture](./docs/architecture.md).
 
-### Localhost Manager
+## Technology
 
-1. Start a local frontend or backend development server.
-2. Open Localhost Manager in QLayer.
-3. Refresh the list.
-4. Confirm the detected port and any safely available process, project, memory, and uptime details.
-5. Open a listener classified as a development server.
+QLayer is built with [Tauri 2](https://tauri.app/), Rust, React, strict TypeScript, Vite, Tailwind CSS, native Windows APIs, and [Tabler Icons](https://tabler.io/icons).
 
-### Projects
+<details>
+<summary><strong>Development</strong></summary>
 
-1. Create a Project and select its local folder.
-2. Link one or more saved or recently discovered chats.
-3. Add the ports used by the project.
-4. Select Start Development or Stop Development and choose a linked chat.
-5. Confirm the actual server state through Localhost Manager.
+Install the Windows prerequisites for Tauri and use pnpm:
 
-## Privacy and safety
+    pnpm install --frozen-lockfile
+    pnpm typecheck
+    pnpm lint
+    pnpm test
+    pnpm build
+    cargo test --manifest-path src-tauri/Cargo.toml
+    cargo check --manifest-path src-tauri/Cargo.toml
 
-QLayer is local-first. It has no telemetry, advertising, cloud sync, remote logging, or analytics. It does not record audio, read prompts or chat transcripts, access credentials or tokens, read Codex authentication files, read browser cookies, intercept traffic, or proxy requests.
+Run the desktop application:
 
-Localhost Manager inspects local listener and process metadata only. QLayer exposes no arbitrary shell, keyboard automation, process termination, or general window-control interface.
+    pnpm desktop
 
-See [Privacy](docs/privacy.md), [Security](SECURITY.md), and [Architecture](docs/architecture.md).
+Build the portable archive:
 
-## Supported platform
+    pnpm desktop:portable
 
-QLayer v0.1.0 supports Windows 10/11 x64. macOS and Linux are not currently supported.
+</details>
 
-## Known limitations
+## Documentation
 
-- The portable executable is unsigned, so Windows SmartScreen may show a warning.
-- Moving `QLayer.exe` after enabling launch at startup can invalidate the saved startup path.
-- Recent-chat discovery and direct Project action delivery depend on compatible local Codex integration behavior.
-- Codex and ChatGPT are third-party applications whose UI and deep-link behavior may change.
-- QLayer does not start, stop, restart, suspend, or terminate development server processes.
-- Automatic updates are not included.
+| Document                               | Description                                      |
+| -------------------------------------- | ------------------------------------------------ |
+| [Architecture](./docs/architecture.md) | Feature boundaries and native integration design |
+| [Development](./docs/development.md)   | Local development setup and commands             |
+| [Testing](./docs/testing.md)           | Frontend, Rust, and release verification         |
+| [Privacy](./docs/privacy.md)           | Local data and privacy boundaries                |
+| [Roadmap](./docs/roadmap.md)           | Deliberately scoped future work                  |
+| [Contributing](./CONTRIBUTING.md)      | Contribution rules and quality checks            |
 
-## Built with
+## Current scope
 
-- Tauri 2 and Rust
-- React and TypeScript
-- Vite and Tailwind CSS
-- Native Windows APIs exposed through narrow Tauri commands
-- Tabler Icons
+QLayer v0.1.0 supports Windows 10/11 x64. macOS, Linux, automatic updates, and direct development process management are not currently supported. Codex and ChatGPT are third-party applications whose UI and deep-link behavior may change.
 
-## How Codex and GPT-5.6 were used
-
-QLayer was developed collaboratively with Codex using GPT-5.6 for architecture, implementation, native Windows debugging, testing, UI refinement, privacy review, performance optimization, and release preparation. Product and safety decisions remained human-directed, including the shortcut-first interaction model, fail-closed automation, local-only data boundaries, and the decision not to expose direct process control.
-
-See [OpenAI Build Week Development](docs/build_week.md) for the boundary between prior work and work completed during the event.
-
-## Development
-
-Install the prerequisites for Tauri development on Windows, then run:
-
-```powershell
-pnpm install --frozen-lockfile
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm build
-cargo test --manifest-path src-tauri/Cargo.toml
-cargo check --manifest-path src-tauri/Cargo.toml
-```
-
-Run the desktop app:
-
-```powershell
-pnpm desktop
-```
-
-Build the portable release archive:
-
-```powershell
-pnpm desktop:portable
-```
-
-The generated ZIP and checksum are written to `release/` and are intentionally excluded from Git history.
-
-See [Development](docs/development.md), [Testing](docs/testing.md), and [Contributing](CONTRIBUTING.md).
+QLayer is unofficial and is not affiliated with, endorsed by, or sponsored by OpenAI.
 
 ## License
 
-QLayer is licensed under the GNU Affero General Public License v3.0 only (`AGPL-3.0-only`). See [LICENSE](LICENSE).
+Licensed under the [GNU Affero General Public License v3.0](./LICENSE).
