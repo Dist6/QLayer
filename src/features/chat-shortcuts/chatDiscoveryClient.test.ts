@@ -9,6 +9,7 @@ describe("recent chat parsing", () => {
         {
           threadId: "019f72d8-d02e-75d1-9969-d6c5a647c95e",
           title: " Selector ",
+          projectId: "project-0123456789abcdef",
           projectName: " QoLayer ",
           updatedAt: "200",
           preview: "ignored",
@@ -21,6 +22,7 @@ describe("recent chat parsing", () => {
         {
           threadId: "019f72d8-d02e-75d1-9969-d6c5a647c95e",
           title: "Selector",
+          projectId: "project-0123456789abcdef",
           projectName: "QoLayer",
           updatedAt: "200",
         },

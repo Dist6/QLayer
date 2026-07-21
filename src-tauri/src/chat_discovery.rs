@@ -15,6 +15,7 @@ const DISCOVERY_TIMEOUT: Duration = Duration::from_secs(4);
 pub struct RecentChat {
     thread_id: String,
     title: String,
+    project_id: Option<String>,
     project_name: Option<String>,
     updated_at: Option<String>,
 }
@@ -118,14 +119,18 @@ fn parse_recent_chat(value: &Value) -> Option<RecentChat> {
         .chars()
         .take(80)
         .collect();
-    let project_name = value
+    let project_root = value
         .get("cwd")
         .and_then(Value::as_str)
-        .and_then(|cwd| {
-            PathBuf::from(cwd)
-                .file_name()
-                .map(|name| name.to_string_lossy().into_owned())
-        })
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute());
+    let project_id = project_root
+        .as_deref()
+        .map(crate::localhost_manager::project_fingerprint);
+    let project_name = project_root
+        .as_deref()
+        .and_then(Path::file_name)
+        .map(|name| name.to_string_lossy().into_owned())
         .filter(|name| !name.is_empty());
     let updated_at = value
         .get("updatedAt")
@@ -135,6 +140,7 @@ fn parse_recent_chat(value: &Value) -> Option<RecentChat> {
     Some(RecentChat {
         thread_id,
         title,
+        project_id,
         project_name,
         updated_at,
     })
@@ -188,7 +194,9 @@ mod tests {
         assert_eq!(chats.len(), 2);
         assert_eq!(chats[0].title, "QoLayer selector");
         assert_eq!(chats[0].project_name.as_deref(), Some("QoLayer"));
+        assert!(chats[0].project_id.as_deref().is_some_and(|id| id.starts_with("project-")));
         assert_eq!(chats[1].title, "Untitled chat");
+        assert_eq!(chats[1].project_id, None);
     }
 
     #[test]

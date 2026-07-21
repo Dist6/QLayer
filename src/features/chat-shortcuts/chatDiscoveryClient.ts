@@ -6,6 +6,7 @@ import { parseCodexThreadInput } from "../codex/deepLinks";
 export type RecentChat = {
   threadId: string;
   title: string;
+  projectId?: string;
   projectName?: string;
   updatedAt?: string;
 };
@@ -41,6 +42,9 @@ function parseRecentChat(value: unknown): RecentChat | null {
   return {
     threadId: thread.threadId,
     title: record.title.trim().slice(0, 80),
+    ...(typeof record.projectId === "string" && /^project-[0-9a-f]{16}$/.test(record.projectId)
+      ? { projectId: record.projectId }
+      : {}),
     ...(typeof record.projectName === "string" && record.projectName.trim()
       ? { projectName: record.projectName.trim().slice(0, 80) }
       : {}),
