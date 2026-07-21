@@ -1,5 +1,6 @@
 import {
   IconBookmarks,
+  IconFolders,
   IconMessages,
   IconMicrophone,
   IconServer,
@@ -22,6 +23,7 @@ const navigationItems: ReadonlyArray<{
 }> = [
   { id: "voiceFlow", label: "Voice Flow", icon: IconMicrophone },
   { id: "localhostManager", label: "Localhost Manager", icon: IconServer },
+  { id: "projects", label: "Projects", icon: IconFolders },
   { id: "chatShortcuts", label: "Chat shortcuts", icon: IconMessages },
   { id: "savedPrompts", label: "Saved prompts", icon: IconBookmarks },
 ];

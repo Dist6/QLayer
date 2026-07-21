@@ -20,6 +20,8 @@ import {
 } from "../features/global-hotkeys/globalHotkeyEvents";
 import { SavedPromptsPanel } from "../features/saved-prompts/SavedPromptsPanel";
 import { LocalhostManagerPanel } from "../features/localhost-manager/LocalhostManagerPanel";
+import { ProjectsPanel } from "../features/projects/ProjectsPanel";
+import { useProjects } from "../features/projects/useProjects";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { syncLaunchAtStartup } from "../features/settings/autostartClient";
 import { createSettingsStorage } from "../features/settings/settingsStorage";
@@ -49,6 +51,7 @@ export function App() {
     useState<GlobalHotkeyStatus>(initialHotkeyStatus);
   const shortcutRecordingRef = useRef(false);
   const chatDestinations = useChatDestinations();
+  const projects = useProjects();
   const voiceFlow = useVoiceFlow(settings, chatDestinations.destinations);
   const { reportMessage, restore, startHold, stopHold } = voiceFlow;
 
@@ -244,6 +247,7 @@ export function App() {
           voiceFlow,
           globalHotkeyStatus,
           chatDestinations,
+          projects,
           changeGlobalHotkey,
           setShortcutRecording,
         )}
@@ -259,6 +263,7 @@ function renderView(
   voiceFlow: ReturnType<typeof useVoiceFlow>,
   globalHotkeyStatus: GlobalHotkeyStatus,
   chatDestinations: ReturnType<typeof useChatDestinations>,
+  projects: ReturnType<typeof useProjects>,
   changeGlobalHotkey: (shortcut: string) => Promise<{ ok: true } | { ok: false; message: string }>,
   setShortcutRecording: (recording: boolean) => void,
 ) {
@@ -270,6 +275,14 @@ function renderView(
     case "localhostManager":
       return (
         <LocalhostManagerPanel autoRefreshSeconds={settings.localhostManager.autoRefreshSeconds} />
+      );
+    case "projects":
+      return (
+        <ProjectsPanel
+          autoRefreshSeconds={settings.localhostManager.autoRefreshSeconds}
+          chats={chatDestinations}
+          state={projects}
+        />
       );
     case "settings":
       return (

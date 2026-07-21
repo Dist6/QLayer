@@ -11,6 +11,8 @@ export function getToolboxWindowHeight(view: ToolboxView | "about", audioMode: A
       return 450;
     case "localhostManager":
       return 450;
+    case "projects":
+      return 450;
     case "savedPrompts":
       return 300;
     case "settings":

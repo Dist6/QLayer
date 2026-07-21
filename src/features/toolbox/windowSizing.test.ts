@@ -16,6 +16,7 @@ describe("toolbox window sizing", () => {
   it("uses bounded heights for the remaining views", () => {
     expect(getToolboxWindowHeight("chatShortcuts", "disabled")).toBe(450);
     expect(getToolboxWindowHeight("localhostManager", "disabled")).toBe(450);
+    expect(getToolboxWindowHeight("projects", "disabled")).toBe(450);
     expect(getToolboxWindowHeight("savedPrompts", "disabled")).toBe(300);
     expect(getToolboxWindowHeight("settings", "disabled")).toBe(430);
     expect(getToolboxWindowHeight("about", "disabled")).toBe(350);
