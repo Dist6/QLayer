@@ -12,6 +12,7 @@ mod global_hotkeys;
 mod keyboard;
 mod localhost_manager;
 mod modifier_hotkey;
+mod project_identity;
 mod tray;
 mod voice_selector;
 mod window_behavior;
@@ -165,6 +166,8 @@ fn main() {
         .manage(global_hotkeys::GlobalHotkeyState::default())
         .manage(audio::AudioState::default())
         .manage(window_behavior::WindowBehaviorState::default())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
@@ -214,6 +217,7 @@ fn main() {
             open_localhost_server,
             set_localhost_project_alias,
             remove_localhost_project_alias,
+            project_identity::identify_project_root,
             voice_selector::show_voice_selector,
             voice_selector::hide_voice_selector,
             set_close_to_tray

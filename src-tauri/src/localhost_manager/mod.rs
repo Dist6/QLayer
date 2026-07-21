@@ -15,6 +15,7 @@ use project_resolution::{
     discover_parent_map, fallback_fingerprint, process_chain, resolve_project, AliasStore,
     ManifestCache, ProjectResolution,
 };
+pub(crate) use project_resolution::project_fingerprint;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, Mutex};
