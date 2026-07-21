@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ChatDestination } from "../chat-shortcuts/chatDestinationTypes";
+import type { Project } from "../projects/projectTypes";
 import {
   beginVoiceDestinationFlow,
   consumeVoiceDestinationSelection,
@@ -14,6 +15,23 @@ const destination: ChatDestination = {
   displayName: "Saved",
   order: 1,
   pinnedAt: "2026-07-18T00:00:00.000Z",
+};
+
+const project: Project = {
+  id: "project",
+  name: "QoLayer",
+  rootPath: "C:\\Projects\\QoLayer",
+  rootIdentity: "root",
+  linkedChats: [
+    {
+      threadId: destination.threadId,
+      displayName: "Project chat",
+      linkedAt: "2026-07-18T00:00:00.000Z",
+    },
+  ],
+  preferredPorts: [],
+  createdAt: "2026-07-18T00:00:00.000Z",
+  updatedAt: "2026-07-18T00:00:00.000Z",
 };
 
 describe("Voice Flow destination state", () => {
@@ -38,12 +56,27 @@ describe("Voice Flow destination state", () => {
   });
 
   it("resolves current and saved targets and rejects deleted destinations", () => {
-    expect(resolveVoiceDestination([destination], { kind: "current" })).toEqual({
+    expect(resolveVoiceDestination([destination], [project], { kind: "current" })).toEqual({
       kind: "current",
     });
     expect(
-      resolveVoiceDestination([destination], { kind: "saved", destinationId: "saved" }),
+      resolveVoiceDestination([destination], [project], {
+        kind: "saved",
+        destinationId: "saved",
+      }),
     ).toEqual({ kind: "saved", threadId: destination.threadId });
-    expect(resolveVoiceDestination([], { kind: "saved", destinationId: "deleted" })).toBeNull();
+    expect(
+      resolveVoiceDestination([], [project], {
+        kind: "projectChat",
+        threadId: destination.threadId,
+      }),
+    ).toEqual({ kind: "saved", threadId: destination.threadId });
+    expect(resolveVoiceDestination([], [], { kind: "saved", destinationId: "deleted" })).toBeNull();
+    expect(
+      resolveVoiceDestination([], [], {
+        kind: "projectChat",
+        threadId: destination.threadId,
+      }),
+    ).toBeNull();
   });
 });

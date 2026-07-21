@@ -7,11 +7,15 @@ import {
   VOICE_SELECTOR_OPEN_EVENT,
   VOICE_SELECTOR_SELECTION_EVENT,
   type VoiceSelectorSelection,
+  type VoiceSelectorProject,
 } from "./voiceSelectorEvents";
 
-export async function showVoiceSelector(destinations: readonly ChatDestination[]): Promise<void> {
+export async function showVoiceSelector(
+  destinations: readonly ChatDestination[],
+  projects: readonly VoiceSelectorProject[],
+): Promise<void> {
   await invoke("show_voice_selector");
-  await emitTo("voice-selector", VOICE_SELECTOR_OPEN_EVENT, { destinations });
+  await emitTo("voice-selector", VOICE_SELECTOR_OPEN_EVENT, { destinations, projects });
 }
 
 export async function hideVoiceSelector(): Promise<void> {

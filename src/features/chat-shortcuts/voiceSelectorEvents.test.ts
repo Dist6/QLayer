@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ChatDestination } from "./chatDestinationTypes";
 import {
   getVoiceSelectorKeyAction,
+  getVoiceSelectorNumber,
   parseVoiceSelectorOpenPayload,
   parseVoiceSelectorSelection,
 } from "./voiceSelectorEvents";
@@ -15,6 +16,12 @@ const destination: ChatDestination = {
   pinnedAt: "2026-07-18T00:00:00.000Z",
 };
 
+const project = {
+  id: "project",
+  name: "QoLayer",
+  chats: [{ threadId: destination.threadId, displayName: "Project chat" }],
+};
+
 describe("voice selector events", () => {
   it("maps digit, numpad, current, and cancel keys", () => {
     expect(getVoiceSelectorKeyAction("Digit0", [destination])).toEqual({ kind: "current" });
@@ -25,14 +32,22 @@ describe("voice selector events", () => {
     expect(getVoiceSelectorKeyAction("Digit9", [destination])).toBeNull();
     expect(getVoiceSelectorKeyAction("Escape", [destination])).toEqual({ kind: "cancel" });
     expect(getVoiceSelectorKeyAction("Space", [destination])).toBeNull();
+    expect(getVoiceSelectorNumber("Digit3")).toBe(3);
+    expect(getVoiceSelectorNumber("KeyP")).toBeNull();
   });
 
   it("validates open and selection payloads", () => {
-    expect(parseVoiceSelectorOpenPayload({ destinations: [destination] })).toEqual({
+    expect(
+      parseVoiceSelectorOpenPayload({ destinations: [destination], projects: [project] }),
+    ).toEqual({
       destinations: [destination],
+      projects: [project],
     });
     expect(
-      parseVoiceSelectorOpenPayload({ destinations: [{ ...destination, order: 10 }] }),
+      parseVoiceSelectorOpenPayload({
+        destinations: [{ ...destination, order: 10 }],
+        projects: [],
+      }),
     ).toBeNull();
     expect(parseVoiceSelectorSelection({ kind: "current" })).toEqual({ kind: "current" });
     expect(parseVoiceSelectorSelection({ kind: "saved", destinationId: "saved" })).toEqual({
@@ -40,5 +55,14 @@ describe("voice selector events", () => {
       destinationId: "saved",
     });
     expect(parseVoiceSelectorSelection({ kind: "saved" })).toBeNull();
+    expect(
+      parseVoiceSelectorSelection({ kind: "projectChat", threadId: destination.threadId }),
+    ).toEqual({ kind: "projectChat", threadId: destination.threadId });
+    expect(
+      parseVoiceSelectorOpenPayload({ destinations: [], projects: [{ ...project, chats: [] }] }),
+    ).toEqual({
+      destinations: [],
+      projects: [{ ...project, chats: [] }],
+    });
   });
 });

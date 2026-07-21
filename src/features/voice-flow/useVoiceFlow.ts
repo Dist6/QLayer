@@ -7,6 +7,7 @@ import {
   showVoiceSelector,
 } from "../chat-shortcuts/voiceSelectorClient";
 import type { VoiceSelectorSelection } from "../chat-shortcuts/voiceSelectorEvents";
+import type { Project } from "../projects/projectTypes";
 import type { AppSettings } from "../settings/settingsTypes";
 import type { VoiceFlowStep } from "./controllers";
 import { audioController, keyboardController, windowController } from "./nativeControllers";
@@ -39,6 +40,7 @@ export type VoiceFlowState = {
 export function useVoiceFlow(
   settings: AppSettings,
   destinations: readonly ChatDestination[] = [],
+  projects: readonly Project[] = [],
 ): VoiceFlowState {
   const [status, setStatus] = useState<VoiceFlowStep>({
     status: "ready",
@@ -49,7 +51,9 @@ export function useVoiceFlow(
   const holdRequestedRef = useRef(false);
   const phaseRef = useRef<VoiceDestinationPhase>("idle");
   const destinationsRef = useRef(destinations);
+  const projectsRef = useRef(projects);
   destinationsRef.current = destinations;
+  projectsRef.current = projects;
 
   const start = useCallback(async () => {
     setRunning(true);
@@ -79,7 +83,16 @@ export function useVoiceFlow(
     }
 
     holdRequestedRef.current = true;
-    phaseRef.current = beginVoiceDestinationFlow(destinations.length > 0);
+    const selectorProjects = projects
+      .filter((project) => project.linkedChats.length > 0)
+      .map((project) => ({
+        id: project.id,
+        name: project.name,
+        chats: project.linkedChats.map(({ threadId, displayName }) => ({ threadId, displayName })),
+      }));
+    phaseRef.current = beginVoiceDestinationFlow(
+      destinations.length > 0 || selectorProjects.length > 0,
+    );
 
     if (phaseRef.current === "selecting") {
       setRunning(true);
@@ -88,7 +101,7 @@ export function useVoiceFlow(
         message: "Choose a chat while holding the shortcut.",
       });
       try {
-        await showVoiceSelector(destinations);
+        await showVoiceSelector(destinations, selectorProjects);
       } catch {
         holdRequestedRef.current = false;
         phaseRef.current = "idle";
@@ -116,7 +129,7 @@ export function useVoiceFlow(
     setStatus(result.steps.at(-1) ?? { status: result.status, message: "Voice Flow finished." });
     phaseRef.current = result.status === "ready" && holdRequestedRef.current ? "listening" : "idle";
     setRunning(false);
-  }, [destinations, settings]);
+  }, [destinations, projects, settings]);
 
   const selectDestination = useCallback(
     async (selection: VoiceSelectorSelection) => {
@@ -125,7 +138,11 @@ export function useVoiceFlow(
         return;
       }
       phaseRef.current = transition.phase;
-      const target = resolveVoiceDestination(destinationsRef.current, selection);
+      const target = resolveVoiceDestination(
+        destinationsRef.current,
+        projectsRef.current,
+        selection,
+      );
       if (!target) {
         holdRequestedRef.current = false;
         phaseRef.current = "idle";

@@ -52,7 +52,7 @@ export function App() {
   const shortcutRecordingRef = useRef(false);
   const chatDestinations = useChatDestinations();
   const projects = useProjects();
-  const voiceFlow = useVoiceFlow(settings, chatDestinations.destinations);
+  const voiceFlow = useVoiceFlow(settings, chatDestinations.destinations, projects.projects);
   const { reportMessage, restore, startHold, stopHold } = voiceFlow;
 
   const setSettings = (next: AppSettings) => {

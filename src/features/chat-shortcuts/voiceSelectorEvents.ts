@@ -1,29 +1,49 @@
 import type { ChatDestination } from "./chatDestinationTypes";
+import { parseCodexThreadInput } from "../codex/deepLinks";
 
 export const VOICE_SELECTOR_OPEN_EVENT = "qolayer://voice-selector-open";
 export const VOICE_SELECTOR_SELECTION_EVENT = "qolayer://voice-selector-selection";
 
 export type VoiceSelectorOpenPayload = {
   destinations: ChatDestination[];
+  projects: VoiceSelectorProject[];
 };
 
-export type VoiceSelectorSelection = { kind: "current" } | { kind: "saved"; destinationId: string };
+export type VoiceSelectorProject = {
+  id: string;
+  name: string;
+  chats: { threadId: string; displayName: string }[];
+};
+
+export type VoiceSelectorSelection =
+  | { kind: "current" }
+  | { kind: "saved"; destinationId: string }
+  | { kind: "projectChat"; threadId: string };
 
 export type VoiceSelectorKeyAction = VoiceSelectorSelection | { kind: "cancel" } | null;
 
 export function parseVoiceSelectorOpenPayload(value: unknown): VoiceSelectorOpenPayload | null {
-  if (!isRecord(value) || !Array.isArray(value.destinations)) {
+  if (!isRecord(value) || !Array.isArray(value.destinations) || !Array.isArray(value.projects)) {
     return null;
   }
   const destinations = value.destinations.filter(isSelectorDestination);
-  if (destinations.length !== value.destinations.length || destinations.length > 9) {
+  const projects = value.projects.filter(isSelectorProject);
+  if (
+    destinations.length !== value.destinations.length ||
+    destinations.length > 9 ||
+    projects.length !== value.projects.length ||
+    projects.length > 100
+  ) {
     return null;
   }
   const orders = new Set(destinations.map((destination) => destination.order));
   if (orders.size !== destinations.length) {
     return null;
   }
-  return { destinations: [...destinations].sort((left, right) => left.order - right.order) };
+  return {
+    destinations: [...destinations].sort((left, right) => left.order - right.order),
+    projects,
+  };
 }
 
 export function parseVoiceSelectorSelection(value: unknown): VoiceSelectorSelection | null {
@@ -35,6 +55,10 @@ export function parseVoiceSelectorSelection(value: unknown): VoiceSelectorSelect
   }
   if (value.kind === "saved" && typeof value.destinationId === "string" && value.destinationId) {
     return { kind: "saved", destinationId: value.destinationId };
+  }
+  if (value.kind === "projectChat" && typeof value.threadId === "string") {
+    const parsed = parseCodexThreadInput(value.threadId);
+    return parsed.ok ? { kind: "projectChat", threadId: parsed.threadId } : null;
   }
   return null;
 }
@@ -58,6 +82,11 @@ export function getVoiceSelectorKeyAction(
   return destination ? { kind: "saved", destinationId: destination.id } : null;
 }
 
+export function getVoiceSelectorNumber(code: string): number | null {
+  const match = /^(?:Digit|Numpad)([0-9])$/.exec(code);
+  return match ? Number(match[1]) : null;
+}
+
 function isSelectorDestination(value: unknown): value is ChatDestination {
   if (!isRecord(value)) {
     return false;
@@ -73,6 +102,31 @@ function isSelectorDestination(value: unknown): value is ChatDestination {
     typeof value.pinnedAt === "string" &&
     (value.projectName === undefined || typeof value.projectName === "string")
   );
+}
+
+function isSelectorProject(value: unknown): value is VoiceSelectorProject {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    !value.id ||
+    typeof value.name !== "string" ||
+    !value.name.trim() ||
+    !Array.isArray(value.chats) ||
+    value.chats.length > 50
+  ) {
+    return false;
+  }
+  return value.chats.every((chat) => {
+    if (
+      !isRecord(chat) ||
+      typeof chat.threadId !== "string" ||
+      typeof chat.displayName !== "string" ||
+      !chat.displayName.trim()
+    ) {
+      return false;
+    }
+    return parseCodexThreadInput(chat.threadId).ok;
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
