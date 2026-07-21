@@ -13,6 +13,7 @@ mod keyboard;
 mod localhost_manager;
 mod modifier_hotkey;
 mod project_identity;
+mod project_actions;
 mod tray;
 mod voice_selector;
 mod window_behavior;
@@ -120,6 +121,14 @@ async fn list_localhost_servers(
 }
 
 #[tauri::command]
+async fn dispatch_project_action(
+    state: tauri::State<'_, project_actions::ProjectActionState>,
+    request: project_actions::ProjectActionRequest,
+) -> Result<project_actions::ProjectActionDispatch, String> {
+    project_actions::dispatch_project_action(state.inner().clone(), request).await
+}
+
+#[tauri::command]
 fn open_localhost_server(app: tauri::AppHandle, server_id: String) -> Result<(), String> {
     let url = app
         .state::<localhost_manager::LocalhostManagerState>()
@@ -166,6 +175,7 @@ fn main() {
         .manage(global_hotkeys::GlobalHotkeyState::default())
         .manage(audio::AudioState::default())
         .manage(window_behavior::WindowBehaviorState::default())
+        .manage(project_actions::ProjectActionState::default())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -218,6 +228,7 @@ fn main() {
             set_localhost_project_alias,
             remove_localhost_project_alias,
             project_identity::identify_project_root,
+            dispatch_project_action,
             voice_selector::show_voice_selector,
             voice_selector::hide_voice_selector,
             set_close_to_tray

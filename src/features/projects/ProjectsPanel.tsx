@@ -17,18 +17,17 @@ import type { ChatDestinationsState } from "../chat-shortcuts/useChatDestination
 import { buildCodexThreadLink } from "../codex/deepLinks";
 import type { LocalhostAutoRefreshSeconds } from "../settings/settingsTypes";
 import { useLocalhostServers } from "../localhost-manager/useLocalhostServers";
+import { ProjectActionDialog } from "./ProjectActionDialog";
 import { ProjectEditorView } from "./ProjectEditorView";
+import { runProjectAction } from "./projectActionClient";
 import { deriveProjectPortStates, type ProjectPortState } from "./projectLocalhostStatus";
-import type { Project } from "./projectTypes";
+import type { Project, ProjectDevelopmentAction } from "./projectTypes";
 import type { ProjectsState } from "./useProjects";
-
-export type ProjectDevelopmentAction = "startDevelopment" | "stopDevelopment";
 
 type ProjectsPanelProps = {
   state: ProjectsState;
   chats: ChatDestinationsState;
   autoRefreshSeconds: LocalhostAutoRefreshSeconds;
-  onDevelopmentAction?: (project: Project, action: ProjectDevelopmentAction) => void;
 };
 
 type ProjectsView =
@@ -37,18 +36,31 @@ type ProjectsView =
   | { kind: "create" }
   | { kind: "edit"; projectId: string };
 
-export function ProjectsPanel({
-  state,
-  chats,
-  autoRefreshSeconds,
-  onDevelopmentAction,
-}: ProjectsPanelProps) {
+export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPanelProps) {
   const [view, setView] = useState<ProjectsView>({ kind: "list" });
+  const [actionRequest, setActionRequest] = useState<{
+    projectId: string;
+    action: ProjectDevelopmentAction;
+  }>();
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string>();
+  const [fallbackText, setFallbackText] = useState<string>();
+  const [actionFeedback, setActionFeedback] = useState<string>();
+  const verificationTimerRef = useRef<number | undefined>(undefined);
   const localhost = useLocalhostServers(autoRefreshSeconds);
 
   useEffect(() => {
     if (!chats.discoveryAttempted) void chats.refreshRecent();
   }, [chats]);
+
+  useEffect(
+    () => () => {
+      if (verificationTimerRef.current !== undefined) {
+        globalThis.clearInterval(verificationTimerRef.current);
+      }
+    },
+    [],
+  );
 
   const selectedProject =
     view.kind === "detail" || view.kind === "edit"
@@ -60,6 +72,50 @@ export function ProjectsPanel({
       setView({ kind: "list" });
     }
   }, [selectedProject, view.kind]);
+
+  const actionProject = actionRequest
+    ? state.projects.find((project) => project.id === actionRequest.projectId)
+    : undefined;
+
+  const beginAction = (project: Project, action: ProjectDevelopmentAction) => {
+    setActionFeedback(undefined);
+    setActionMessage(undefined);
+    setFallbackText(undefined);
+    setActionRequest({ projectId: project.id, action });
+  };
+
+  const confirmAction = async (
+    project: Project,
+    action: ProjectDevelopmentAction,
+    threadId: string,
+  ) => {
+    setActionBusy(true);
+    setActionMessage("Sending the action to Codex...");
+    setFallbackText(undefined);
+    state.update(project.id, {
+      name: project.name,
+      rootPath: project.rootPath,
+      rootIdentity: project.rootIdentity,
+      linkedChats: project.linkedChats,
+      preferredPorts: project.preferredPorts,
+      lastSelectedChatId: threadId,
+    });
+
+    const outcome = await runProjectAction(project, action, threadId);
+    setActionBusy(false);
+    setActionMessage(outcome.message);
+
+    if (outcome.status === "manualFallback") {
+      setFallbackText(outcome.fallbackText);
+      return;
+    }
+
+    setActionRequest(undefined);
+    setActionFeedback(outcome.message);
+    if (outcome.status === "completed") {
+      startPortVerification(localhost.refresh, verificationTimerRef);
+    }
+  };
 
   if (view.kind === "create") {
     return (
@@ -90,25 +146,45 @@ export function ProjectsPanel({
 
   if (view.kind === "detail" && selectedProject) {
     return (
-      <ProjectDetailView
-        localhostError={localhost.error}
-        onAction={(action) => onDevelopmentAction?.(selectedProject, action)}
-        onBack={() => setView({ kind: "list" })}
-        onDelete={() => {
-          state.remove(selectedProject.id);
-          setView({ kind: "list" });
-        }}
-        onEdit={() => setView({ kind: "edit", projectId: selectedProject.id })}
-        onOpenChat={(threadId) => void openProjectChat(threadId)}
-        onRefresh={() => void localhost.refresh()}
-        portStates={deriveProjectPortStates(
-          selectedProject,
-          localhost.snapshot,
-          localhost.refreshing,
-        )}
-        project={selectedProject}
-        refreshing={localhost.refreshing}
-      />
+      <>
+        <ProjectDetailView
+          actionFeedback={actionFeedback}
+          localhostError={localhost.error}
+          onAction={(action) => beginAction(selectedProject, action)}
+          onBack={() => setView({ kind: "list" })}
+          onDelete={() => {
+            state.remove(selectedProject.id);
+            setView({ kind: "list" });
+          }}
+          onEdit={() => setView({ kind: "edit", projectId: selectedProject.id })}
+          onOpenChat={(threadId) => void openProjectChat(threadId)}
+          onRefresh={() => void localhost.refresh()}
+          portStates={deriveProjectPortStates(
+            selectedProject,
+            localhost.snapshot,
+            localhost.refreshing,
+          )}
+          project={selectedProject}
+          refreshing={localhost.refreshing}
+        />
+        {actionRequest && actionProject ? (
+          <ProjectActionDialog
+            action={actionRequest.action}
+            busy={actionBusy}
+            fallbackText={fallbackText}
+            message={actionMessage}
+            onCancel={() => {
+              setActionRequest(undefined);
+              setActionMessage(undefined);
+              setFallbackText(undefined);
+            }}
+            onConfirm={(threadId) =>
+              void confirmAction(actionProject, actionRequest.action, threadId)
+            }
+            project={actionProject}
+          />
+        ) : null}
+      </>
     );
   }
 
@@ -228,6 +304,7 @@ function ProjectDetailView({
   portStates,
   refreshing,
   localhostError,
+  actionFeedback,
   onBack,
   onEdit,
   onDelete,
@@ -239,6 +316,7 @@ function ProjectDetailView({
   portStates: ReadonlyMap<string, ProjectPortState>;
   refreshing: boolean;
   localhostError: string | null;
+  actionFeedback?: string;
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -328,6 +406,11 @@ function ProjectDetailView({
             Stop Development
           </button>
         </div>
+        {actionFeedback ? (
+          <p className="project-action-feedback" role="status">
+            {actionFeedback}
+          </p>
+        ) : null}
 
         <section className="project-detail-section">
           <header>
@@ -437,6 +520,24 @@ function ProjectDeleteDialog({
 
 async function openProjectChat(threadId: string): Promise<void> {
   await invoke("open_codex_url", { url: buildCodexThreadLink(threadId) }).catch(() => undefined);
+}
+
+function startPortVerification(
+  refresh: () => Promise<void>,
+  timerRef: { current: number | undefined },
+): void {
+  if (timerRef.current !== undefined) globalThis.clearInterval(timerRef.current);
+  void refresh();
+  let remainingChecks = 12;
+  timerRef.current = globalThis.setInterval(() => {
+    remainingChecks -= 1;
+    if (remainingChecks <= 0) {
+      if (timerRef.current !== undefined) globalThis.clearInterval(timerRef.current);
+      timerRef.current = undefined;
+      return;
+    }
+    void refresh();
+  }, 5_000);
 }
 
 function shortProjectPath(path: string): string {

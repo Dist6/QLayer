@@ -1,5 +1,7 @@
 export type ProjectPortRole = "frontend" | "backend" | "fullstack" | "database" | "other";
 
+export type ProjectDevelopmentAction = "startDevelopment" | "stopDevelopment";
+
 export type ProjectPort = {
   id: string;
   label: string;
