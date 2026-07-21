@@ -62,7 +62,7 @@ export function VoiceDestinationSelectorApp() {
       <header className="selector-heading">
         <p className="eyebrow">Voice Flow</p>
         <h1>Choose a chat</h1>
-        <p>Keep holding Ctrl+Alt+Space.</p>
+        <p>Keep holding your Voice Flow shortcut.</p>
       </header>
       <div className="selector-list">
         <button onClick={() => choose({ kind: "current" })} type="button">

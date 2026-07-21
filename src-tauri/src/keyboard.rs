@@ -17,6 +17,7 @@ enum KeyCode {
     Control,
     Shift,
     Alt,
+    Windows,
     D,
 }
 
@@ -26,8 +27,13 @@ impl KeyCode {
             Self::Control => 0x1d,
             Self::Shift => 0x2a,
             Self::Alt => 0x38,
+            Self::Windows => 0x5b,
             Self::D => 0x20,
         }
+    }
+
+    fn is_extended(self) -> bool {
+        matches!(self, Self::Windows)
     }
 }
 
@@ -83,8 +89,8 @@ fn input_plan_for_shortcut(_shortcut: DictationShortcut) -> Vec<KeyAction> {
 }
 
 fn press_plan_for_shortcut(_shortcut: DictationShortcut) -> Vec<KeyAction> {
-    // Keep Space down so the global-hotkey release event continues to track the real hold.
     vec![
+        KeyAction::Release(KeyCode::Windows),
         KeyAction::Release(KeyCode::Alt),
         KeyAction::Release(KeyCode::Shift),
         KeyAction::Release(KeyCode::Control),
@@ -113,14 +119,20 @@ fn parse_dictation_shortcut(shortcut: &str) -> Option<DictationShortcut> {
 mod platform {
     use super::KeyAction;
     use windows::Win32::UI::Input::KeyboardAndMouse::{
-        SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP,
-        KEYEVENTF_SCANCODE, VIRTUAL_KEY,
+        SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
+        KEYEVENTF_KEYUP, KEYEVENTF_SCANCODE, VIRTUAL_KEY,
     };
 
     pub fn send_actions(actions: Vec<KeyAction>) -> Result<(), &'static str> {
         let inputs = actions
             .iter()
-            .map(|action| key_input(action_key(*action), matches!(action, KeyAction::Release(_))))
+            .map(|action| {
+                let (key, key_up) = match action {
+                    KeyAction::Press(key) => (*key, false),
+                    KeyAction::Release(key) => (*key, true),
+                };
+                key_input(key, key_up)
+            })
             .collect::<Vec<_>>();
 
         let sent = unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
@@ -131,18 +143,22 @@ mod platform {
         }
     }
 
-    fn key_input(key: VIRTUAL_KEY, key_up: bool) -> INPUT {
+    fn key_input(key: super::KeyCode, key_up: bool) -> INPUT {
+        let mut flags = KEYEVENTF_SCANCODE;
+        if key_up {
+            flags |= KEYEVENTF_KEYUP;
+        }
+        if key.is_extended() {
+            flags |= KEYEVENTF_EXTENDEDKEY;
+        }
+
         INPUT {
             r#type: INPUT_KEYBOARD,
             Anonymous: INPUT_0 {
                 ki: KEYBDINPUT {
                     wVk: VIRTUAL_KEY(0),
-                    wScan: key.0,
-                    dwFlags: if key_up {
-                        KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP
-                    } else {
-                        KEYEVENTF_SCANCODE
-                    },
+                    wScan: VIRTUAL_KEY(key.scan_code()).0,
+                    dwFlags: flags,
                     time: 0,
                     dwExtraInfo: 0,
                 },
@@ -150,11 +166,6 @@ mod platform {
         }
     }
 
-    fn action_key(action: KeyAction) -> VIRTUAL_KEY {
-        match action {
-            KeyAction::Press(key) | KeyAction::Release(key) => VIRTUAL_KEY(key.scan_code()),
-        }
-    }
 }
 
 #[cfg(not(windows))]
@@ -190,10 +201,11 @@ mod tests {
     }
 
     #[test]
-    fn preserves_the_physical_hold_key_while_sending_ctrl_shift_d() {
+    fn releases_physical_modifiers_before_sending_ctrl_shift_d() {
         assert_eq!(
             press_plan_for_shortcut(DictationShortcut::CtrlShiftD),
             vec![
+                KeyAction::Release(KeyCode::Windows),
                 KeyAction::Release(KeyCode::Alt),
                 KeyAction::Release(KeyCode::Shift),
                 KeyAction::Release(KeyCode::Control),
@@ -228,6 +240,8 @@ mod tests {
     fn maps_ctrl_shift_d_to_physical_scan_codes() {
         assert_eq!(KeyCode::Control.scan_code(), 0x1d);
         assert_eq!(KeyCode::Shift.scan_code(), 0x2a);
+        assert_eq!(KeyCode::Windows.scan_code(), 0x5b);
+        assert!(KeyCode::Windows.is_extended());
         assert_eq!(KeyCode::D.scan_code(), 0x20);
     }
 }

@@ -32,12 +32,12 @@ describe("global hotkey events", () => {
     expect(
       parseGlobalHotkeyStatus({
         state: "active",
-        shortcut: "Ctrl+Alt+Space",
+        shortcut: "Ctrl+Win",
         message: "Global hotkey is active.",
       }),
     ).toEqual({
       state: "active",
-      shortcut: "Ctrl+Alt+Space",
+      shortcut: "Ctrl+Win",
       message: "Global hotkey is active.",
     });
   });
@@ -45,7 +45,7 @@ describe("global hotkey events", () => {
   it("falls back to not available for invalid status payloads", () => {
     expect(parseGlobalHotkeyStatus({ state: "ready" })).toEqual({
       state: "notAvailable",
-      shortcut: "Ctrl+Alt+Space",
+      shortcut: "Ctrl+Win",
       message: "Global hotkey status is unavailable.",
     });
   });

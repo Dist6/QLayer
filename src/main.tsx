@@ -1,10 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { isTauri } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { App } from "./app/App";
 import "./app/App.css";
 import { VoiceDestinationSelectorApp } from "./features/chat-shortcuts/VoiceDestinationSelectorApp";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const root = document.getElementById("root");
 
@@ -14,6 +15,10 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    {getCurrentWindow().label === "voice-selector" ? <VoiceDestinationSelectorApp /> : <App />}
+    {isTauri() && getCurrentWindow().label === "voice-selector" ? (
+      <VoiceDestinationSelectorApp />
+    ) : (
+      <App />
+    )}
   </StrictMode>,
 );

@@ -10,8 +10,11 @@ export const defaultSettings: AppSettings = {
     dictationShortcut: "Ctrl+Shift+D",
   },
   voiceFlow: {
-    hotkey: "Ctrl+Alt+Space",
+    hotkey: "Ctrl+Win",
     audioMode: "disabled",
     listeningVolumePercent: 20,
+  },
+  localhostManager: {
+    autoRefreshSeconds: 15,
   },
 };

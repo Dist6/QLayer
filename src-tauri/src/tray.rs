@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::sync::Mutex;
 use tauri::image::Image;
 use tauri::menu::{MenuBuilder, MenuEvent};
-use tauri::tray::TrayIconBuilder;
+use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{App, AppHandle, Emitter, Manager};
 
 const MAIN_WINDOW_LABEL: &str = "main";
@@ -104,11 +104,26 @@ fn try_setup_tray(app: &mut App) -> tauri::Result<()> {
         .cloned()
         .unwrap_or_else(|| Image::new(FALLBACK_ICON_RGBA, 1, 1));
 
+    for label in [MAIN_WINDOW_LABEL, "voice-selector"] {
+        if let Some(window) = app.get_webview_window(label) {
+            window.set_icon(icon.clone())?;
+        }
+    }
+
     TrayIconBuilder::with_id("qolayer-main")
         .icon(icon)
         .tooltip("QoLayer")
         .menu(&menu)
-        .show_menu_on_left_click(true)
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::DoubleClick {
+                button: MouseButton::Left,
+                ..
+            } = event
+            {
+                let _ = show_main_window(tray.app_handle());
+            }
+        })
         .on_menu_event(handle_tray_menu_event)
         .build(app)?;
 

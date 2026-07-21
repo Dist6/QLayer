@@ -28,8 +28,9 @@ export type StartTargetedVoiceFlowHoldInput = StartVoiceFlowHoldInput & {
 };
 
 const CODEX_FOCUS_SETTLE_DELAY_MS = 50;
-const WAITING_FOR_CODEX_MESSAGE =
-  "Waiting for Codex or ChatGPT. Make sure it is open and visible, then hold Ctrl+Alt+Space again.";
+function waitingForCodexMessage(shortcut: string): string {
+  return `Waiting for Codex or ChatGPT. Make sure it is open and visible, then hold ${shortcut} again.`;
+}
 
 export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceFlowRunResult> {
   const steps: VoiceFlowStep[] = [];
@@ -90,7 +91,7 @@ export async function startTargetedVoiceFlowHold(
     await input.window.showQoLayer();
     return finish("waitingForCodex", steps, {
       status: "waitingForCodex",
-      message: WAITING_FOR_CODEX_MESSAGE,
+      message: waitingForCodexMessage(input.settings.voiceFlow.hotkey),
     });
   }
 
@@ -227,7 +228,7 @@ async function prepareVoiceFlow(
     await input.window.showQoLayer();
     return finish("waitingForCodex", steps, {
       status: "waitingForCodex",
-      message: WAITING_FOR_CODEX_MESSAGE,
+      message: waitingForCodexMessage(input.settings.voiceFlow.hotkey),
     });
   }
 

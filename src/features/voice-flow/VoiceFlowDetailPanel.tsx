@@ -1,3 +1,9 @@
+import { IconInfoCircle } from "@tabler/icons-react";
+
+import {
+  GlobalHotkeyRecorder,
+  type GlobalHotkeyChangeResult,
+} from "../global-hotkeys/GlobalHotkeyRecorder";
 import type { AppSettings, AudioMode } from "../settings/settingsTypes";
 import { listeningVolumeBounds } from "../settings/settingsValidation";
 import type { VoiceFlowState } from "./useVoiceFlow";
@@ -5,7 +11,9 @@ import type { VoiceFlowState } from "./useVoiceFlow";
 type VoiceFlowDetailPanelProps = {
   settings: AppSettings;
   voiceFlow: VoiceFlowState;
+  onGlobalHotkeyChange: (shortcut: string) => Promise<GlobalHotkeyChangeResult>;
   onSettingsChange: (settings: AppSettings) => void;
+  onShortcutRecordingChange: (recording: boolean) => void;
 };
 
 const audioOptions: ReadonlyArray<{ value: AudioMode; label: string }> = [
@@ -17,9 +25,15 @@ const audioOptions: ReadonlyArray<{ value: AudioMode; label: string }> = [
 export function VoiceFlowDetailPanel({
   settings,
   voiceFlow,
+  onGlobalHotkeyChange,
   onSettingsChange,
+  onShortcutRecordingChange,
 }: VoiceFlowDetailPanelProps) {
   const displayStatus = getDisplayStatus(voiceFlow);
+  const selectedAudioIndex = audioOptions.findIndex(
+    (option) => option.value === settings.voiceFlow.audioMode,
+  );
+  const lowerAudio = settings.voiceFlow.audioMode === "duck";
   const updateVoiceFlow = (next: Partial<AppSettings["voiceFlow"]>) => {
     onSettingsChange({
       ...settings,
@@ -29,34 +43,32 @@ export function VoiceFlowDetailPanel({
 
   return (
     <section className="tool-view voice-flow-view">
-      <div className="view-heading">
-        <div>
-          <p className="eyebrow">Voice utility</p>
-          <h1>Voice Flow</h1>
-        </div>
+      <header className="voice-flow-heading">
+        <h1>Voice Flow</h1>
         <div className={`flow-status flow-status-${displayStatus.tone}`}>
           <span aria-hidden="true" />
           {displayStatus.label}
         </div>
+      </header>
+
+      <div className="flat-setting shortcut-setting">
+        <span className="setting-label">Voice shortcut</span>
+        <GlobalHotkeyRecorder
+          onChange={onGlobalHotkeyChange}
+          onRecordingChange={onShortcutRecordingChange}
+          shortcut={settings.voiceFlow.hotkey}
+        />
       </div>
 
-      <div className="shortcut-block">
-        <p>Hold to talk</p>
-        <div className="shortcut-row" aria-label="Hold Control Alt Space to talk">
-          <Keycap>Ctrl</Keycap>
-          <span>+</span>
-          <Keycap>Alt</Keycap>
-          <span>+</span>
-          <Keycap wide>Space</Keycap>
-        </div>
-      </div>
-
-      <div className="settings-section">
-        <div className="section-label-row">
-          <label id="background-audio-label">Background audio</label>
-          <span>Restores on release</span>
-        </div>
-        <div className="segmented-control" aria-labelledby="background-audio-label">
+      <div className="audio-settings">
+        <span className="setting-label" id="background-audio-label">
+          Background audio
+        </span>
+        <div
+          className={`segmented-control segment-index-${selectedAudioIndex}`}
+          aria-labelledby="background-audio-label"
+        >
+          <span aria-hidden="true" className="segment-indicator" />
           {audioOptions.map((option) => (
             <button
               aria-pressed={settings.voiceFlow.audioMode === option.value}
@@ -68,36 +80,56 @@ export function VoiceFlowDetailPanel({
             </button>
           ))}
         </div>
+
+        <div
+          aria-hidden={!lowerAudio}
+          className={lowerAudio ? "volume-reveal volume-reveal-open" : "volume-reveal"}
+        >
+          <div className="volume-reveal-inner">
+            <div className="volume-setting">
+              <label htmlFor="listening-volume">Listening volume</label>
+              <input
+                aria-label="Listening volume"
+                disabled={!lowerAudio}
+                id="listening-volume"
+                max={listeningVolumeBounds.max}
+                min={listeningVolumeBounds.min}
+                onChange={(event) =>
+                  updateVoiceFlow({ listeningVolumePercent: Number(event.target.value) })
+                }
+                step="1"
+                style={
+                  {
+                    "--range-progress": `${getRangeProgress(settings.voiceFlow.listeningVolumePercent)}%`,
+                  } as React.CSSProperties
+                }
+                type="range"
+                value={settings.voiceFlow.listeningVolumePercent}
+              />
+              <output htmlFor="listening-volume">
+                {settings.voiceFlow.listeningVolumePercent}%
+              </output>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {settings.voiceFlow.audioMode === "duck" ? (
-        <div className="volume-setting">
-          <div className="section-label-row">
-            <label htmlFor="listening-volume">Listening volume</label>
-            <output htmlFor="listening-volume">{settings.voiceFlow.listeningVolumePercent}%</output>
-          </div>
-          <input
-            aria-label="Listening volume"
-            id="listening-volume"
-            max={listeningVolumeBounds.max}
-            min={listeningVolumeBounds.min}
-            onChange={(event) =>
-              updateVoiceFlow({ listeningVolumePercent: Number(event.target.value) })
-            }
-            step="1"
-            type="range"
-            value={settings.voiceFlow.listeningVolumePercent}
-          />
-        </div>
-      ) : null}
-
       {displayStatus.message ? <p className="flow-message">{displayStatus.message}</p> : null}
+
+      <footer className="voice-flow-footer">
+        <IconInfoCircle aria-hidden="true" size={16} stroke={1.6} />
+        <span>Audio restores when you release the shortcut.</span>
+      </footer>
     </section>
   );
 }
 
-function Keycap({ children, wide = false }: { children: string; wide?: boolean }) {
-  return <kbd className={wide ? "keycap keycap-wide" : "keycap"}>{children}</kbd>;
+function getRangeProgress(value: number): number {
+  return (
+    ((value - listeningVolumeBounds.min) /
+      (listeningVolumeBounds.max - listeningVolumeBounds.min)) *
+    100
+  );
 }
 
 function getDisplayStatus(voiceFlow: VoiceFlowState): {

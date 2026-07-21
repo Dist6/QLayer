@@ -1,8 +1,10 @@
 import { defaultSettings } from "./defaultSettings";
+import { validateGlobalHotkey } from "../global-hotkeys/globalHotkeyShortcut";
 import type {
   AppSettings,
   AudioMode,
   CodexDictationShortcut,
+  LocalhostAutoRefreshSeconds,
   StoredSettingsParseResult,
 } from "./settingsTypes";
 
@@ -10,6 +12,8 @@ type ValidationResult = { ok: true; settings: AppSettings } | { ok: false; setti
 
 const audioModes = new Set<AudioMode>(["disabled", "duck", "mute"]);
 const dictationShortcuts = new Set<CodexDictationShortcut>(["Ctrl+Shift+D"]);
+const legacyDefaultGlobalHotkey = "Ctrl+Alt+Space";
+const autoRefreshIntervals = new Set<LocalhostAutoRefreshSeconds>([null, 15, 30, 60]);
 export const listeningVolumeBounds = { min: 5, max: 50 } as const;
 
 export function validateSettings(value: unknown): ValidationResult {
@@ -42,6 +46,7 @@ function mergeSettings(value: Record<string, unknown>): AppSettings {
   const general = readRecord(value.general);
   const codex = readRecord(value.codex);
   const voiceFlow = readRecord(value.voiceFlow);
+  const localhostManager = readRecord(value.localhostManager);
 
   return {
     general: {
@@ -60,11 +65,17 @@ function mergeSettings(value: Record<string, unknown>): AppSettings {
       ),
     },
     voiceFlow: {
-      hotkey: readNonEmptyString(voiceFlow.hotkey, defaultSettings.voiceFlow.hotkey),
+      hotkey: readGlobalHotkey(voiceFlow.hotkey, defaultSettings.voiceFlow.hotkey),
       audioMode: readEnum(voiceFlow.audioMode, audioModes, defaultSettings.voiceFlow.audioMode),
       listeningVolumePercent: readListeningVolume(
         voiceFlow.listeningVolumePercent,
         defaultSettings.voiceFlow.listeningVolumePercent,
+      ),
+    },
+    localhostManager: {
+      autoRefreshSeconds: readAutoRefreshInterval(
+        localhostManager.autoRefreshSeconds,
+        defaultSettings.localhostManager.autoRefreshSeconds,
       ),
     },
   };
@@ -74,16 +85,27 @@ function isSettingsFullyValid(value: Record<string, unknown>): boolean {
   const general = readRecord(value.general);
   const codex = readRecord(value.codex);
   const voiceFlow = readRecord(value.voiceFlow);
+  const localhostManager = readRecord(value.localhostManager);
 
   return (
     typeof general.launchAtStartup === "boolean" &&
     typeof general.closeToTray === "boolean" &&
     typeof codex.enabled === "boolean" &&
     dictationShortcuts.has(codex.dictationShortcut as CodexDictationShortcut) &&
-    isNonEmptyString(voiceFlow.hotkey) &&
+    isCanonicalGlobalHotkey(voiceFlow.hotkey) &&
     audioModes.has(voiceFlow.audioMode as AudioMode) &&
-    isValidListeningVolume(voiceFlow.listeningVolumePercent)
+    isValidListeningVolume(voiceFlow.listeningVolumePercent) &&
+    autoRefreshIntervals.has(localhostManager.autoRefreshSeconds as LocalhostAutoRefreshSeconds)
   );
+}
+
+function readAutoRefreshInterval(
+  value: unknown,
+  fallback: LocalhostAutoRefreshSeconds,
+): LocalhostAutoRefreshSeconds {
+  return autoRefreshIntervals.has(value as LocalhostAutoRefreshSeconds)
+    ? (value as LocalhostAutoRefreshSeconds)
+    : fallback;
 }
 
 function readRecord(value: unknown): Record<string, unknown> {
@@ -98,12 +120,23 @@ function readBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function readNonEmptyString(value: unknown, fallback: string): string {
-  return isNonEmptyString(value) ? value : fallback;
-}
-
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function readGlobalHotkey(value: unknown, fallback: string): string {
+  if (!isNonEmptyString(value)) return fallback;
+  if (value === legacyDefaultGlobalHotkey) return fallback;
+
+  const validation = validateGlobalHotkey(value);
+  return validation.ok ? validation.shortcut : fallback;
+}
+
+function isCanonicalGlobalHotkey(value: unknown): value is string {
+  if (!isNonEmptyString(value)) return false;
+
+  const validation = validateGlobalHotkey(value);
+  return validation.ok && validation.shortcut === value;
 }
 
 function readEnum<T extends string>(value: unknown, allowed: Set<T>, fallback: T): T {

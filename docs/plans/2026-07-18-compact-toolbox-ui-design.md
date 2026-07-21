@@ -18,13 +18,17 @@ The redesigned app uses a narrow icon sidebar and a single content surface inspi
 
 ## Window and shell
 
-- Target size: approximately 410 x 370 px.
+- Target width: approximately 420-440 px.
+- Let the content determine the compact window height. `Off` and `Mute` should
+  collapse the listening-volume row; `Lower` should expand the window only by
+  the height needed for that row.
 - Frameless, non-resizable compact utility window.
 - Hide from the taskbar and return to the tray when closed.
 - Open from the tray and retain the existing tray-first lifecycle.
-- Use one continuous charcoal surface with a subtle outer border and restrained shadow.
+- Use one continuous charcoal surface with approximately 20-22 px outer
+  corner radii, a subtle outer border, and a restrained shadow.
 - Use a 48 px left navigation rail separated by a low-contrast divider.
-- Place a custom monochrome QoLayer three-layer mark at the top of the rail.
+- Use the official monochrome QoLayer logo at the top of the rail.
 
 ## Navigation
 
@@ -44,7 +48,9 @@ Empty future views should preserve the shell and title but contain no fake contr
 - Use Tabler outline icons only.
 - Default sidebar icon size: 19 px.
 - Default stroke: 1.7.
-- Use neutral icon colors; communicate selection with a soft graphite background.
+- Use neutral icon colors; communicate selection with a soft graphite
+  background only. Do not add a colored bar, stripe, dot, or line beside the
+  active navigation item.
 - Do not mix icon libraries.
 
 Initial mapping:
@@ -62,15 +68,20 @@ Exact export names must be verified against the installed package during impleme
 
 ## Voice Flow view
 
-The Voice Flow view contains:
+The Voice Flow view uses a flat settings layout. Labels and controls sit
+directly on the main surface and rely on spacing and thin dividers for
+structure. Do not wrap settings in cards or outlined containers.
 
-- Header title: `Voice Flow`.
+The view contains:
+
+- Header title: `Voice Flow` with the compact state indicator immediately to
+  its right on the same baseline. The state must never sit below the title.
 - Compact state indicator with one of:
   - `Ready`
   - `Listening`
   - `Needs attention`
-- Instruction: `Hold Ctrl Alt Space to talk`.
-- Three keycaps: `Ctrl`, `Alt`, and `Space`.
+- A flat `Voice shortcut` row with the configured shortcut rendered as
+  individual keycaps and a compact edit action.
 - Section label: `Background audio`.
 - Segmented control:
   - `Off`
@@ -80,6 +91,11 @@ The Voice Flow view contains:
   - Label: `Listening volume`
   - Current percentage value
   - A compact range slider
+
+The background-audio segmented control is the only grouped control in this
+view. Its selected capsule should glide between options with a short spring
+transition. The control remains fully usable when reduced motion is enabled,
+without relying on animation for state communication.
 
 The listening-volume setting controls the target Windows master output volume while Voice Flow is active. The original volume and mute state must be preserved and restored when the global shortcut is released.
 
@@ -127,14 +143,19 @@ Compatibility detection remains automatic. Do not add an application selector fo
 
 ## Visual system
 
-- Neutral charcoal palette similar in restraint to Codex and ChatGPT.
-- Near-white primary text and cool-gray secondary text.
-- Muted green only for a healthy status dot.
+- Strictly neutral warm-charcoal palette with near-white primary text and gray
+  secondary text. Do not use purple or another chromatic accent in normal,
+  selected, hover, focus, or healthy states.
+- Use tonal contrast, weight, borders, and shape to communicate state.
 - Compact system typography based on Segoe UI Variable with careful weight hierarchy.
 - Low-contrast 1 px dividers and borders.
-- Rounded corners should be consistent but not pill-shaped everywhere.
-- Use subtle tonal variation or micro-texture rather than visible gradients.
+- Keep the outer shell generously rounded, but do not place every setting in a
+  rounded container. Keycaps, segmented controls, sliders, and icon-button
+  hit areas may retain appropriate control-level rounding.
+- Do not use visible gradients, glass effects, or decorative glow.
 - Provide hover, active, focus-visible, and disabled states.
+- Use short, restrained transitions for navigation state, shortcut editing,
+  slider feedback, and conditional row disclosure.
 - Respect reduced-motion preferences.
 
 ## Accessibility
@@ -156,11 +177,15 @@ Compatibility detection remains automatic. Do not add an application selector fo
 
 ## Approved reference
 
-The approved visual direction is the generated mockup with:
+The approved visual direction is the revised monochrome mockup with:
 
 - A 48 px icon rail.
+- The official QoLayer logo.
 - Voice Flow selected.
 - Visible Chat shortcuts and Saved prompts buttons.
 - Settings anchored at the bottom.
+- `Voice Flow` and `Ready` on the same horizontal line.
+- No active-item side bar or chromatic accent.
+- Flat settings rows without card containers.
 - A `Lower` audio state with a visible listening-volume slider.
 - No compatibility footer text.

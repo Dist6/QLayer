@@ -1,4 +1,5 @@
 import type { GlobalHotkeyStatus } from "../global-hotkeys/globalHotkeyEvents";
+import { getShortcutKeycaps } from "../global-hotkeys/globalHotkeyShortcut";
 import type { AppSettings } from "./settingsTypes";
 
 type SettingsPageProps = {
@@ -18,14 +19,17 @@ export function SettingsPage({
       general: { ...settings.general, ...next },
     });
   };
+  const updateLocalhostManager = (next: Partial<AppSettings["localhostManager"]>) => {
+    onSettingsChange({
+      ...settings,
+      localhostManager: { ...settings.localhostManager, ...next },
+    });
+  };
 
   return (
     <section className="tool-view settings-view">
       <div className="view-heading">
-        <div>
-          <p className="eyebrow">QoLayer</p>
-          <h1>Settings</h1>
-        </div>
+        <h1>Settings</h1>
       </div>
 
       <div className="setting-list">
@@ -46,8 +50,35 @@ export function SettingsPage({
             <strong>Voice Flow shortcut</strong>
             <span>{globalHotkeyStatus.state === "active" ? "Active" : "Not available"}</span>
           </div>
-          <code>{globalHotkeyStatus.shortcut}</code>
+          <div className="mini-keycaps" aria-label={globalHotkeyStatus.shortcut}>
+            {getShortcutKeycaps(globalHotkeyStatus.shortcut).map((key) => (
+              <kbd key={key}>{key}</kbd>
+            ))}
+          </div>
         </div>
+        <label className="select-setting">
+          <span>
+            <strong>Localhost auto-refresh</strong>
+            <small>Refresh only while the tool is visible.</small>
+          </span>
+          <select
+            aria-label="Localhost auto-refresh"
+            onChange={(event) =>
+              updateLocalhostManager({
+                autoRefreshSeconds:
+                  event.target.value === "off"
+                    ? null
+                    : (Number(event.target.value) as 15 | 30 | 60),
+              })
+            }
+            value={settings.localhostManager.autoRefreshSeconds ?? "off"}
+          >
+            <option value="off">Off</option>
+            <option value="15">15s</option>
+            <option value="30">30s</option>
+            <option value="60">60s</option>
+          </select>
+        </label>
       </div>
     </section>
   );

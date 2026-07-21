@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_opener::OpenerExt;
@@ -8,6 +10,8 @@ mod codex_runtime;
 mod codex_threads;
 mod global_hotkeys;
 mod keyboard;
+mod localhost_manager;
+mod modifier_hotkey;
 mod tray;
 mod voice_selector;
 mod window_behavior;
@@ -35,6 +39,14 @@ fn get_tray_status(app: tauri::AppHandle) -> tray::TrayStatus {
 #[tauri::command]
 fn get_global_hotkey_status(app: tauri::AppHandle) -> global_hotkeys::GlobalHotkeyStatus {
     global_hotkeys::global_hotkey_status(app)
+}
+
+#[tauri::command]
+fn set_global_hotkey(
+    app: tauri::AppHandle,
+    shortcut: String,
+) -> Result<global_hotkeys::GlobalHotkeyStatus, String> {
+    global_hotkeys::set_global_hotkey(app, shortcut)
 }
 
 #[tauri::command]
@@ -94,6 +106,48 @@ async fn list_recent_codex_chats() -> Result<Vec<chat_discovery::RecentChat>, St
 }
 
 #[tauri::command]
+async fn list_localhost_servers(
+    app: tauri::AppHandle,
+) -> Result<localhost_manager::LocalhostSnapshot, String> {
+    let state = app
+        .state::<localhost_manager::LocalhostManagerState>()
+        .inner()
+        .clone();
+    tauri::async_runtime::spawn_blocking(move || state.refresh())
+        .await
+        .map_err(|_| "Local development servers could not be inspected.".to_string())?
+}
+
+#[tauri::command]
+fn open_localhost_server(app: tauri::AppHandle, server_id: String) -> Result<(), String> {
+    let url = app
+        .state::<localhost_manager::LocalhostManagerState>()
+        .resolve_open_url(&server_id)?;
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|_| "The local server could not be opened.".to_string())
+}
+
+#[tauri::command]
+fn set_localhost_project_alias(
+    app: tauri::AppHandle,
+    server_id: String,
+    name: String,
+) -> Result<(), String> {
+    app.state::<localhost_manager::LocalhostManagerState>()
+        .set_project_alias(&server_id, &name)
+}
+
+#[tauri::command]
+fn remove_localhost_project_alias(
+    app: tauri::AppHandle,
+    server_id: String,
+) -> Result<(), String> {
+    app.state::<localhost_manager::LocalhostManagerState>()
+        .remove_project_alias(&server_id)
+}
+
+#[tauri::command]
 fn set_close_to_tray(state: tauri::State<window_behavior::WindowBehaviorState>, enabled: bool) {
     state.set_close_to_tray(enabled);
 }
@@ -117,6 +171,8 @@ fn main() {
             Some(vec!["--minimized"]),
         ))
         .setup(|app| {
+            let alias_path = app.path().app_data_dir()?.join("localhost-project-aliases.json");
+            app.manage(localhost_manager::LocalhostManagerState::with_alias_path(alias_path));
             tray::setup_tray(app);
             global_hotkeys::setup_global_hotkeys(app);
             if should_start_minimized(std::env::args()) {
@@ -144,6 +200,7 @@ fn main() {
             open_codex_url,
             get_tray_status,
             get_global_hotkey_status,
+            set_global_hotkey,
             show_main_window,
             prepare_audio,
             restore_audio,
@@ -153,6 +210,10 @@ fn main() {
             focus_codex_window,
             focus_codex_thread,
             list_recent_codex_chats,
+            list_localhost_servers,
+            open_localhost_server,
+            set_localhost_project_alias,
+            remove_localhost_project_alias,
             voice_selector::show_voice_selector,
             voice_selector::hide_voice_selector,
             set_close_to_tray

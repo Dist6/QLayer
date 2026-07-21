@@ -1,5 +1,6 @@
 export type AudioMode = "disabled" | "duck" | "mute";
 export type CodexDictationShortcut = "Ctrl+Shift+D";
+export type LocalhostAutoRefreshSeconds = 15 | 30 | 60 | null;
 
 export type AppSettings = {
   general: {
@@ -14,6 +15,9 @@ export type AppSettings = {
     hotkey: string;
     audioMode: AudioMode;
     listeningVolumePercent: number;
+  };
+  localhostManager: {
+    autoRefreshSeconds: LocalhostAutoRefreshSeconds;
   };
 };
 

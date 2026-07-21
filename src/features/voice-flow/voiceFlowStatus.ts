@@ -7,7 +7,7 @@ const visibleStatusMessages: Partial<Record<VoiceFlowStep["status"], string>> = 
   nothingToRestore: "Nothing to restore.",
   codexFocused: "Codex focused.",
   codexFocusNotConfirmed: "Codex could not be focused.",
-  waitingForCodex: "Waiting for Codex. Open Codex, then hold Ctrl+Alt+Space again.",
+  waitingForCodex: "Waiting for Codex. Open it, then hold your Voice Flow shortcut again.",
   audioUnavailable: "Audio control is not available.",
   dictationSent: "Dictation shortcut sent.",
   dictationStarted: "Dictation is listening.",

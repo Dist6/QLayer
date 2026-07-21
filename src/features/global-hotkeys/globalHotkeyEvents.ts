@@ -1,6 +1,6 @@
 export const QOLAYER_GLOBAL_HOTKEY_ACTION_EVENT = "qolayer://global-hotkey-action";
 export const QOLAYER_GLOBAL_HOTKEY_STATUS_EVENT = "qolayer://global-hotkey-status";
-export const DEFAULT_GLOBAL_HOTKEY_SHORTCUT = "Ctrl+Alt+Space";
+export const DEFAULT_GLOBAL_HOTKEY_SHORTCUT = "Ctrl+Win";
 
 export type GlobalHotkeyAction = "startVoiceFlowHold" | "stopVoiceFlowHold";
 export type GlobalHotkeyStatusState = "active" | "failed" | "notAvailable";

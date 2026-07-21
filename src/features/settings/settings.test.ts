@@ -6,10 +6,11 @@ import { parseStoredSettings, validateSettings } from "./settingsValidation";
 describe("settings defaults", () => {
   it("uses conservative v0.1 defaults", () => {
     expect(defaultSettings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
-    expect(defaultSettings.voiceFlow.hotkey).toBe("Ctrl+Alt+Space");
+    expect(defaultSettings.voiceFlow.hotkey).toBe("Ctrl+Win");
     expect(defaultSettings.voiceFlow.audioMode).toBe("disabled");
     expect(defaultSettings.voiceFlow.listeningVolumePercent).toBe(20);
     expect(defaultSettings.general).toEqual({ launchAtStartup: false, closeToTray: true });
+    expect(defaultSettings.localhostManager.autoRefreshSeconds).toBe(15);
   });
 });
 
@@ -97,4 +98,66 @@ describe("settings validation", () => {
     expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
     expect(parsed.recovered).toBe(true);
   });
+
+  it("preserves a supported custom Voice Flow shortcut", () => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        ...defaultSettings,
+        voiceFlow: { ...defaultSettings.voiceFlow, hotkey: "Ctrl+Shift+M" },
+      }),
+    );
+
+    expect(parsed.settings.voiceFlow.hotkey).toBe("Ctrl+Shift+M");
+    expect(parsed.recovered).toBe(false);
+  });
+
+  it.each([null, 15, 30, 60] as const)("accepts localhost refresh interval %s", (value) => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        ...defaultSettings,
+        localhostManager: { autoRefreshSeconds: value },
+      }),
+    );
+
+    expect(parsed.settings.localhostManager.autoRefreshSeconds).toBe(value);
+    expect(parsed.recovered).toBe(false);
+  });
+
+  it("recovers an unsupported localhost refresh interval", () => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        ...defaultSettings,
+        localhostManager: { autoRefreshSeconds: 1 },
+      }),
+    );
+
+    expect(parsed.settings.localhostManager.autoRefreshSeconds).toBe(15);
+    expect(parsed.recovered).toBe(true);
+  });
+
+  it("migrates the legacy default Voice Flow shortcut", () => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        ...defaultSettings,
+        voiceFlow: { ...defaultSettings.voiceFlow, hotkey: "Ctrl+Alt+Space" },
+      }),
+    );
+
+    expect(parsed.settings.voiceFlow.hotkey).toBe("Ctrl+Win");
+  });
+
+  it.each(["Ctrl+1", "Meta+Alt+M", "Ctrl+Shift+D", "Shift+M"])(
+    "recovers safely from unsupported Voice Flow shortcut %s",
+    (hotkey) => {
+      const parsed = parseStoredSettings(
+        JSON.stringify({
+          ...defaultSettings,
+          voiceFlow: { ...defaultSettings.voiceFlow, hotkey },
+        }),
+      );
+
+      expect(parsed.settings.voiceFlow.hotkey).toBe("Ctrl+Win");
+      expect(parsed.recovered).toBe(true);
+    },
+  );
 });

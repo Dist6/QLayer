@@ -24,6 +24,11 @@ export async function getGlobalHotkeyStatus(): Promise<GlobalHotkeyStatus> {
   }
 }
 
+export async function setGlobalHotkey(shortcut: string): Promise<GlobalHotkeyStatus> {
+  const status = await invoke("set_global_hotkey", { shortcut });
+  return parseGlobalHotkeyStatus(status);
+}
+
 export async function listenForGlobalHotkeyActions(
   onAction: (action: GlobalHotkeyAction) => void,
   onInvalidPayload: (message: string) => void,

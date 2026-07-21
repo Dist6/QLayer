@@ -135,7 +135,7 @@ describe("Voice Flow latency and focus safety", () => {
     expect(result.steps.at(-1)).toEqual({
       status: "waitingForCodex",
       message:
-        "Waiting for Codex or ChatGPT. Make sure it is open and visible, then hold Ctrl+Alt+Space again.",
+        "Waiting for Codex or ChatGPT. Make sure it is open and visible, then hold Ctrl+Win again.",
     });
     expect(events).toEqual(["audio", "focus", "restore", "show"]);
   });

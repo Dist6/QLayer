@@ -42,10 +42,10 @@ describe("Voice Flow status messages", () => {
       readVoiceFlowMessages([
         {
           status: "waitingForCodex",
-          message: "Waiting for Codex. Open Codex, then hold Ctrl+Alt+Space again.",
+          message: "Waiting for Codex. Open Codex, then hold Ctrl+Win again.",
         },
       ]),
-    ).toEqual(["Waiting for Codex. Open Codex, then hold Ctrl+Alt+Space again."]);
+    ).toEqual(["Waiting for Codex. Open it, then hold your Voice Flow shortcut again."]);
   });
 
   it("uses a short unavailable message for dictation automation", () => {

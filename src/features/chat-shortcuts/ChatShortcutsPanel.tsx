@@ -1,4 +1,5 @@
 import {
+  IconArrowLeft,
   IconArrowDown,
   IconArrowUp,
   IconCheck,
@@ -7,7 +8,7 @@ import {
   IconRefresh,
   IconTrash,
 } from "@tabler/icons-react";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { parseCodexThreadInput } from "../codex/deepLinks";
 import { buildChatShortcutViewModel } from "./chatShortcutViewModel";
@@ -17,12 +18,16 @@ type ChatShortcutsPanelProps = {
   state: ChatDestinationsState;
 };
 
+type ChatShortcutsView = "list" | "add";
+
 export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
   const [manualInput, setManualInput] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualMessage, setManualMessage] = useState<string>();
+  const [view, setView] = useState<ChatShortcutsView>("list");
   const [renamingId, setRenamingId] = useState<string>();
   const [renameValue, setRenameValue] = useState("");
+  const manualNameRef = useRef<HTMLInputElement>(null);
   const model = useMemo(
     () => buildChatShortcutViewModel(state.destinations, state.recentChats),
     [state.destinations, state.recentChats],
@@ -33,6 +38,19 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
       void state.refreshRecent();
     }
   }, [state]);
+
+  useEffect(() => {
+    if (view === "add") {
+      manualNameRef.current?.focus();
+    }
+  }, [view]);
+
+  const closeAddView = () => {
+    setManualInput("");
+    setManualName("");
+    setManualMessage(undefined);
+    setView("list");
+  };
 
   const addManual = (event: FormEvent) => {
     event.preventDefault();
@@ -45,28 +63,91 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
       threadId: parsed.threadId,
       displayName: manualName.trim() || "Saved chat",
     });
-    setManualInput("");
-    setManualName("");
-    setManualMessage(undefined);
+    closeAddView();
   };
+
+  if (view === "add") {
+    return (
+      <section className="tool-view chat-shortcuts-view chat-add-view" aria-label="Add chat">
+        <header className="chat-add-heading">
+          <button
+            aria-label="Back to Chat shortcuts"
+            className="chat-add-back"
+            onClick={closeAddView}
+            type="button"
+          >
+            <IconArrowLeft aria-hidden="true" size={20} stroke={1.7} />
+          </button>
+          <h1>Add chat</h1>
+        </header>
+
+        <form className="manual-chat-form" id="manual-chat-form" onSubmit={addManual}>
+          <label className="manual-chat-field">
+            <span>Name</span>
+            <input
+              className="compact-input manual-chat-input"
+              onChange={(event) => setManualName(event.target.value)}
+              placeholder="Optional name"
+              ref={manualNameRef}
+              value={manualName}
+            />
+          </label>
+
+          <label className="manual-chat-field">
+            <span>Chat ID</span>
+            <input
+              className="compact-input manual-chat-input"
+              onChange={(event) => setManualInput(event.target.value)}
+              placeholder="Paste chat ID"
+              value={manualInput}
+            />
+          </label>
+
+          <p className="manual-chat-helper">Paste the thread ID from Codex or ChatGPT.</p>
+          {manualMessage ? <p className="form-message">{manualMessage}</p> : null}
+
+          <div className="manual-chat-actions">
+            <button className="manual-chat-cancel" onClick={closeAddView} type="button">
+              Cancel
+            </button>
+            <button
+              className="manual-chat-submit"
+              disabled={!model.canPinMore || !manualInput.trim()}
+              type="submit"
+            >
+              Add chat
+            </button>
+          </div>
+        </form>
+      </section>
+    );
+  }
 
   return (
     <section className="tool-view chat-shortcuts-view" aria-label="Chat shortcuts">
       <header className="chat-shortcuts-heading">
-        <div>
-          <p className="eyebrow">Voice Flow</p>
-          <h1>Chat shortcuts</h1>
+        <h1>Chat shortcuts</h1>
+        <div aria-label="Chat shortcut actions" className="chat-shortcuts-actions">
+          <button
+            aria-label="Add chat"
+            className="chat-add-button"
+            onClick={() => setView("add")}
+            title="Add chat"
+            type="button"
+          >
+            <IconPlus aria-hidden="true" size={18} stroke={1.8} />
+          </button>
+          <button
+            aria-label="Refresh recent chats"
+            className="icon-action"
+            disabled={state.discoveryLoading}
+            onClick={() => void state.refreshRecent()}
+            title="Refresh recent chats"
+            type="button"
+          >
+            <IconRefresh aria-hidden="true" size={18} stroke={1.7} />
+          </button>
         </div>
-        <button
-          aria-label="Refresh recent chats"
-          className="icon-action"
-          disabled={state.discoveryLoading}
-          onClick={() => void state.refreshRecent()}
-          title="Refresh recent chats"
-          type="button"
-        >
-          <IconRefresh aria-hidden="true" size={16} stroke={1.7} />
-        </button>
       </header>
 
       <div className="chat-shortcuts-scroll">
@@ -111,7 +192,7 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
                       onClick={() => state.move(destination.id, "up")}
                       type="button"
                     >
-                      <IconArrowUp aria-hidden="true" size={13} />
+                      <IconArrowUp aria-hidden="true" size={16} />
                     </button>
                     <button
                       aria-label={`Move ${destination.displayName} down`}
@@ -119,7 +200,7 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
                       onClick={() => state.move(destination.id, "down")}
                       type="button"
                     >
-                      <IconArrowDown aria-hidden="true" size={13} />
+                      <IconArrowDown aria-hidden="true" size={16} />
                     </button>
                     <button
                       aria-label={`Rename ${destination.displayName}`}
@@ -135,9 +216,9 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
                       type="button"
                     >
                       {renamingId === destination.id ? (
-                        <IconCheck aria-hidden="true" size={13} />
+                        <IconCheck aria-hidden="true" size={16} />
                       ) : (
-                        <IconPencil aria-hidden="true" size={13} />
+                        <IconPencil aria-hidden="true" size={16} />
                       )}
                     </button>
                     <button
@@ -145,7 +226,7 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
                       onClick={() => state.remove(destination.id)}
                       type="button"
                     >
-                      <IconTrash aria-hidden="true" size={13} />
+                      <IconTrash aria-hidden="true" size={16} />
                     </button>
                   </div>
                 </div>
@@ -189,39 +270,6 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
               </div>
             ))}
           </div>
-        </section>
-
-        <section className="shortcut-section" aria-labelledby="manual-chat-title">
-          <div className="shortcut-section-heading">
-            <h2 id="manual-chat-title">Add manually</h2>
-          </div>
-          <form className="manual-chat-form" onSubmit={addManual}>
-            <input
-              aria-label="Chat name"
-              className="compact-input"
-              onChange={(event) => setManualName(event.target.value)}
-              placeholder="Name (optional)"
-              value={manualName}
-            />
-            <div className="manual-chat-link-row">
-              <input
-                aria-label="Codex chat ID or link"
-                className="compact-input"
-                onChange={(event) => setManualInput(event.target.value)}
-                placeholder="Chat ID or codex:// link"
-                value={manualInput}
-              />
-              <button
-                aria-label="Add chat destination"
-                className="icon-action"
-                disabled={!model.canPinMore || !manualInput.trim()}
-                type="submit"
-              >
-                <IconPlus aria-hidden="true" size={16} stroke={1.7} />
-              </button>
-            </div>
-            {manualMessage ? <p className="form-message">{manualMessage}</p> : null}
-          </form>
         </section>
       </div>
     </section>

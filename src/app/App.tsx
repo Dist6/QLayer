@@ -1,6 +1,8 @@
 import { IconX } from "@tabler/icons-react";
+import { isTauri } from "@tauri-apps/api/core";
+import { LogicalSize } from "@tauri-apps/api/dpi";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AboutPanel } from "../features/about/AboutPanel";
 import { ChatShortcutsPanel } from "../features/chat-shortcuts/ChatShortcutsPanel";
@@ -10,12 +12,14 @@ import {
   getGlobalHotkeyStatus,
   listenForGlobalHotkeyActions,
   listenForGlobalHotkeyStatus,
+  setGlobalHotkey,
 } from "../features/global-hotkeys/globalHotkeyClient";
 import {
   DEFAULT_GLOBAL_HOTKEY_SHORTCUT,
   type GlobalHotkeyStatus,
 } from "../features/global-hotkeys/globalHotkeyEvents";
 import { SavedPromptsPanel } from "../features/saved-prompts/SavedPromptsPanel";
+import { LocalhostManagerPanel } from "../features/localhost-manager/LocalhostManagerPanel";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { syncLaunchAtStartup } from "../features/settings/autostartClient";
 import { createSettingsStorage } from "../features/settings/settingsStorage";
@@ -23,6 +27,7 @@ import type { AppSettings } from "../features/settings/settingsTypes";
 import { setCloseToTray } from "../features/settings/windowBehaviorClient";
 import { ToolboxSidebar } from "../features/toolbox/ToolboxSidebar";
 import type { ToolboxView } from "../features/toolbox/toolboxViews";
+import { getToolboxWindowHeight, TOOLBOX_WINDOW_WIDTH } from "../features/toolbox/windowSizing";
 import { listenForTrayActions } from "../features/tray/trayClient";
 import { VoiceFlowDetailPanel } from "../features/voice-flow/VoiceFlowDetailPanel";
 import { useVoiceFlow } from "../features/voice-flow/useVoiceFlow";
@@ -42,6 +47,7 @@ export function App() {
   const [settings, setSettingsState] = useState<AppSettings>(loaded.settings);
   const [globalHotkeyStatus, setGlobalHotkeyStatus] =
     useState<GlobalHotkeyStatus>(initialHotkeyStatus);
+  const shortcutRecordingRef = useRef(false);
   const chatDestinations = useChatDestinations();
   const voiceFlow = useVoiceFlow(settings, chatDestinations.destinations);
   const { reportMessage, restore, startHold, stopHold } = voiceFlow;
@@ -52,7 +58,52 @@ export function App() {
   };
 
   useEffect(() => {
-    void getGlobalHotkeyStatus().then(setGlobalHotkeyStatus);
+    const requestedShortcut = loaded.settings.voiceFlow.hotkey;
+    const applyStatus = (status: GlobalHotkeyStatus) => {
+      setGlobalHotkeyStatus(status);
+      if (status.state === "active" && status.shortcut !== requestedShortcut) {
+        setSettingsState((current) => {
+          const repaired = {
+            ...current,
+            voiceFlow: { ...current.voiceFlow, hotkey: status.shortcut },
+          };
+          storage.save(repaired);
+          return repaired;
+        });
+      }
+    };
+
+    void setGlobalHotkey(requestedShortcut)
+      .then(applyStatus)
+      .catch(() => void getGlobalHotkeyStatus().then(applyStatus));
+  }, [loaded.settings.voiceFlow.hotkey, storage]);
+
+  const changeGlobalHotkey = useCallback(
+    async (shortcut: string) => {
+      try {
+        const status = await setGlobalHotkey(shortcut);
+        setGlobalHotkeyStatus(status);
+        setSettingsState((current) => {
+          const next = {
+            ...current,
+            voiceFlow: { ...current.voiceFlow, hotkey: status.shortcut },
+          };
+          storage.save(next);
+          return next;
+        });
+        return { ok: true } as const;
+      } catch (error) {
+        return {
+          ok: false,
+          message: typeof error === "string" ? error : "The shortcut could not be changed.",
+        } as const;
+      }
+    },
+    [storage],
+  );
+
+  const setShortcutRecording = useCallback((recording: boolean) => {
+    shortcutRecordingRef.current = recording;
   }, []);
 
   useEffect(() => {
@@ -62,6 +113,15 @@ export function App() {
   useEffect(() => {
     void syncLaunchAtStartup(settings.general.launchAtStartup).catch(() => undefined);
   }, [settings.general.launchAtStartup]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+
+    const height = getToolboxWindowHeight(activeView, settings.voiceFlow.audioMode);
+    void getCurrentWindow()
+      .setSize(new LogicalSize(TOOLBOX_WINDOW_WIDTH, height))
+      .catch(() => undefined);
+  }, [activeView, settings.voiceFlow.audioMode]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -95,6 +155,8 @@ export function App() {
 
     void listenForGlobalHotkeyActions(
       (action) => {
+        if (shortcutRecordingRef.current) return;
+
         if (action === "startVoiceFlowHold") {
           setActiveView("voiceFlow");
           void startHold();
@@ -182,6 +244,8 @@ export function App() {
           voiceFlow,
           globalHotkeyStatus,
           chatDestinations,
+          changeGlobalHotkey,
+          setShortcutRecording,
         )}
       </main>
     </div>
@@ -195,12 +259,18 @@ function renderView(
   voiceFlow: ReturnType<typeof useVoiceFlow>,
   globalHotkeyStatus: GlobalHotkeyStatus,
   chatDestinations: ReturnType<typeof useChatDestinations>,
+  changeGlobalHotkey: (shortcut: string) => Promise<{ ok: true } | { ok: false; message: string }>,
+  setShortcutRecording: (recording: boolean) => void,
 ) {
   switch (activeView) {
     case "chatShortcuts":
       return <ChatShortcutsPanel state={chatDestinations} />;
     case "savedPrompts":
       return <SavedPromptsPanel />;
+    case "localhostManager":
+      return (
+        <LocalhostManagerPanel autoRefreshSeconds={settings.localhostManager.autoRefreshSeconds} />
+      );
     case "settings":
       return (
         <SettingsPage
@@ -217,6 +287,8 @@ function renderView(
           onSettingsChange={setSettings}
           settings={settings}
           voiceFlow={voiceFlow}
+          onGlobalHotkeyChange={changeGlobalHotkey}
+          onShortcutRecordingChange={setShortcutRecording}
         />
       );
   }

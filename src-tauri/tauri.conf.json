@@ -14,15 +14,17 @@
       {
         "label": "main",
         "title": "QoLayer",
-        "width": 410,
-        "height": 370,
-        "minWidth": 410,
-        "minHeight": 370,
-        "maxWidth": 410,
-        "maxHeight": 370,
+        "width": 440,
+        "height": 330,
+        "minWidth": 440,
+        "minHeight": 300,
+        "maxWidth": 440,
+        "maxHeight": 450,
         "center": true,
         "resizable": false,
         "decorations": false,
+        "transparent": true,
+        "shadow": false,
         "skipTaskbar": true
       },
       {
@@ -38,6 +40,8 @@
         "visible": false,
         "resizable": false,
         "decorations": false,
+        "transparent": true,
+        "shadow": false,
         "alwaysOnTop": true,
         "focus": false,
         "skipTaskbar": true
@@ -51,6 +55,13 @@
     "active": false,
     "targets": "all",
     "category": "DeveloperTool",
-    "license": "AGPL-3.0-only"
+    "license": "AGPL-3.0-only",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }

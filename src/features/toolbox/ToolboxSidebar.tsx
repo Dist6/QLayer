@@ -1,11 +1,13 @@
 import {
   IconBookmarks,
   IconMessages,
+  IconMicrophone,
+  IconServer,
   IconSettings,
-  IconWaveSine,
   type Icon,
 } from "@tabler/icons-react";
 
+import qolayerLogo from "../../assets/qolayer-logo.png";
 import type { ToolboxView } from "./toolboxViews";
 
 type ToolboxSidebarProps = {
@@ -18,7 +20,8 @@ const navigationItems: ReadonlyArray<{
   label: string;
   icon: Icon;
 }> = [
-  { id: "voiceFlow", label: "Voice Flow", icon: IconWaveSine },
+  { id: "voiceFlow", label: "Voice Flow", icon: IconMicrophone },
+  { id: "localhostManager", label: "Localhost Manager", icon: IconServer },
   { id: "chatShortcuts", label: "Chat shortcuts", icon: IconMessages },
   { id: "savedPrompts", label: "Saved prompts", icon: IconBookmarks },
 ];
@@ -27,9 +30,7 @@ export function ToolboxSidebar({ activeView, onSelect }: ToolboxSidebarProps) {
   return (
     <aside className="toolbox-sidebar" aria-label="Toolbox navigation">
       <div className="sidebar-brand" aria-label="QoLayer">
-        <span />
-        <span />
-        <span />
+        <img alt="" src={qolayerLogo} />
       </div>
 
       <nav className="sidebar-navigation">
