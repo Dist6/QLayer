@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AboutPanel } from "../features/about/AboutPanel";
+import qolayerLogo from "../assets/qolayer-logo.png";
 import { ChatShortcutsPanel } from "../features/chat-shortcuts/ChatShortcutsPanel";
 import { useChatDestinations } from "../features/chat-shortcuts/useChatDestinations";
 import { openCodexAction } from "../features/codex/codexController";
@@ -24,8 +25,9 @@ import { SettingsPage } from "../features/settings/SettingsPage";
 import { syncLaunchAtStartup } from "../features/settings/autostartClient";
 import { createSettingsStorage } from "../features/settings/settingsStorage";
 import type { AppSettings } from "../features/settings/settingsTypes";
-import { setCloseToTray } from "../features/settings/windowBehaviorClient";
+import { setCloseToTray, setKeepVisible } from "../features/settings/windowBehaviorClient";
 import { ToolboxSidebar } from "../features/toolbox/ToolboxSidebar";
+import { getStartupSplashTiming, type StartupSplashPhase } from "../features/toolbox/startupSplash";
 import type { ToolboxView } from "../features/toolbox/toolboxViews";
 import { hideToolboxWindow } from "../features/toolbox/toolboxWindowClient";
 import { TOOLBOX_WINDOW_HEIGHT, TOOLBOX_WINDOW_WIDTH } from "../features/toolbox/windowSizing";
@@ -46,6 +48,7 @@ export function App() {
   const storage = useMemo(() => createSettingsStorage(window.localStorage), []);
   const loaded = useMemo(() => storage.load(), [storage]);
   const [activeView, setActiveView] = useState<AppView>("voiceFlow");
+  const [splashPhase, setSplashPhase] = useState<StartupSplashPhase>("visible");
   const [settings, setSettingsState] = useState<AppSettings>(loaded.settings);
   const [globalHotkeyStatus, setGlobalHotkeyStatus] =
     useState<GlobalHotkeyStatus>(initialHotkeyStatus);
@@ -54,6 +57,21 @@ export function App() {
   const projects = useProjects();
   const voiceFlow = useVoiceFlow(settings, chatDestinations.destinations, projects.projects);
   const { reportMessage, restore, startHold, stopHold } = voiceFlow;
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timing = getStartupSplashTiming(reducedMotion);
+    const exitTimer = globalThis.setTimeout(() => setSplashPhase("exiting"), timing.visibleMs);
+    const hideTimer = globalThis.setTimeout(
+      () => setSplashPhase("hidden"),
+      timing.visibleMs + timing.exitMs,
+    );
+
+    return () => {
+      globalThis.clearTimeout(exitTimer);
+      globalThis.clearTimeout(hideTimer);
+    };
+  }, []);
 
   const setSettings = (next: AppSettings) => {
     setSettingsState(next);
@@ -114,6 +132,10 @@ export function App() {
   }, [settings.general.closeToTray]);
 
   useEffect(() => {
+    void setKeepVisible(settings.general.keepVisible).catch(() => undefined);
+  }, [settings.general.keepVisible]);
+
+  useEffect(() => {
     void syncLaunchAtStartup(settings.general.launchAtStartup).catch(() => undefined);
   }, [settings.general.launchAtStartup]);
 
@@ -126,14 +148,19 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!isTauri()) return;
+    if (!isTauri() || settings.general.keepVisible) return;
 
     let dismissTimer: number | undefined;
     const hideWhenFocusLeaves = () => {
       globalThis.clearTimeout(dismissTimer);
       dismissTimer = globalThis.setTimeout(() => {
         const modalOpen = document.querySelector("dialog[open]") !== null;
-        if (!document.hasFocus() && !modalOpen && !isWindowDismissSuspended()) {
+        if (
+          !document.hasFocus() &&
+          !modalOpen &&
+          !shortcutRecordingRef.current &&
+          !isWindowDismissSuspended()
+        ) {
           void hideToolboxWindow();
         }
       }, 80);
@@ -144,7 +171,7 @@ export function App() {
       globalThis.clearTimeout(dismissTimer);
       window.removeEventListener("blur", hideWhenFocusLeaves);
     };
-  }, []);
+  }, [settings.general.keepVisible]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -236,7 +263,7 @@ export function App() {
   }, [reportMessage, restore]);
 
   return (
-    <div className="app-shell">
+    <div className={"app-shell app-shell-splash-" + splashPhase}>
       <div
         aria-hidden="true"
         className="window-drag-region"
@@ -248,23 +275,31 @@ export function App() {
         }}
       />
 
-      <ToolboxSidebar activeView={activeView} onSelect={setActiveView} />
-
-      <main className="main-panel" id="main-content">
-        <div className="tool-view-stage" key={activeView}>
-          {renderView(
-            activeView,
-            settings,
-            setSettings,
-            voiceFlow,
-            globalHotkeyStatus,
-            chatDestinations,
-            projects,
-            changeGlobalHotkey,
-            setShortcutRecording,
-          )}
+      {splashPhase !== "hidden" ? (
+        <div aria-hidden="true" className={"app-splash app-splash-" + splashPhase}>
+          <img alt="" src={qolayerLogo} />
         </div>
-      </main>
+      ) : null}
+
+      <div className="app-content" inert={splashPhase !== "hidden"}>
+        <ToolboxSidebar activeView={activeView} onSelect={setActiveView} />
+
+        <main className="main-panel" id="main-content">
+          <div className="tool-view-stage" key={activeView}>
+            {renderView(
+              activeView,
+              settings,
+              setSettings,
+              voiceFlow,
+              globalHotkeyStatus,
+              chatDestinations,
+              projects,
+              changeGlobalHotkey,
+              setShortcutRecording,
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
 import type { AppSettings, AudioMode } from "../settings/settingsTypes";
 import { listeningVolumeBounds } from "../settings/settingsValidation";
 import type { VoiceFlowState } from "./useVoiceFlow";
+import { getVoiceFlowDisplayStatus } from "./voiceFlowPresentation";
 
 type VoiceFlowDetailPanelProps = {
   settings: AppSettings;
@@ -29,7 +30,7 @@ export function VoiceFlowDetailPanel({
   onSettingsChange,
   onShortcutRecordingChange,
 }: VoiceFlowDetailPanelProps) {
-  const displayStatus = getDisplayStatus(voiceFlow);
+  const displayStatus = getVoiceFlowDisplayStatus(voiceFlow.status);
   const selectedAudioIndex = audioOptions.findIndex(
     (option) => option.value === settings.voiceFlow.audioMode,
   );
@@ -130,29 +131,4 @@ function getRangeProgress(value: number): number {
       (listeningVolumeBounds.max - listeningVolumeBounds.min)) *
     100
   );
-}
-
-function getDisplayStatus(voiceFlow: VoiceFlowState): {
-  label: string;
-  tone: "ready" | "listening" | "attention";
-  message?: string;
-} {
-  if (voiceFlow.status.status === "dictationStarted") {
-    return { label: "Listening", tone: "listening" };
-  }
-
-  if (
-    voiceFlow.status.status === "failed" ||
-    voiceFlow.status.status === "waitingForCodex" ||
-    voiceFlow.status.status === "audioUnavailable" ||
-    voiceFlow.status.status === "dictationUnavailable"
-  ) {
-    return {
-      label: "Needs attention",
-      tone: "attention",
-      message: voiceFlow.status.message,
-    };
-  }
-
-  return { label: "Ready", tone: "ready" };
 }

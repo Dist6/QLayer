@@ -6,6 +6,7 @@ export type AppSettings = {
   general: {
     launchAtStartup: boolean;
     closeToTray: boolean;
+    keepVisible: boolean;
   };
   codex: {
     enabled: boolean;

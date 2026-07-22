@@ -9,7 +9,11 @@ describe("settings defaults", () => {
     expect(defaultSettings.voiceFlow.hotkey).toBe("Ctrl+Win");
     expect(defaultSettings.voiceFlow.audioMode).toBe("disabled");
     expect(defaultSettings.voiceFlow.listeningVolumePercent).toBe(20);
-    expect(defaultSettings.general).toEqual({ launchAtStartup: false, closeToTray: true });
+    expect(defaultSettings.general).toEqual({
+      launchAtStartup: false,
+      closeToTray: true,
+      keepVisible: false,
+    });
     expect(defaultSettings.localhostManager.autoRefreshSeconds).toBe(30);
   });
 });
@@ -44,8 +48,24 @@ describe("settings validation", () => {
 
     expect(parsed.settings.voiceFlow.audioMode).toBe("mute");
     expect(parsed.settings.voiceFlow.listeningVolumePercent).toBe(35);
-    expect(parsed.settings.general).toEqual({ launchAtStartup: true, closeToTray: false });
+    expect(parsed.settings.general).toEqual({
+      launchAtStartup: true,
+      closeToTray: false,
+      keepVisible: false,
+    });
     expect(parsed.settings.codex.dictationShortcut).toBe("Ctrl+Shift+D");
+  });
+
+  it("preserves the Keep QLayer visible preference", () => {
+    const parsed = parseStoredSettings(
+      JSON.stringify({
+        ...defaultSettings,
+        general: { ...defaultSettings.general, keepVisible: true },
+      }),
+    );
+
+    expect(parsed.settings.general.keepVisible).toBe(true);
+    expect(parsed.recovered).toBe(false);
   });
 
   it.each([5, 20, 50])("accepts a %i percent listening volume", (value) => {

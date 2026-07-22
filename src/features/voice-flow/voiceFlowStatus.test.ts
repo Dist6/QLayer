@@ -45,7 +45,7 @@ describe("Voice Flow status messages", () => {
           message: "Waiting for Codex. Open Codex, then hold Ctrl+Win again.",
         },
       ]),
-    ).toEqual(["Waiting for Codex. Open it, then hold your Voice Flow shortcut again."]);
+    ).toEqual(["Codex or ChatGPT isn't open."]);
   });
 
   it("uses a short unavailable message for dictation automation", () => {

@@ -68,10 +68,9 @@ h1 {
 
 .app-shell {
   position: relative;
-  display: grid;
+  display: block;
   width: 100%;
   height: 100%;
-  grid-template-columns: 64px minmax(0, 1fr);
   margin: 0;
   overflow: hidden;
   border: 1px solid oklch(48% 0.008 105 / 44%);
@@ -81,8 +80,52 @@ h1 {
     inset 0 1px 0 oklch(96% 0.006 100 / 4%),
     0 16px 44px rgb(0 0 0 / 20%);
   backdrop-filter: blur(22px) saturate(92%);
-  animation: shell-enter 240ms var(--ease-out) both;
   isolation: isolate;
+}
+
+.app-content {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: 64px minmax(0, 1fr);
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 360ms var(--ease-out),
+    transform 360ms var(--ease-out);
+}
+
+.app-shell-splash-visible .app-content {
+  opacity: 0;
+  transform: scale(0.992);
+}
+
+.app-splash {
+  position: absolute;
+  z-index: 8;
+  display: grid;
+  overflow: hidden;
+  border-radius: inherit;
+  background: oklch(20% 0.008 110);
+  inset: 0;
+  place-items: center;
+  pointer-events: none;
+  transition:
+    opacity 360ms var(--ease-out),
+    transform 360ms var(--ease-out);
+}
+
+.app-splash img {
+  display: block;
+  width: 230px;
+  height: 230px;
+  object-fit: contain;
+  animation: splash-logo-enter 650ms var(--ease-out) both;
+}
+
+.app-splash-exiting {
+  opacity: 0;
+  transform: scale(0.985);
 }
 
 .window-drag-region {
@@ -232,8 +275,14 @@ h1 {
   background: #b8b9b4;
 }
 
+.flow-status-checking,
 .flow-status-listening {
   color: var(--text-soft);
+}
+
+.flow-status-checking > span {
+  background: transparent;
+  animation: status-pulse 1.1s ease-in-out infinite;
 }
 
 .flow-status-listening > span {
@@ -1616,10 +1665,10 @@ h1 {
   text-align: right;
 }
 
-@keyframes shell-enter {
+@keyframes splash-logo-enter {
   from {
     opacity: 0;
-    transform: scale(0.985);
+    transform: scale(0.94);
   }
 
   to {
@@ -1677,7 +1726,7 @@ h1 {
 }
 
 .projects-heading > div,
-.project-detail-heading > div > div {
+.project-detail-heading > div:nth-child(2) > div {
   display: flex;
   min-width: 0;
   align-items: baseline;
@@ -1921,13 +1970,16 @@ h1 {
 }
 
 .project-menu {
-  position: fixed;
+  position: absolute;
   z-index: 100;
-  top: 76px;
-  right: 22px;
+  top: calc(100% + 6px);
+  right: 0;
   display: grid;
   width: 132px;
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
   padding: 5px;
+  overflow: hidden;
   border: 1px solid var(--line-strong);
   border-radius: 11px;
   background: #222321;
@@ -1937,6 +1989,8 @@ h1 {
 
 .project-menu button {
   display: flex;
+  width: 100%;
+  min-width: 0;
   min-height: 38px;
   align-items: center;
   gap: 9px;
@@ -1948,6 +2002,7 @@ h1 {
   background: transparent;
   cursor: pointer;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .project-menu button:hover {
@@ -1973,49 +2028,6 @@ h1 {
 
 .project-detail-scroll {
   padding: 0 4px 16px;
-}
-
-.project-development-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 18px 0 16px;
-  border-bottom: 1px solid var(--line);
-}
-
-.project-development-actions button {
-  min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: 9px;
-  color: var(--text-soft);
-  background: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 620;
-  transition:
-    color 150ms var(--ease-out),
-    background-color 150ms var(--ease-out),
-    transform 100ms var(--ease-out);
-}
-
-.project-development-actions button:first-child {
-  border-color: #d8d8d3;
-  color: var(--control-dark);
-  background: var(--control-light);
-}
-
-.project-development-actions button:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.project-development-actions button:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.project-development-actions button:disabled {
-  opacity: 0.38;
-  cursor: default;
 }
 
 .project-detail-section {
@@ -2133,6 +2145,57 @@ h1 {
 
 .project-section-help {
   margin: 2px 0 5px;
+}
+
+.project-detected-port-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin: 11px 0 8px;
+}
+
+.project-detected-port-picker select,
+.project-detected-port-picker button {
+  min-width: 0;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: var(--text-soft);
+  background: #1b1c1a;
+  font: inherit;
+  font-size: 14px;
+}
+
+.project-detected-port-picker select {
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.project-detected-port-picker button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-weight: 620;
+  transition:
+    color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+.project-detected-port-picker button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.project-detected-port-picker button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.project-detected-port-picker button:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 
 .project-port-explanation {

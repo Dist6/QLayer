@@ -23,9 +23,9 @@ Voice dictation, chat navigation, development server visibility, and project con
 
 ## What QLayer does
 
-| Voice Flow                                                      | Localhost Manager                                                    | Projects                                                               | Chat shortcuts                                                      |
-| --------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Hold one global shortcut to focus Codex or ChatGPT and dictate. | See local development servers, ports, processes, memory, and uptime. | Connect a local folder with its chats and preferred development ports. | Save or discover Codex chats and choose where Voice Flow should go. |
+| Voice Flow                                                      | Localhost Manager                                                    | Projects                                                                           | Chat shortcuts                                                      |
+| --------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Hold one global shortcut to focus Codex or ChatGPT and dictate. | See local development servers, ports, processes, memory, and uptime. | Connect a local folder with its chats and detected or preferred development ports. | Save or discover Codex chats and choose where Voice Flow should go. |
 
 QLayer stays in the Windows tray and keeps the workflow available without becoming another full-size application. It stores preferences locally and does not require an account, API key, or cloud service.
 
@@ -43,7 +43,7 @@ QLayer stays in the Windows tray and keeps the workflow available without becomi
     </td>
     <td width="33%" align="center">
       <img src="./docs/assets/screenshots/settings.png" alt="QLayer settings"><br>
-      <sub><strong>Settings</strong><br>Startup, tray, shortcut, and refresh preferences.</sub>
+      <sub><strong>Settings</strong><br>Startup, visibility, shortcut, and refresh preferences.</sub>
     </td>
   </tr>
 </table>
@@ -61,7 +61,7 @@ Background audio can remain unchanged, lower to a chosen level, or mute while sp
 
 Localhost Manager detects likely frontend and backend development servers and separates them from unknown local listeners. When available, it shows the URL, port, role, process, project identity, memory usage, and uptime.
 
-QLayer can open a detected development URL in the default browser. It does **not** intercept traffic, expose a shell, or start, stop, restart, suspend, or terminate development processes.
+Projects can add a detected development server as a preferred port for local status checks. QLayer can open a detected development URL in the default browser. It does **not** intercept traffic, expose a shell, or start, stop, restart, suspend, or terminate development processes.
 
 ## Install the portable release
 
@@ -76,7 +76,7 @@ No installer or administrator access is required. The executable is currently un
 - Windows 10 or Windows 11
 - x64 processor
 - Microsoft Edge WebView2 Runtime
-- Codex or ChatGPT for Windows for Voice Flow and chat actions
+- Codex or ChatGPT for Windows for Voice Flow and chat navigation
 
 ## Privacy by design
 

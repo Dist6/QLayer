@@ -1,4 +1,5 @@
 import type { AppSettings } from "../settings/settingsTypes";
+import { buildCodexUnavailableMessage } from "./voiceFlowAvailability";
 import type {
   AudioController,
   KeyboardController,
@@ -28,9 +29,6 @@ export type StartTargetedVoiceFlowHoldInput = StartVoiceFlowHoldInput & {
 };
 
 const CODEX_FOCUS_SETTLE_DELAY_MS = 50;
-function waitingForCodexMessage(shortcut: string): string {
-  return `Waiting for Codex or ChatGPT. Make sure it is open and visible, then hold ${shortcut} again.`;
-}
 
 export async function startVoiceFlow(input: StartVoiceFlowInput): Promise<VoiceFlowRunResult> {
   const steps: VoiceFlowStep[] = [];
@@ -84,16 +82,22 @@ export async function startTargetedVoiceFlowHold(
   const focusResult = input.threadId
     ? await input.window.focusCodexThread?.(input.threadId)
     : await input.window.focusCodex();
-  if (focusResult?.ok) {
-    steps.push(focusResult.value);
+  if (!focusResult?.ok) {
+    await input.window.showQLayer();
+    return fail(steps, focusResult?.message ?? "Codex focus is not available.");
   }
-  if (!focusResult?.ok || focusResult.value.status !== "codexFocused") {
+  if (focusResult.value.status === "waitingForCodex") {
     await input.window.showQLayer();
     return finish("waitingForCodex", steps, {
       status: "waitingForCodex",
-      message: waitingForCodexMessage(input.settings.voiceFlow.hotkey),
+      message: buildCodexUnavailableMessage(input.settings.voiceFlow.hotkey),
     });
   }
+  if (focusResult.value.status !== "codexFocused") {
+    await input.window.showQLayer();
+    return finish("codexFocusNotConfirmed", steps, focusResult.value);
+  }
+  steps.push(focusResult.value);
 
   await (input.waitAfterCodexFocus ?? waitAfterCodexFocus)();
   if (!input.shouldContinue()) {
@@ -219,18 +223,25 @@ async function prepareVoiceFlow(
   steps.push({ status: "focusingCodex", message: "Looking for Codex." });
 
   const focusResult = await input.window.focusCodex();
-  if (focusResult.ok) {
-    steps.push(focusResult.value);
+  if (!focusResult.ok) {
+    await restorePreparedAudio(input.audio, steps);
+    await input.window.showQLayer();
+    return fail(steps, focusResult.message);
   }
-
-  if (!focusResult.ok || focusResult.value.status !== "codexFocused") {
+  if (focusResult.value.status === "waitingForCodex") {
     await restorePreparedAudio(input.audio, steps);
     await input.window.showQLayer();
     return finish("waitingForCodex", steps, {
       status: "waitingForCodex",
-      message: waitingForCodexMessage(input.settings.voiceFlow.hotkey),
+      message: buildCodexUnavailableMessage(input.settings.voiceFlow.hotkey),
     });
   }
+  if (focusResult.value.status !== "codexFocused") {
+    await restorePreparedAudio(input.audio, steps);
+    await input.window.showQLayer();
+    return finish("codexFocusNotConfirmed", steps, focusResult.value);
+  }
+  steps.push(focusResult.value);
 
   await (input.waitAfterCodexFocus ?? waitAfterCodexFocus)();
 

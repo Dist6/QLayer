@@ -23,4 +23,4 @@ QLayer is local-first and intentionally must not:
 - Expose arbitrary shell commands or direct process management.
 - Expose general keyboard injection or arbitrary window control.
 
-Native capabilities must remain narrow, validated, and covered by the minimum practical Tauri permissions. Localhost inspection is limited to listener and sanitized process metadata. Project actions use fixed messages and never approve or execute development commands directly.
+Native capabilities must remain narrow, validated, and covered by the minimum practical Tauri permissions. Localhost inspection is limited to listener and sanitized process metadata. The non-user-facing Project action prototype accepts only fixed messages and never approves or executes development commands directly.

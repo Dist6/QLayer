@@ -11,19 +11,22 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
-import { type MouseEvent, useEffect, useRef, useState } from "react";
+import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 
+import { suspendWindowDismiss } from "../../shared/windowFocusGuard";
 import type { ChatDestinationsState } from "../chat-shortcuts/useChatDestinations";
 import { buildCodexThreadLink } from "../codex/deepLinks";
 import type { LocalhostAutoRefreshSeconds } from "../settings/settingsTypes";
 import { useLocalhostServers } from "../localhost-manager/useLocalhostServers";
-import { useVisibleInterval } from "../localhost-manager/useVisibleInterval";
-import { ProjectActionDialog } from "./ProjectActionDialog";
 import { ProjectChatLinkView } from "./ProjectChatLinkView";
 import { ProjectEditorView } from "./ProjectEditorView";
-import { runProjectAction } from "./projectActionClient";
+import {
+  createProjectPortFromServer,
+  getDetectedProjectServers,
+  type DetectedProjectServers,
+} from "./projectDetectedPorts";
 import { deriveProjectPortStates, type ProjectPortState } from "./projectLocalhostStatus";
-import type { Project, ProjectDevelopmentAction } from "./projectTypes";
+import type { Project } from "./projectTypes";
 import type { ProjectsState } from "./useProjects";
 
 type ProjectsPanelProps = {
@@ -41,32 +44,16 @@ type ProjectsView =
 
 export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPanelProps) {
   const [view, setView] = useState<ProjectsView>({ kind: "list" });
-  const [actionRequest, setActionRequest] = useState<{
-    projectId: string;
-    action: ProjectDevelopmentAction;
-  }>();
-  const [actionBusy, setActionBusy] = useState(false);
-  const [actionMessage, setActionMessage] = useState<string>();
-  const [fallbackText, setFallbackText] = useState<string>();
-  const [actionFeedback, setActionFeedback] = useState<string>();
-  const [verificationChecksRemaining, setVerificationChecksRemaining] = useState<number | null>(
-    null,
-  );
   const localhost = useLocalhostServers(autoRefreshSeconds);
-
-  useVisibleInterval(
-    () => {
-      void localhost.refresh();
-      setVerificationChecksRemaining((current) =>
-        current === null || current <= 1 ? null : current - 1,
-      );
-    },
-    verificationChecksRemaining === null ? null : 5_000,
-  );
 
   useEffect(() => {
     if (!chats.discoveryAttempted) void chats.refreshRecent();
   }, [chats]);
+
+  useEffect(() => {
+    if (view.kind === "list" || view.kind === "detail") return;
+    return suspendWindowDismiss();
+  }, [view.kind]);
 
   const selectedProject =
     view.kind === "detail" || view.kind === "edit" || view.kind === "linkChats"
@@ -81,51 +68,6 @@ export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPane
       setView({ kind: "list" });
     }
   }, [selectedProject, view.kind]);
-
-  const actionProject = actionRequest
-    ? state.projects.find((project) => project.id === actionRequest.projectId)
-    : undefined;
-
-  const beginAction = (project: Project, action: ProjectDevelopmentAction) => {
-    setActionFeedback(undefined);
-    setActionMessage(undefined);
-    setFallbackText(undefined);
-    setActionRequest({ projectId: project.id, action });
-  };
-
-  const confirmAction = async (
-    project: Project,
-    action: ProjectDevelopmentAction,
-    threadId: string,
-  ) => {
-    setActionBusy(true);
-    setActionMessage("Sending the action to Codex...");
-    setFallbackText(undefined);
-    state.update(project.id, {
-      name: project.name,
-      rootPath: project.rootPath,
-      rootIdentity: project.rootIdentity,
-      linkedChats: project.linkedChats,
-      preferredPorts: project.preferredPorts,
-      lastSelectedChatId: threadId,
-    });
-
-    const outcome = await runProjectAction(project, action, threadId);
-    setActionBusy(false);
-    setActionMessage(outcome.message);
-
-    if (outcome.status === "manualFallback") {
-      setFallbackText(outcome.fallbackText);
-      return;
-    }
-
-    setActionRequest(undefined);
-    setActionFeedback(outcome.message);
-    if (outcome.status === "completed") {
-      void localhost.refresh();
-      setVerificationChecksRemaining(11);
-    }
-  };
 
   if (view.kind === "create") {
     return (
@@ -179,47 +121,43 @@ export function ProjectsPanel({ state, chats, autoRefreshSeconds }: ProjectsPane
   }
 
   if (view.kind === "detail" && selectedProject) {
+    const detectedServers = getDetectedProjectServers(selectedProject, localhost.snapshot);
     return (
-      <>
-        <ProjectDetailView
-          actionFeedback={actionFeedback}
-          localhostError={localhost.error}
-          onAction={(action) => beginAction(selectedProject, action)}
-          onBack={() => setView({ kind: "list" })}
-          onDelete={() => {
-            state.remove(selectedProject.id);
-            setView({ kind: "list" });
-          }}
-          onEdit={() => setView({ kind: "edit", projectId: selectedProject.id })}
-          onLinkChats={() => setView({ kind: "linkChats", projectId: selectedProject.id })}
-          onOpenChat={(threadId) => void openProjectChat(threadId)}
-          onRefresh={() => void localhost.refresh()}
-          portStates={deriveProjectPortStates(
-            selectedProject,
-            localhost.snapshot,
-            localhost.refreshing,
-          )}
-          project={selectedProject}
-          refreshing={localhost.refreshing}
-        />
-        {actionRequest && actionProject ? (
-          <ProjectActionDialog
-            action={actionRequest.action}
-            busy={actionBusy}
-            fallbackText={fallbackText}
-            message={actionMessage}
-            onCancel={() => {
-              setActionRequest(undefined);
-              setActionMessage(undefined);
-              setFallbackText(undefined);
-            }}
-            onConfirm={(threadId) =>
-              void confirmAction(actionProject, actionRequest.action, threadId)
-            }
-            project={actionProject}
-          />
-        ) : null}
-      </>
+      <ProjectDetailView
+        detectedServers={detectedServers}
+        localhostError={localhost.error}
+        onAddDetectedServer={(server) =>
+          state.update(selectedProject.id, {
+            name: selectedProject.name,
+            rootPath: selectedProject.rootPath,
+            rootIdentity: selectedProject.rootIdentity,
+            linkedChats: selectedProject.linkedChats,
+            preferredPorts: [
+              ...selectedProject.preferredPorts,
+              createProjectPortFromServer(server),
+            ],
+            ...(selectedProject.lastSelectedChatId
+              ? { lastSelectedChatId: selectedProject.lastSelectedChatId }
+              : {}),
+          })
+        }
+        onBack={() => setView({ kind: "list" })}
+        onDelete={() => {
+          state.remove(selectedProject.id);
+          setView({ kind: "list" });
+        }}
+        onEdit={() => setView({ kind: "edit", projectId: selectedProject.id })}
+        onLinkChats={() => setView({ kind: "linkChats", projectId: selectedProject.id })}
+        onOpenChat={(threadId) => void openProjectChat(threadId)}
+        onRefresh={() => void localhost.refresh()}
+        portStates={deriveProjectPortStates(
+          selectedProject,
+          localhost.snapshot,
+          localhost.refreshing,
+        )}
+        project={selectedProject}
+        refreshing={localhost.refreshing}
+      />
     );
   }
 
@@ -337,35 +275,68 @@ export function ProjectListView({
 function ProjectDetailView({
   project,
   portStates,
+  detectedServers,
   refreshing,
   localhostError,
-  actionFeedback,
+  onAddDetectedServer,
   onBack,
   onEdit,
   onLinkChats,
   onDelete,
   onOpenChat,
   onRefresh,
-  onAction,
 }: {
   project: Project;
   portStates: ReadonlyMap<string, ProjectPortState>;
+  detectedServers: DetectedProjectServers;
   refreshing: boolean;
   localhostError: string | null;
-  actionFeedback?: string;
+  onAddDetectedServer: (server: DetectedProjectServers["available"][number]) => void;
   onBack: () => void;
   onEdit: () => void;
   onLinkChats: () => void;
   onDelete: () => void;
   onOpenChat: (threadId: string) => void;
   onRefresh: () => void;
-  onAction: (action: ProjectDevelopmentAction) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const running = [...portStates.values()].filter((state) => state.kind === "running").length;
 
-  const closeMenu = (event: MouseEvent) => {
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const releaseDismiss = suspendWindowDismiss();
+    const closeFromInsideApp = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (menuButtonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    };
+    const closeWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+
+    document.addEventListener("pointerdown", closeFromInsideApp, true);
+    document.addEventListener("keydown", closeWithKeyboard);
+    return () => {
+      releaseDismiss();
+      document.removeEventListener("pointerdown", closeFromInsideApp, true);
+      document.removeEventListener("keydown", closeWithKeyboard);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!confirmDelete) return;
+    return suspendWindowDismiss();
+  }, [confirmDelete]);
+
+  const closeMenu = (event: ReactMouseEvent) => {
     event.stopPropagation();
     setMenuOpen(false);
   };
@@ -393,20 +364,23 @@ function ProjectDetailView({
         <div className="project-menu-wrap">
           <button
             aria-expanded={menuOpen}
+            aria-haspopup="menu"
             aria-label="Project actions"
             className="icon-action"
             onClick={() => setMenuOpen((current) => !current)}
+            ref={menuButtonRef}
             type="button"
           >
             <IconDots aria-hidden="true" size={20} stroke={1.8} />
           </button>
           {menuOpen ? (
-            <div className="project-menu">
+            <div className="project-menu" ref={menuRef} role="menu">
               <button
                 onClick={(event) => {
                   closeMenu(event);
                   onEdit();
                 }}
+                role="menuitem"
                 type="button"
               >
                 <IconPencil aria-hidden="true" size={17} stroke={1.7} /> Edit
@@ -417,6 +391,7 @@ function ProjectDetailView({
                   closeMenu(event);
                   setConfirmDelete(true);
                 }}
+                role="menuitem"
                 type="button"
               >
                 <IconTrash aria-hidden="true" size={17} stroke={1.7} /> Delete
@@ -427,28 +402,6 @@ function ProjectDetailView({
       </header>
 
       <div className="project-detail-scroll">
-        <div className="project-development-actions">
-          <button
-            disabled={project.linkedChats.length === 0}
-            onClick={() => onAction("startDevelopment")}
-            type="button"
-          >
-            Start Development
-          </button>
-          <button
-            disabled={project.linkedChats.length === 0}
-            onClick={() => onAction("stopDevelopment")}
-            type="button"
-          >
-            Stop Development
-          </button>
-        </div>
-        {actionFeedback ? (
-          <p className="project-action-feedback" role="status">
-            {actionFeedback}
-          </p>
-        ) : null}
-
         <section className="project-detail-section">
           <header>
             <h2>Localhost</h2>
@@ -467,8 +420,13 @@ function ProjectDetailView({
             </button>
           </header>
           <p className="project-section-help">
-            Compares configured ports with local servers detected for this folder.
+            Add a detected development server or compare it with this Project's configured ports.
           </p>
+          <DetectedServerPicker
+            detected={detectedServers}
+            onAdd={onAddDetectedServer}
+            refreshing={refreshing}
+          />
           {project.preferredPorts.length === 0 ? (
             <p className="project-section-empty">No preferred ports configured.</p>
           ) : (
@@ -544,6 +502,75 @@ function ProjectDetailView({
       ) : null}
     </section>
   );
+}
+
+function DetectedServerPicker({
+  detected,
+  refreshing,
+  onAdd,
+}: {
+  detected: DetectedProjectServers;
+  refreshing: boolean;
+  onAdd: (server: DetectedProjectServers["available"][number]) => void;
+}) {
+  const [selectedId, setSelectedId] = useState("");
+  const selected = detected.available.find((server) => server.id === selectedId);
+
+  useEffect(() => {
+    if (selectedId && !selected) setSelectedId("");
+  }, [selected, selectedId]);
+
+  if (detected.detectedCount === 0) {
+    return (
+      <p className="project-section-empty">
+        {refreshing
+          ? "Checking for local development servers..."
+          : "No local development servers detected."}
+      </p>
+    );
+  }
+
+  if (detected.available.length === 0) {
+    return <p className="project-section-empty">All detected development servers are linked.</p>;
+  }
+
+  return (
+    <div className="project-detected-port-picker">
+      <select
+        aria-label="Detected development server"
+        onChange={(event) => setSelectedId(event.currentTarget.value)}
+        value={selectedId}
+      >
+        <option value="">Select a detected server</option>
+        {detected.available.map((server) => (
+          <option key={server.id} value={server.id}>
+            {server.displayAddress} | {server.projectName ?? detectedServerKindLabel(server.kind)}
+          </option>
+        ))}
+      </select>
+      <button
+        disabled={!selected}
+        onClick={() => {
+          if (!selected) return;
+          onAdd(selected);
+          setSelectedId("");
+        }}
+        type="button"
+      >
+        <IconPlus aria-hidden="true" size={17} stroke={1.8} />
+        Add
+      </button>
+    </div>
+  );
+}
+
+function detectedServerKindLabel(
+  kind: DetectedProjectServers["available"][number]["kind"],
+): string {
+  if (kind === "frontend") return "Frontend";
+  if (kind === "backend") return "Backend";
+  if (kind === "fullStack") return "Full stack";
+  return "Dev server";
 }
 
 function ProjectDeleteDialog({

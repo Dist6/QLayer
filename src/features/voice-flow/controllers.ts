@@ -3,6 +3,7 @@ import type { AudioMode } from "../settings/settingsTypes";
 
 export type VoiceFlowStatus =
   | "ready"
+  | "checkingCodex"
   | "selectingChat"
   | "focusingCodex"
   | "codexFocused"
@@ -40,6 +41,7 @@ export type KeyboardController = {
 };
 
 export type WindowController = {
+  isCodexAvailable?: () => Promise<AppResult<boolean>>;
   focusCodex: () => Promise<AppResult<VoiceFlowStep>>;
   focusCodexThread?: (threadId: string) => Promise<AppResult<VoiceFlowStep>>;
   showQLayer: () => Promise<AppResult<void>>;

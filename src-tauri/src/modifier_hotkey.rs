@@ -90,6 +90,7 @@ impl ChordState {
 #[cfg(windows)]
 mod platform {
     use super::{AppHandle, ChordState, HookAction, KeyKind, GLOBAL_HOTKEY_ACTION_EVENT};
+    use crate::voice_selector;
     use serde::Serialize;
     use std::sync::{mpsc, Mutex, OnceLock};
     use std::thread::{self, JoinHandle};
@@ -221,7 +222,10 @@ mod platform {
                 let action = context.state.transition(key, pressed, injected);
                 match action {
                     HookAction::StartAndSuppress => emit(&context.app, "startVoiceFlowHold"),
-                    HookAction::StopAndSuppress => emit(&context.app, "stopVoiceFlowHold"),
+                    HookAction::StopAndSuppress => {
+                        voice_selector::hide_voice_selector_after_hotkey_release(&context.app);
+                        emit(&context.app, "stopVoiceFlowHold");
+                    }
                     HookAction::Pass | HookAction::Suppress => {}
                 }
                 Some(action)

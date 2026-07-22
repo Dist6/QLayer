@@ -5,24 +5,24 @@ QLayer is a Tauri 2 desktop app with a React, TypeScript, Vite, and Tailwind fro
 ## Frontend
 
 - `src/app` contains the compact app shell and top-level view composition.
-- `src/features/quick-tools` contains the Quick Tools module list and navigation mapping. Top-level Quick Tools are user-facing modules, not internal tray or restore actions.
+- `src/features/toolbox` contains the compact Quick Tools navigation, window sizing, and startup presentation.
 - `src/features/codex` contains Codex deep links used by the integration selector.
 - `src/features/global-hotkeys` contains typed global hotkey events, status parsing, the frontend client, and the compact Global Hotkeys view.
 - `src/features/voice-flow` contains controller contracts, native controller adapters, and the simple Voice Flow state machine.
 - `src/features/chat-shortcuts` contains saved Codex destinations, recent-chat discovery adapters, and the compact Voice Flow destination selector.
 - `src/features/localhost-manager` contains sanitized localhost server contracts, classification, and presentation.
-- `src/features/projects` contains validated local Project storage, folder/chat/port associations, action delivery, and the Projects views.
+- `src/features/projects` contains validated local Project storage, folder/chat/port associations, detected-port selection, and the Projects views.
 - `src/features/settings` contains typed settings, defaults, validation, storage, and the compact Settings view.
 - `src/features/about` contains the compact About and privacy summary view.
 - `src/shared` contains reused UI primitives and result types only.
 
 ## Native
 
-`src-tauri` is intentionally narrow. Native capabilities are exposed as focused, typed commands for Codex deep links, tray state, global hotkeys, Windows audio, Codex focus, the allowlisted dictation shortcut, localhost inspection, Project folder identification, and predefined Project actions. QLayer never exposes a general shell or arbitrary process API.
+`src-tauri` is intentionally narrow. Native capabilities are exposed as focused, typed commands for Codex deep links, tray state, global hotkeys, Windows audio, Codex focus, the allowlisted dictation shortcut, localhost inspection, and Project folder identification. QLayer never exposes a general shell or arbitrary process API.
 
 The system tray setup lives in `src-tauri/src/tray.rs`. Tray menu actions either show the main QLayer window, quit the app, or emit a typed frontend event that React handles through the existing Voice Flow service.
 
-The global hotkey setup lives in `src-tauri/src/global_hotkeys.rs`. It uses Tauri's official global shortcut plugin to register the configured shortcut (`Ctrl+Win` by default), stores a small registration status, and emits typed press and release events that drive the Voice Flow lifecycle through the existing React service boundary.
+The global hotkey setup lives in `src-tauri/src/global_hotkeys.rs`. The modifier-only `Ctrl+Win` default uses a narrowly scoped Windows hook, while configured shortcuts with a main key use Tauri's official global shortcut plugin. Both paths store a small registration status and emit typed press and release events that drive the Voice Flow lifecycle through the existing React service boundary.
 
 The Windows audio setup lives in `src-tauri/src/audio.rs`. It uses Windows Core Audio to store the current global endpoint volume/mute state, lower or mute global system audio for Voice Flow, and restore the saved state on request. Audio control is global in v0.1, not per-app.
 
@@ -34,7 +34,7 @@ Window lifecycle behavior stays native-side: a user close request hides the main
 
 Localhost inspection returns sanitized listener and resource metadata. Project identity uses an opaque fingerprint shared with Localhost Manager; a port match by itself never proves ownership.
 
-Project actions live in `src-tauri/src/project_actions.rs`. They construct fixed Start Development or Stop Development messages from validated Project metadata and deliver them to the user-selected Codex chat through Codex App Server when available. QLayer never accepts an arbitrary prompt or command through this boundary, never approves Codex operations automatically, and never starts, stops, restarts, or terminates development processes itself. Before App Server accepts an action, an unavailable integration falls back to a write-only clipboard copy. Localhost Manager then verifies the configured ports with restrained polling.
+A safety-bounded Project action prototype remains isolated in `src-tauri/src/project_actions.rs`, but the current Projects UI does not expose Start Development or Stop Development. The boundary accepts only fixed messages from validated Project metadata; it never accepts an arbitrary prompt or command, approves Codex operations automatically, or manages development processes directly.
 
 QLayer v0.1 does not expose broad shell access, arbitrary command execution, arbitrary window control, credential reading, token reading, browser cookie access, network interception, or proxy behavior.
 
@@ -54,4 +54,4 @@ Voice Flow remains shortcut-driven and preserves its push-to-talk lifecycle. The
 
 A Project groups one user-selected local folder, linked Codex chats, structured preferred ports, and verified localhost state. Project data uses defensive versioned local storage. Deleting a Project removes only its QLayer configuration.
 
-Start Development and Stop Development always ask the user to choose a linked chat. The last chosen chat may be highlighted next time as a convenience, but it is not a control chat. Actual server state always comes from Localhost Manager rather than action-delivery status.
+The current Projects UI focuses on folder context, linked chats, detected development servers, and preferred-port status. Start Development and Stop Development are not exposed. Actual server state always comes from Localhost Manager.

@@ -55,6 +55,7 @@ function mergeSettings(value: Record<string, unknown>): AppSettings {
         defaultSettings.general.launchAtStartup,
       ),
       closeToTray: readBoolean(general.closeToTray, defaultSettings.general.closeToTray),
+      keepVisible: readBoolean(general.keepVisible, defaultSettings.general.keepVisible),
     },
     codex: {
       enabled: readBoolean(codex.enabled, defaultSettings.codex.enabled),
@@ -90,6 +91,7 @@ function isSettingsFullyValid(value: Record<string, unknown>): boolean {
   return (
     typeof general.launchAtStartup === "boolean" &&
     typeof general.closeToTray === "boolean" &&
+    (general.keepVisible === undefined || typeof general.keepVisible === "boolean") &&
     typeof codex.enabled === "boolean" &&
     dictationShortcuts.has(codex.dictationShortcut as CodexDictationShortcut) &&
     isCanonicalGlobalHotkey(voiceFlow.hotkey) &&

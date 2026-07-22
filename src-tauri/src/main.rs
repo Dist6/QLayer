@@ -95,6 +95,11 @@ fn focus_codex_window(app: tauri::AppHandle) -> window_focus::WindowFocusStep {
 }
 
 #[tauri::command]
+fn is_codex_window_available() -> bool {
+    window_focus::codex_window_available()
+}
+
+#[tauri::command]
 fn focus_codex_thread(app: tauri::AppHandle, thread_id: String) -> window_focus::WindowFocusStep {
     window_focus::focus_codex_thread(&thread_id, |url| {
         app.opener().open_url(url, None::<&str>).is_ok()
@@ -163,6 +168,16 @@ fn set_close_to_tray(state: tauri::State<window_behavior::WindowBehaviorState>, 
     state.set_close_to_tray(enabled);
 }
 
+#[tauri::command]
+fn set_keep_visible(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    let Some(window) = app.get_webview_window("main") else {
+        return Err("QLayer window is unavailable.".to_string());
+    };
+    window
+        .set_always_on_top(enabled)
+        .map_err(|_| "QLayer window visibility could not be changed.".to_string())
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(
@@ -229,6 +244,7 @@ fn main() {
             send_dictation_shortcut,
             press_dictation_shortcut,
             release_dictation_shortcut,
+            is_codex_window_available,
             focus_codex_window,
             focus_codex_thread,
             list_recent_codex_chats,
@@ -240,7 +256,8 @@ fn main() {
             dispatch_project_action,
             voice_selector::show_voice_selector,
             voice_selector::hide_voice_selector,
-            set_close_to_tray
+            set_close_to_tray,
+            set_keep_visible
         ])
         .run(tauri::generate_context!())
         .expect("error while running QLayer");

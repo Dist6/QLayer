@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { suspendWindowDismiss } from "../../shared/windowFocusGuard";
 import { parseCodexThreadInput } from "../codex/deepLinks";
 import { buildChatShortcutViewModel } from "./chatShortcutViewModel";
 import type { ChatDestinationsState } from "./useChatDestinations";
@@ -44,6 +45,11 @@ export function ChatShortcutsPanel({ state }: ChatShortcutsPanelProps) {
       manualNameRef.current?.focus();
     }
   }, [view]);
+
+  useEffect(() => {
+    if (view !== "add" && !renamingId) return;
+    return suspendWindowDismiss();
+  }, [renamingId, view]);
 
   const closeAddView = () => {
     setManualInput("");

@@ -19,7 +19,7 @@ where
             message: "Codex focused.",
         },
         FocusOutcome::NotFound => WindowFocusStep {
-            status: "codexFocusNotConfirmed",
+            status: "waitingForCodex",
             message: "No supported Codex or ChatGPT window was detected.",
         },
         FocusOutcome::ActivationNotConfirmed => WindowFocusStep {
@@ -31,6 +31,10 @@ where
             message: "ChatGPT became active, but its composer could not be focused.",
         },
     }
+}
+
+pub fn codex_window_available() -> bool {
+    platform::codex_window_available()
 }
 
 pub fn verified_codex_process_path() -> Option<PathBuf> {
@@ -71,7 +75,7 @@ where
     };
     if !window_available() {
         return WindowFocusStep {
-            status: "codexFocusNotConfirmed",
+            status: "waitingForCodex",
             message: "No supported Codex or ChatGPT window was detected.",
         };
     }
@@ -562,6 +566,7 @@ mod tests {
             |_| panic!("opener must not run"),
             focused_step,
         );
+        assert_eq!(missing.status, "waitingForCodex");
         assert_eq!(
             missing.message,
             "No supported Codex or ChatGPT window was detected."

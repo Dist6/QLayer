@@ -24,8 +24,8 @@ Work completed during the submission period includes:
 - A Voice Flow destination selector with individual Chat and Project modes.
 - Validated Codex thread deep links and fail-closed destination routing.
 - Localhost Manager with Windows listener discovery, development-server classification, project identification, resource visibility, uptime, and visibility-aware refresh behavior.
-- Projects with local folders, linked chats, preferred ports, port verification, and predefined Start Development and Stop Development messages.
-- Safe Project action delivery to a user-selected chat, with clipboard fallback.
+- Projects with local folders, linked chats, detected or preferred ports, and port verification.
+- An internal safety-bounded Project action prototype, not exposed in the current UI.
 - UI, window placement, icon, performance, and release-readiness improvements.
 - Portable Windows release packaging and public-project documentation.
 
@@ -54,12 +54,12 @@ The product direction, feature approvals, safety constraints, and final decision
 
 ## Evidence
 
-| Commit                   | Date       | Work                                                                                      |
-| ------------------------ | ---------- | ----------------------------------------------------------------------------------------- |
-| `d4433be`                | 2026-07-18 | Completed the compact Voice Flow toolbox                                                  |
-| `02a873a`?`73b91f0`      | 2026-07-18 | Added validated chat destinations, discovery, selection, and Voice Flow routing           |
-| `f0f827e`                | 2026-07-20 | Completed the Quick Tools foundation, including Localhost Manager work                    |
-| `a7a286f`?`f82b28f`      | 2026-07-20 | Added Projects, linked chats and servers, safe actions, and Project-based voice selection |
-| `v0.1.0` release history | 2026-07-21 | Release polish, optimization, portable packaging, documentation, and validation           |
+| Commit                   | Date       | Work                                                                                    |
+| ------------------------ | ---------- | --------------------------------------------------------------------------------------- |
+| `d4433be`                | 2026-07-18 | Completed the compact Voice Flow toolbox                                                |
+| `02a873a` to `73b91f0`   | 2026-07-18 | Added validated chat destinations, discovery, selection, and Voice Flow routing         |
+| `f0f827e`                | 2026-07-20 | Completed the Quick Tools foundation, including Localhost Manager work                  |
+| `a7a286f` to `f82b28f`   | 2026-07-20 | Added Projects, linked chats and servers, action prototype, and Project voice selection |
+| `v0.1.0` release history | 2026-07-21 | Release polish, optimization, portable packaging, documentation, and validation         |
 
 The primary Codex Build Week task should be submitted using the required `/feedback` Session ID. The repository history and dated Codex sessions provide the detailed record.

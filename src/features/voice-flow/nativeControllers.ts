@@ -43,12 +43,25 @@ export const keyboardController: KeyboardController = {
     invokeKeyboardCommand("release_dictation_shortcut", { shortcut }),
 };
 
-export const windowController: WindowController = {
+export const windowController = {
+  isCodexAvailable: async () => invokeCodexAvailabilityCommand(),
   focusCodex: async () => invokeWindowCommand("focus_codex_window"),
   focusCodexThread: async (threadId: string) =>
     invokeWindowCommand("focus_codex_thread", { threadId }),
   showQLayer: async () => invokeShowMainWindow(),
-};
+} satisfies WindowController;
+
+async function invokeCodexAvailabilityCommand(): Promise<AppResult<boolean>> {
+  try {
+    return parseNativeCodexAvailability(await invoke<unknown>("is_codex_window_available"));
+  } catch {
+    return notImplemented("Codex detection is not available.");
+  }
+}
+
+export function parseNativeCodexAvailability(value: unknown): AppResult<boolean> {
+  return typeof value === "boolean" ? { ok: true, value } : failed("Codex detection failed.");
+}
 
 async function invokeAudioCommand(
   command: "prepare_audio" | "restore_audio",
@@ -149,7 +162,9 @@ function isNativeKeyboardStep(value: unknown): value is NativeVoiceFlowStep {
 function isNativeWindowStep(value: unknown): value is NativeVoiceFlowStep {
   return (
     isNativeVoiceFlowStep(value) &&
-    (value.status === "codexFocused" || value.status === "codexFocusNotConfirmed")
+    (value.status === "codexFocused" ||
+      value.status === "codexFocusNotConfirmed" ||
+      value.status === "waitingForCodex")
   );
 }
 

@@ -4,6 +4,7 @@ export const defaultSettings: AppSettings = {
   general: {
     launchAtStartup: false,
     closeToTray: true,
+    keepVisible: false,
   },
   codex: {
     enabled: true,

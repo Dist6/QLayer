@@ -20,6 +20,6 @@ v0.1 stores local preferences, saved chat identifiers and labels, Project folder
 
 Localhost Manager inspects local listeners and sanitized process metadata. Project detection may inspect only bounded, allowlisted local manifest metadata near a reliably identified process path. It does not inspect traffic contents.
 
-Predefined Project actions are sent only to the Codex chat selected by the user through the local Codex integration. QLayer does not accept arbitrary commands, does not approve Codex actions automatically, and does not directly manage development processes. When delivery is unavailable, QLayer can write the fixed action message to the clipboard; it never reads clipboard contents.
+The current Projects UI does not expose Start Development or Stop Development. Its internal prototype remains constrained to fixed messages and does not accept arbitrary commands, approve Codex actions automatically, or directly manage development processes. QLayer never reads clipboard contents.
 
 Future capabilities that require extra permissions must be explicit and opt-in.

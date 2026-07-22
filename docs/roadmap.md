@@ -9,7 +9,7 @@
 - Saved and recently discovered Chat Shortcuts.
 - Voice destination selection by Chat or Project.
 - Localhost Manager with safe listener classification and resource visibility.
-- Projects with linked chats, preferred ports, and predefined development actions.
+- Projects with linked chats, detected development servers, and preferred-port status.
 - Local-first settings, no telemetry, and narrow native permissions.
 
 ## Later
@@ -19,6 +19,7 @@ Potential future work remains subject to product, privacy, and safety review:
 - Signed releases and automatic updates.
 - macOS support.
 - Pinned localhost servers and project grouping refinements.
+- Optional predefined Project development requests through a user-selected chat.
 - Explicitly confirmed development server stop or restart actions.
 - Additional safe chat and Project workflows.
 

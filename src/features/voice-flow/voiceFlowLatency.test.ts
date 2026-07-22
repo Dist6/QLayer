@@ -104,8 +104,8 @@ describe("Voice Flow latency and focus safety", () => {
         return {
           ok: true as const,
           value: {
-            status: "codexFocusNotConfirmed" as const,
-            message: "Codex focus could not be confirmed.",
+            status: "waitingForCodex" as const,
+            message: "No supported Codex or ChatGPT window was detected.",
           },
         };
       },
@@ -134,10 +134,46 @@ describe("Voice Flow latency and focus safety", () => {
     expect(result.status).toBe("waitingForCodex");
     expect(result.steps.at(-1)).toEqual({
       status: "waitingForCodex",
-      message:
-        "Waiting for Codex or ChatGPT. Make sure it is open and visible, then hold Ctrl+Win again.",
+      message: "Codex or ChatGPT isn't open. Open either app, then hold Ctrl+Win again.",
     });
     expect(events).toEqual(["audio", "focus", "restore", "show"]);
+  });
+
+  it("keeps a detected focus failure separate from an unavailable app", async () => {
+    const events: string[] = [];
+    const window = {
+      focusCodex: async () => {
+        events.push("focus");
+        return {
+          ok: true as const,
+          value: {
+            status: "codexFocusNotConfirmed" as const,
+            message: "ChatGPT was detected, but Windows did not allow it to become active.",
+          },
+        };
+      },
+      showQLayer: async () => {
+        events.push("show");
+        return { ok: true as const, value: undefined };
+      },
+    } satisfies WindowController;
+
+    const result = await startVoiceFlowHold(
+      asHoldInput({
+        settings: defaultSettings,
+        audio: createAudioController(events, "audioDisabled"),
+        window,
+        keyboard: createKeyboardController(events),
+        shouldContinue: () => true,
+      }),
+    );
+
+    expect(result.status).toBe("codexFocusNotConfirmed");
+    expect(result.steps.at(-1)).toEqual({
+      status: "codexFocusNotConfirmed",
+      message: "ChatGPT was detected, but Windows did not allow it to become active.",
+    });
+    expect(events).toEqual(["audio", "focus", "show"]);
   });
 
   it("releases dictation if the hold ends while the key press is completing", async () => {

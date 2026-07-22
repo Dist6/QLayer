@@ -11,6 +11,7 @@ import type { Project } from "../projects/projectTypes";
 import type { AppSettings } from "../settings/settingsTypes";
 import type { VoiceFlowStep } from "./controllers";
 import { audioController, keyboardController, windowController } from "./nativeControllers";
+import { buildCodexUnavailableMessage } from "./voiceFlowAvailability";
 import {
   restoreVoiceFlowAudio,
   startVoiceFlow,
@@ -43,19 +44,69 @@ export function useVoiceFlow(
   projects: readonly Project[] = [],
 ): VoiceFlowState {
   const [status, setStatus] = useState<VoiceFlowStep>({
-    status: "ready",
-    message: "Ready.",
+    status: "checkingCodex",
+    message: "Checking for Codex or ChatGPT.",
   });
   const [steps, setSteps] = useState<VoiceFlowStep[]>([]);
   const [running, setRunning] = useState(false);
   const holdRequestedRef = useRef(false);
+  const availabilityRequestRef = useRef(0);
   const phaseRef = useRef<VoiceDestinationPhase>("idle");
   const destinationsRef = useRef(destinations);
   const projectsRef = useRef(projects);
   destinationsRef.current = destinations;
   projectsRef.current = projects;
 
+  const refreshCodexAvailability = useCallback(async () => {
+    const requestId = ++availabilityRequestRef.current;
+    if (holdRequestedRef.current || phaseRef.current !== "idle") {
+      return;
+    }
+
+    setStatus({ status: "checkingCodex", message: "Checking for Codex or ChatGPT." });
+    const result = await windowController.isCodexAvailable();
+    if (
+      requestId !== availabilityRequestRef.current ||
+      holdRequestedRef.current ||
+      phaseRef.current !== "idle"
+    ) {
+      return;
+    }
+
+    if (!result.ok) {
+      setStatus({ status: "failed", message: result.message });
+      return;
+    }
+
+    setStatus(
+      result.value
+        ? { status: "ready", message: "Codex or ChatGPT detected." }
+        : {
+            status: "waitingForCodex",
+            message: buildCodexUnavailableMessage(settings.voiceFlow.hotkey),
+          },
+    );
+  }, [settings.voiceFlow.hotkey]);
+
+  useEffect(() => {
+    const refresh = () => void refreshCodexAvailability();
+    const refreshWhenVisible = () => {
+      if (!document.hidden) {
+        refresh();
+      }
+    };
+
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [refreshCodexAvailability]);
+
   const start = useCallback(async () => {
+    availabilityRequestRef.current += 1;
     setRunning(true);
     setStatus({ status: "focusingCodex", message: "Starting Voice Flow." });
 
@@ -82,6 +133,7 @@ export function useVoiceFlow(
       return;
     }
 
+    availabilityRequestRef.current += 1;
     holdRequestedRef.current = true;
     const selectorProjects = projects
       .filter((project) => project.linkedChats.length > 0)
@@ -150,6 +202,7 @@ export function useVoiceFlow(
         return;
       }
 
+      availabilityRequestRef.current += 1;
       setRunning(true);
       setStatus({ status: "focusingCodex", message: "Opening the selected chat." });
       const result = await startTargetedVoiceFlowHold({
@@ -214,6 +267,7 @@ export function useVoiceFlow(
   }, [settings.codex.dictationShortcut]);
 
   const reportMessage = useCallback((step: VoiceFlowStep) => {
+    availabilityRequestRef.current += 1;
     setStatus(step);
     setSteps((current) => [...current, step]);
   }, []);

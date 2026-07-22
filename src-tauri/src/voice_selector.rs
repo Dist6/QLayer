@@ -27,6 +27,17 @@ pub async fn show_voice_selector(app: AppHandle) -> Result<bool, String> {
 
 #[tauri::command]
 pub fn hide_voice_selector(app: AppHandle) -> Result<(), String> {
+    destroy_voice_selector(&app)
+}
+
+pub fn hide_voice_selector_after_hotkey_release(app: &AppHandle) {
+    let app_for_task = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        let _ = destroy_voice_selector(&app_for_task);
+    });
+}
+
+fn destroy_voice_selector(app: &AppHandle) -> Result<(), String> {
     let Some(window) = app.get_webview_window(SELECTOR_WINDOW_LABEL) else {
         return Ok(());
     };

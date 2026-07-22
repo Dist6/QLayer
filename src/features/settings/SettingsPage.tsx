@@ -45,6 +45,12 @@ export function SettingsPage({
           label="Close to tray"
           onChange={(checked) => updateGeneral({ closeToTray: checked })}
         />
+        <ToggleSetting
+          checked={settings.general.keepVisible}
+          description="Keep the window open and above other apps."
+          label="Keep QLayer visible"
+          onChange={(checked) => updateGeneral({ keepVisible: checked })}
+        />
         <div className="readonly-setting">
           <div>
             <strong>Voice Flow shortcut</strong>

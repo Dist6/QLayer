@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { isWindowDismissSuspended, withWindowDismissSuspended } from "./windowFocusGuard";
+import {
+  isWindowDismissSuspended,
+  suspendWindowDismiss,
+  withWindowDismissSuspended,
+} from "./windowFocusGuard";
 
 describe("window focus guard", () => {
   it("suspends dismissal only while a native interaction is active", async () => {
@@ -20,6 +24,18 @@ describe("window focus guard", () => {
       }),
     ).rejects.toThrow("dialog failed");
 
+    expect(isWindowDismissSuspended()).toBe(false);
+  });
+
+  it("keeps dismissal suspended until every active interaction releases it", () => {
+    const releaseFirst = suspendWindowDismiss();
+    const releaseSecond = suspendWindowDismiss();
+
+    releaseFirst();
+    expect(isWindowDismissSuspended()).toBe(true);
+
+    releaseSecond();
+    releaseSecond();
     expect(isWindowDismissSuspended()).toBe(false);
   });
 });

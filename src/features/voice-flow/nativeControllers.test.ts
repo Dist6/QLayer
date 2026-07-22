@@ -1,6 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { parseNativeKeyboardStep, parseNativeWindowStep } from "./nativeControllers";
+import {
+  parseNativeCodexAvailability,
+  parseNativeKeyboardStep,
+  parseNativeWindowStep,
+} from "./nativeControllers";
+
+describe("native Codex availability parsing", () => {
+  it("accepts only boolean availability values", () => {
+    expect(parseNativeCodexAvailability(true)).toEqual({ ok: true, value: true });
+    expect(parseNativeCodexAvailability(false)).toEqual({ ok: true, value: false });
+    expect(parseNativeCodexAvailability("true")).toEqual({
+      ok: false,
+      reason: "failed",
+      message: "Codex detection failed.",
+    });
+  });
+});
 
 describe("native keyboard controller parsing", () => {
   it("accepts a successful dictation shortcut step", () => {
@@ -72,6 +88,21 @@ describe("native window controller parsing", () => {
       value: {
         status: "codexFocused",
         message: "Codex focused.",
+      },
+    });
+  });
+
+  it("accepts a missing Codex or ChatGPT window step", () => {
+    expect(
+      parseNativeWindowStep({
+        status: "waitingForCodex",
+        message: "No supported Codex or ChatGPT window was detected.",
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        status: "waitingForCodex",
+        message: "No supported Codex or ChatGPT window was detected.",
       },
     });
   });
