@@ -52,7 +52,7 @@ QLayer v$version - Windows x64 portable
 Requirements:
 - Windows 10 or Windows 11 x64
 - Microsoft Edge WebView2 Runtime
-- Codex or ChatGPT for Windows for Voice Flow and chat actions
+- Codex or ChatGPT for Windows for Voice Flow and chat navigation
 
 QLayer stores preferences locally in Windows AppData. Moving the executable after enabling launch at startup can invalidate the saved startup path.
 "@
